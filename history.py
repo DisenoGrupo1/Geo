@@ -8,10 +8,10 @@ CORS(app, resources={r"/location-history": {"origins": "*"}})
 
 # Configuración de la base de datos
 db_config = {
-    'host': 'geotaxidb.cxeui44s4lo7.us-east-1.rds.amazonaws.com',
-    'user': 'geotaxi',
-    'password': 'geotaxi1234',
-    'database': 'geotaxi_db'
+    'host': 'ENDPOINT',
+    'user': 'USER',
+    'password': 'PASSWORD',
+    'database': 'DATABASE'
 }
 
 # Ruta para obtener el historial de ubicaciones
