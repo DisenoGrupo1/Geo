@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Title</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=GOOGLEMAPSAPIKEY&callback=initMap" defer></script>
+    <style>
+        #map {
+            height: 80%;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #date-selection {
+            margin: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        label {
+            margin-right: 10px;
+        }
+        input {
+            margin: 0 10px 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="date-selection">
+        <label for="start-date-history">Start Date:</label>
+        <input type="date" id="start-date-history" required>
+        <label for="end-date-history">End Date:</label>
+        <input type="date" id="end-date-history" required>
+        <label for="start-time-history">Start Time:</label>
+        <input type="time" id="start-time-history" required>
+        <label for="end-time-history">End Time:</label>
+        <input type="time" id="end-time-history" required>
+        <button onclick="loadHistory()">Load History</button>
+    </div>
+    <div id="map"></div>
+
+    <script>
+        let map, pathPolyline;
+        let pathCoordinates = [];
+        let endMarker;  // Variable para almacenar el marcador final
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), { zoom: 2 });
+            pathPolyline = new google.maps.Polyline({
+                path: pathCoordinates,
+                geodesic: true,
+                strokeColor: '#FF0000',
+                strokeOpacity: 1.0,
+                strokeWeight: 2,
+                map: map
+            });
+        }
+
+        function updatePolyline() {
+            pathPolyline.setPath(pathCoordinates.map(coord => new google.maps.LatLng(coord.latitud, coord.longitud)));
+            if (pathCoordinates.length > 0) {
+                map.setCenter(new google.maps.LatLng(pathCoordinates[0].latitud, pathCoordinates[0].longitud));
+                map.setZoom(15);
+                
+                // Añadir marcador solo para el fin
+                addEndMarker();
+            }
+        }
+
+        function addEndMarker() {
+            // Limpiar el marcador anterior si existe
+            if (endMarker) {
+                endMarker.setMap(null);
+            }
+
+            // Crear el marcador para la ubicación final
+            const endLocation = pathCoordinates[pathCoordinates.length - 1];
+            endMarker = new google.maps.Marker({
+                position: new google.maps.LatLng(endLocation.latitud, endLocation.longitud),
+                map: map,
+                title: 'Fin'
+            });
+        }
+
+        function loadHistory() {
+            const startDate = document.getElementById('start-date-history').value;
+            const endDate = document.getElementById('end-date-history').value;
+            const startTime = document.getElementById('start-time-history').value;
+            const endTime = document.getElementById('end-time-history').value;
+
+            if (startDate && endDate && startTime && endTime) {
+                const startDateTime = new Date(`${startDate}T${startTime}`);
+                const endDateTime = new Date(`${endDate}T${endTime}`);
+
+                if (endDateTime <= startDateTime) {
+                    alert("La fecha y hora de finalización debe ser posterior a la fecha y hora de inicio.");
+                    return;
+                }
+
+                const requestBody = {
+                    start_date: startDate,
+                    end_date: endDate,
+                    start_time: startTime,
+                    end_time: endTime
+                };
+
+                fetch('http://aws_ip:60000/location-history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        pathCoordinates = data.map(loc => ({
+                            latitud: loc.latitud,
+                            longitud: loc.longitud
+                        }));
+                        updatePolyline();
+                    } else {
+                        alert(data.message || "No se encontraron ubicaciones para el rango de fechas especificado.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching location history:", error);
+                    alert("Error al consultar los históricos de ubicación: " + error.message);
+                });
+            } else {
+                alert("Por favor, seleccione fechas y horas válidas.");
+            }
+        }
+
+        function setMaxDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('start-date-history').setAttribute('max', today);
+            document.getElementById('end-date-history').setAttribute('max', today);
+        }
+
+        window.onload = setMaxDate;
+    </script>
+</body>
+</html>
