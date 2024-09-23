@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geotaxi - Location History</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=GOOGLEMAPSAPIKEY&callback=initMap" defer></script>
     <style>
         #map {
@@ -44,7 +46,7 @@
     <script>
         let map, pathPolyline;
         let pathCoordinates = [];
-        let endMarker;  // Variable para almacenar el marcador final
+        let endMarker;
 
         function initMap() {
             map = new google.maps.Map(document.getElementById('map'), { zoom: 2 });
@@ -61,21 +63,17 @@
         function updatePolyline() {
             pathPolyline.setPath(pathCoordinates.map(coord => new google.maps.LatLng(coord.latitud, coord.longitud)));
             if (pathCoordinates.length > 0) {
-                map.setCenter(new google.maps.LatLng(pathCoordinates[0].latitud, pathCoordinates[0].longitud));
-                map.setZoom(15);
-                
-                // Añadir marcador solo para el fin
+                const bounds = new google.maps.LatLngBounds();
+                pathCoordinates.forEach(coord => bounds.extend(new google.maps.LatLng(coord.latitud, coord.longitud)));
+                map.fitBounds(bounds);
                 addEndMarker();
             }
         }
 
         function addEndMarker() {
-            // Limpiar el marcador anterior si existe
             if (endMarker) {
                 endMarker.setMap(null);
             }
-
-            // Crear el marcador para la ubicación final
             const endLocation = pathCoordinates[pathCoordinates.length - 1];
             endMarker = new google.maps.Marker({
                 position: new google.maps.LatLng(endLocation.latitud, endLocation.longitud),
@@ -106,7 +104,7 @@
                     end_time: endTime
                 };
 
-                fetch('http://aws_ip:60000/location-history', {
+                fetch('http://AWS_IP:60000/location-history', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -140,9 +138,25 @@
         }
 
         function setMaxDate() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('start-date-history').setAttribute('max', today);
-            document.getElementById('end-date-history').setAttribute('max', today);
+            const today = new Date();
+            const localDate = today.toLocaleDateString('en-CA'); // Obtiene la fecha en formato YYYY-MM-DD
+            document.getElementById('start-date-history').setAttribute('max', localDate);
+            document.getElementById('end-date-history').setAttribute('max', localDate);
+            
+            // Validaciones adicionales
+            document.getElementById('start-date-history').addEventListener('input', function() {
+                if (this.value > localDate) {
+                    this.value = localDate;
+                    alert('No puedes seleccionar una fecha futura.');
+                }
+            });
+
+            document.getElementById('end-date-history').addEventListener('input', function() {
+                if (this.value > localDate) {
+                    this.value = localDate;
+                    alert('No puedes seleccionar una fecha futura.');
+                }
+            });
         }
 
         window.onload = setMaxDate;
