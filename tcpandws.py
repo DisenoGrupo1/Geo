@@ -29,7 +29,7 @@ connection_pool = pooling.MySQLConnectionPool(
     database='DATABASE'
 )
 
-# Configuración del Throttle para WebSocket
+
 NOTIFICATION_THRESHOLD = 5  # Enviar notificaciones cada 5 segundos como máximo
 last_notification_time = time.time()
 
