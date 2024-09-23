@@ -4,7 +4,7 @@
     <title>Geotaxi Real-Time Ubication</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAE20PFwak54XlxC7xidSaGgXVWjk-w_QQ&callback=initMap"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=GOOGLEMAPSAPIKEY&callback=initMap"></script>
     <style>
         /* Tamaño del mapa */
         #map {
@@ -62,7 +62,7 @@
                 return; // Sale si se han alcanzado los intentos maximos
             }
 
-            socket = new WebSocket('ws://34.224.102.36:20000');
+            socket = new WebSocket('ws://aws_ip:20000');
 
             socket.onopen = function(event) {
                 console.log("Conectado al WebSocket");
@@ -133,7 +133,7 @@
             });
 
             // Realiza una solicitud para obtener la última ubicación almacenada
-            fetch('http://34.224.102.36:50000/last_location')
+            fetch('http://aws_ip:50000/last_location')
                 .then(response => response.json())
                 .then(data => {
                     if (data.latitud && data.longitud) {
