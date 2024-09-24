@@ -11,6 +11,7 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app, resources={r"/last_location": {"origins": "*"}})
 
+
 # Configuración de la base de datos
 db_config = {
     'host': os.getenv('DB_HOST'),
@@ -18,6 +19,11 @@ db_config = {
     'password': os.getenv('DB_PASSWORD'),
     'database': os.getenv('DB_NAME')
 }
+
+@app.route('/')
+def index():
+    google_maps_api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    return render_template('index.html', google_maps_api_key=google_maps_api_key)
 
 # Ruta para obtener la última ubicación
 @app.route('/last_location', methods=['GET'])

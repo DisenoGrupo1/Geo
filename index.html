@@ -1,11 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Ruta Suavizada con Polilínea</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAE20PFwak54XlxC7xidSaGgXVWjk-w_QQ&callback=initMap" async defer></script>
-
+    <title>Ruta Suavizada con Polilínea</title>
     <style>
         /* Tamaño del mapa */
         #map {
@@ -41,10 +39,13 @@
     </style>
 </head>
 <body>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap" async defer></script>
+    
     <div id="map"></div>
     <div id="link-container">
         <a href="history.html">View Location History</a>
     </div>
+    
     <script>
         let map;
         let marker;
@@ -134,72 +135,5 @@
             // Configura los parámetros para la solicitud de la ruta
             const request = {
                 origin: lastLatLng,  // Última posición conocida
-                destination: latLng,  // Nueva posición
-                travelMode: google.maps.TravelMode.DRIVING, // Modo de viaje en coche
-            };
+           
 
-            // Solicita la nueva ruta al DirectionsService
-            directionsService.route(request, function(result, status) {
-                if (status === 'OK') {
-                    directionsRenderer.setDirections(result);
-                } else {
-                    console.error("Error al obtener la ruta: " + status);
-                }
-            });
-
-            // Actualiza la última posición
-            lastLatLng = latLng;
-        }
-
-        function initMap() {
-            map = new google.maps.Map(document.getElementById('map'), {
-                zoom: 2,
-            });
-
-            directionsService = new google.maps.DirectionsService();
-            directionsRenderer = new google.maps.DirectionsRenderer({
-                map: map,
-                suppressMarkers: true // Oculta los marcadores predeterminados de la ruta
-            });
-
-            // Configura la polilínea para el trazado del recorrido
-            pathPolyline = new google.maps.Polyline({
-                path: pathCoordinates,
-                geodesic: true,
-                strokeColor: '#FF0000',
-                strokeOpacity: 1.0,
-                strokeWeight: 2,
-                map: map
-            });
-
-            // Solicita la última ubicación almacenada
-            fetch('http://aws_ip:50000/last_location')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.latitud && data.longitud) {
-                        let initialLatLng = new google.maps.LatLng(parseFloat(data.latitud), parseFloat(data.longitud));
-
-                        marker = new google.maps.Marker({
-                            position: initialLatLng,
-                            map: map
-                        });
-
-                        map.setCenter(initialLatLng);
-                        map.setZoom(15);
-
-                        // Añade el punto inicial a la polilínea
-                        pathCoordinates.push(initialLatLng);
-                        pathPolyline.setPath(pathCoordinates);
-
-                        lastLatLng = initialLatLng; // Guarda la última posición
-                    }
-                })
-                .catch(error => console.error("Error al obtener la última ubicación:", error))
-                .finally(() => {
-                    // Una vez cargada la última ubicación, inicializa el WebSocket
-                    initializeWebSocket();
-                });
-        }
-    </script>
-</body>
-</html>
