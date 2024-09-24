@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Escribe el titulo</title>
+    <title>TU TITULO</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAE20PFwak54XlxC7xidSaGgXVWjk-w_QQ&callback=initMap" async defer></script>
@@ -48,27 +48,29 @@
     <script>
         let map;
         let marker;
-        let pathCoordinates = []; // Array para almacenar las coordenadas del recorrido
-        let pathPolyline; // Variable para almacenar la línea del recorrido
-        let reconnectInterval = 1000; // Intervalo inicial de reconexion de 1 segundo
-        let socket; // Define el socket fuera de las funciones para poder reutilizarlo
-        let reconnectAttempts = 0; // Contador de intentos de reconexion
-        const MAX_ATTEMPTS = 5; // Maximo numero de intentos de reconexion
-        let lastUpdateTime = null; // Almacena el ultimo timestamp recibido
+        let directionsService;
+        let directionsRenderer;
+        let socket;
+        let reconnectInterval = 1000; // Intervalo de reconexión inicial
+        let reconnectAttempts = 0;
+        const MAX_ATTEMPTS = 5; // Máximo número de intentos de reconexión
+        let lastUpdateTime = null; // Última actualización de timestamp
         let mapInitialized = false; // Bandera para indicar si el mapa ha sido centrado
+        let waypoints = []; // Puntos intermedios para la ruta
+        let lastLatLng = null; // Almacena la última posición
 
         function initializeWebSocket() {
             if (reconnectAttempts >= MAX_ATTEMPTS) {
-                console.log("Numero maximo de intentos de reconexion alcanzado");
-                return; // Sale si se han alcanzado los intentos maximos
+                console.log("Número máximo de intentos de reconexión alcanzado");
+                return;
             }
 
             socket = new WebSocket('ws://aws_ip:20000');
 
             socket.onopen = function(event) {
                 console.log("Conectado al WebSocket");
-                reconnectInterval = 1000; // Reinicia el intervalo de reconexion despues de una conexion exitosa
-                reconnectAttempts = 0; // Reinicia el contador de intentos al conectarse
+                reconnectInterval = 1000;
+                reconnectAttempts = 0;
             };
 
             socket.onmessage = function(event) {
@@ -79,6 +81,17 @@
                 let currentTime = new Date(`${data.fecha}T${data.hora}`);
                 if (!lastUpdateTime || (currentTime - lastUpdateTime) >= 10000) {
                     lastUpdateTime = currentTime;
+
+                    // Añade la nueva coordenada como punto intermedio
+                    waypoints.push({
+                        location: latLng,
+                        stopover: false
+                    });
+
+                    // Actualiza la ruta
+                    updateRoute(latLng);
+
+                    // Mueve el marcador a la nueva posición
                     if (!marker) {
                         marker = new google.maps.Marker({
                             position: latLng,
@@ -86,21 +99,6 @@
                         });
                     } else {
                         marker.setPosition(latLng);
-                    }
-
-                    pathCoordinates.push(latLng);
-
-                    if (pathPolyline) {
-                        pathPolyline.setPath(pathCoordinates);
-                    } else {
-                        pathPolyline = new google.maps.Polyline({
-                            path: pathCoordinates,
-                            geodesic: true,
-                            strokeColor: '#FF0000',
-                            strokeOpacity: 1.0,
-                            strokeWeight: 2,
-                            map: map
-                        });
                     }
 
                     if (!mapInitialized) {
@@ -115,41 +113,81 @@
 
             socket.onerror = function(event) {
                 console.error("Error de WebSocket:", event);
-                alert("Error de conexion. Intentando reconectar...");
+                alert("Error de conexión. Intentando reconectar...");
             };
 
             socket.onclose = function(event) {
                 console.log("WebSocket cerrado:", event);
                 reconnectAttempts++;
-                console.log(`Intento de reconexion: ${reconnectAttempts}`);
+                console.log(`Intento de reconexión: ${reconnectAttempts}`);
                 setTimeout(initializeWebSocket, reconnectInterval);
                 reconnectInterval = Math.min(reconnectInterval * 2, 60000);
             };
         }
 
-        // Función para inicializar el mapa con la última ubicación desde la base de datos
+        function updateRoute(latLng) {
+            // Si no hay una última posición válida, usa la nueva como origen
+            if (!lastLatLng) {
+                lastLatLng = latLng;
+                return;
+            }
+
+            // Configura los parámetros para la solicitud de la ruta
+            const request = {
+                origin: lastLatLng,  // Última posición conocida
+                destination: latLng,  // Nueva posición
+                travelMode: google.maps.TravelMode.DRIVING, // Modo de viaje en coche
+            };
+
+            // Solicita la nueva ruta al DirectionsService
+            directionsService.route(request, function(result, status) {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(result);
+                } else {
+                    console.error("Error al obtener la ruta: " + status);
+                }
+            });
+
+            // Actualiza la última posición
+            lastLatLng = latLng;
+        }
+
         function initMap() {
             map = new google.maps.Map(document.getElementById('map'), {
                 zoom: 2,
             });
 
-            // Realiza una solicitud para obtener la última ubicación almacenada
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer({
+                map: map,
+                preserveViewport: true // Mantener el zoom actual
+            });
+
+            // Solicita la última ubicación almacenada
             fetch('http://aws_ip:50000/last_location')
                 .then(response => response.json())
                 .then(data => {
                     if (data.latitud && data.longitud) {
-                        let lastLatLng = new google.maps.LatLng(parseFloat(data.latitud), parseFloat(data.longitud));
+                        let initialLatLng = new google.maps.LatLng(parseFloat(data.latitud), parseFloat(data.longitud));
 
                         marker = new google.maps.Marker({
-                            position: lastLatLng,
+                            position: initialLatLng,
                             map: map
                         });
 
-                        map.setCenter(lastLatLng);
+                        map.setCenter(initialLatLng);
                         map.setZoom(15);
+
+                        // Añade el punto inicial a los waypoints
+                        waypoints.push({
+                            location: initialLatLng,
+                            stopover: false
+                        });
+
+                        lastLatLng = initialLatLng; // Guarda la última posición
                     }
                 })
-                .catch(error => console.error("Error al obtener la ultima ubicacion:", error))
+                .catch(error => console.error("Error al obtener la última ubicación:", error))
                 .finally(() => {
                     // Una vez cargada la última ubicación, inicializa el WebSocket
                     initializeWebSocket();
