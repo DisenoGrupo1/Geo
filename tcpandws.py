@@ -8,6 +8,11 @@ import re
 import json
 import time
 from websocket_server import WebsocketServer
+import os
+from dotenv import load_dotenv
+
+# Cargar variables de entorno
+load_dotenv()
 
 # Variables globales
 last_saved_timestamp = None
@@ -23,10 +28,10 @@ save_lock = asyncio.Lock()
 connection_pool = pooling.MySQLConnectionPool(
     pool_name="mypool",
     pool_size=10,
-    host='ENDPOINT',
-    user='USER',
-    password='PASSWORD',
-    database='DATABASE'
+    host=os.getenv('DB_HOST'),
+    user=os.getenv('DB_USER'),
+    password=os.getenv('DB_PASSWORD'),
+    database=os.getenv('DB_NAME')
 )
 
 # Configuración del Throttle para WebSocket

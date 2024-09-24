@@ -2,16 +2,21 @@ from flask import Flask, jsonify
 import mysql.connector
 from datetime import datetime
 from flask_cors import CORS
+import os
+from dotenv import load_dotenv
+
+# Cargar variables de entorno
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app, resources={r"/last_location": {"origins": "*"}})
 
 # Configuración de la base de datos
 db_config = {
-    'host': 'ENDPOINT',  # Cambia por tu host de MySQL
-    'user': 'USER',  # Cambia por tu usuario de MySQL
-    'password': 'PASSWORD',  # Cambia por tu contraseña de MySQL
-    'database': 'DATABASE_NAME'  # Cambia por tu nombre de base de datos
+    'host': os.getenv('DB_HOST'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'database': os.getenv('DB_NAME')
 }
 
 # Ruta para obtener la última ubicación
