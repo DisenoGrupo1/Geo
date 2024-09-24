@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>TU TITULO</title>
+    <title>Ruta Suavizada con Polilínea</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAE20PFwak54XlxC7xidSaGgXVWjk-w_QQ&callback=initMap" async defer></script>
@@ -48,6 +48,8 @@
     <script>
         let map;
         let marker;
+        let pathCoordinates = []; // Coordenadas del recorrido
+        let pathPolyline; // Polilínea del recorrido
         let directionsService;
         let directionsRenderer;
         let socket;
@@ -56,7 +58,6 @@
         const MAX_ATTEMPTS = 5; // Máximo número de intentos de reconexión
         let lastUpdateTime = null; // Última actualización de timestamp
         let mapInitialized = false; // Bandera para indicar si el mapa ha sido centrado
-        let waypoints = []; // Puntos intermedios para la ruta
         let lastLatLng = null; // Almacena la última posición
 
         function initializeWebSocket() {
@@ -82,14 +83,9 @@
                 if (!lastUpdateTime || (currentTime - lastUpdateTime) >= 10000) {
                     lastUpdateTime = currentTime;
 
-                    // Añade la nueva coordenada como punto intermedio
-                    waypoints.push({
-                        location: latLng,
-                        stopover: false
-                    });
-
-                    // Actualiza la ruta
-                    updateRoute(latLng);
+                    // Actualiza el trazado de la polilínea
+                    pathCoordinates.push(latLng);
+                    pathPolyline.setPath(pathCoordinates);
 
                     // Mueve el marcador a la nueva posición
                     if (!marker) {
@@ -100,6 +96,9 @@
                     } else {
                         marker.setPosition(latLng);
                     }
+
+                    // Ajusta la ruta a las carreteras
+                    updateRoute(latLng);
 
                     if (!mapInitialized) {
                         map.setCenter(latLng);
@@ -160,7 +159,17 @@
             directionsService = new google.maps.DirectionsService();
             directionsRenderer = new google.maps.DirectionsRenderer({
                 map: map,
-                preserveViewport: true // Mantener el zoom actual
+                suppressMarkers: true // Oculta los marcadores predeterminados de la ruta
+            });
+
+            // Configura la polilínea para el trazado del recorrido
+            pathPolyline = new google.maps.Polyline({
+                path: pathCoordinates,
+                geodesic: true,
+                strokeColor: '#FF0000',
+                strokeOpacity: 1.0,
+                strokeWeight: 2,
+                map: map
             });
 
             // Solicita la última ubicación almacenada
@@ -178,11 +187,9 @@
                         map.setCenter(initialLatLng);
                         map.setZoom(15);
 
-                        // Añade el punto inicial a los waypoints
-                        waypoints.push({
-                            location: initialLatLng,
-                            stopover: false
-                        });
+                        // Añade el punto inicial a la polilínea
+                        pathCoordinates.push(initialLatLng);
+                        pathPolyline.setPath(pathCoordinates);
 
                         lastLatLng = initialLatLng; // Guarda la última posición
                     }
