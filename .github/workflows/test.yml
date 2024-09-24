@@ -10,7 +10,7 @@ jobs:
     runs-on: self-hosted  # Usa tus propios runners
     strategy:
       matrix:
-        runner: [felix, dylan, martin]  # Define los runners a utilizar
+        runner: [felix, Dylan, martin]  # Define los runners a utilizar
 
     steps:
       # Paso 1: Checkout del código desde el repositorio
