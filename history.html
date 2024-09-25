@@ -29,6 +29,7 @@
 
         let map, pathPolyline;
         let pathCoordinates = [];
+        let startMarker; // Marcador de inicio
         let endMarker;
 
         function initMap() {
@@ -49,8 +50,21 @@
                 const bounds = new google.maps.LatLngBounds();
                 pathCoordinates.forEach(coord => bounds.extend(new google.maps.LatLng(coord.latitud, coord.longitud)));
                 map.fitBounds(bounds);
+                addStartMarker(); // Agregar marcador de inicio
                 addEndMarker();
             }
+        }
+
+        function addStartMarker() {
+            if (startMarker) {
+                startMarker.setMap(null); // Elimina el marcador anterior si existe
+            }
+            const startLocation = pathCoordinates[0]; // Primera ubicación
+            startMarker = new google.maps.Marker({
+                position: new google.maps.LatLng(startLocation.latitud, startLocation.longitud),
+                map: map,
+                title: 'Inicio'
+            });
         }
 
         function addEndMarker() {
@@ -186,4 +200,3 @@
     <div id="map"></div>
 </body>
 </html>
-
