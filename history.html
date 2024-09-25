@@ -96,7 +96,7 @@
                 })
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
+                        throw new Error(`No existen ubicaciones para la ventana de tiempo especificada`);
                     }
                     return response.json();
                 })
