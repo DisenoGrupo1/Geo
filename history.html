@@ -13,7 +13,7 @@
                 .then(response => response.json())
                 .then(config => {
                     configData = config;
-                    console.log("Configuración cargada:", configData);
+                    //console.log("Configuración cargada:", configData);
 
                     // Cambia el título de la página
                     document.getElementById('page-title').innerText = configData.TITLE;
