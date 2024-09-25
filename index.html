@@ -1,78 +1,63 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
+    <title>Insert your title/title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ruta Suavizada con Polilínea</title>
-    <style>
-        /* Tamaño del mapa */
-        #map {
-            height: 90%; /* Ajustado para dejar espacio para el hipervínculo */
-        }
-
-        /* Asegurarse de que el cuerpo y el HTML ocupen el 100% del tamaño */
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-
-        /* Contenedor del hipervínculo */
-        #link-container {
-            height: 10%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #f8f9fa;
-        }
-
-        /* Estilo del enlace como botón */
-        #link-container a {
-            display: inline-block; /* Permite aplicar padding y margen */
-            background-color: #007BFF; /* Color de fondo */
-            color: white; /* Color del texto */
-            padding: 10px 20px; /* Espaciado interno */
-            text-decoration: none; /* Sin subrayado */
-            border-radius: 5px; /* Bordes redondeados */
-            transition: background-color 0.3s, transform 0.2s; /* Transiciones suaves */
-        }
-    </style>
-</head>
-<body>
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap" async defer></script>
-    
-    <div id="map"></div>
-    <div id="link-container">
-        <a href="history.html">View Location History</a>
-    </div>
     
     <script>
+        let configData;
+
+
+        // Función para cargar la configuración desde el archivo config.json
+        function loadConfig() {
+            return fetch('config.json')
+                .then(response => response.json())
+                .then(config => {
+                    configData = config;
+                    console.log("Configuración cargada:", configData);
+
+                    // Establece el título de la página
+                    document.title = configData.TITLE;
+
+                    // Inserta la API key de Google Maps en el script
+                    const script = document.createElement('script');
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
+                    script.async = true;
+                    script.defer = true;
+                    document.head.appendChild(script);
+                })
+                .catch(error => console.error("Error al cargar config.json:", error));
+        }
+
+
         let map;
         let marker;
-        let pathCoordinates = []; // Coordenadas del recorrido
-        let pathPolyline; // Polilínea del recorrido
-        let directionsService;
-        let directionsRenderer;
-        let socket;
-        let reconnectInterval = 1000; // Intervalo de reconexión inicial
-        let reconnectAttempts = 0;
+        let pathCoordinates = []; // Array para almacenar las coordenadas del recorrido
+        let pathPolyline; // Variable para almacenar la línea del recorrido
+        let reconnectInterval = 1000; // Intervalo inicial de reconexión de 1 segundo
+        let socket; // Define el socket fuera de las funciones para poder reutilizarlo
+        let reconnectAttempts = 0; // Contador de intentos de reconexión
         const MAX_ATTEMPTS = 5; // Máximo número de intentos de reconexión
-        let lastUpdateTime = null; // Última actualización de timestamp
+        let lastUpdateTime = null; // Almacena el último timestamp recibido
         let mapInitialized = false; // Bandera para indicar si el mapa ha sido centrado
-        let lastLatLng = null; // Almacena la última posición
+      
 
         function initializeWebSocket() {
             if (reconnectAttempts >= MAX_ATTEMPTS) {
                 console.log("Número máximo de intentos de reconexión alcanzado");
-                return;
+                return; // Sale si se han alcanzado los intentos máximos
+
             }
 
-            socket = new WebSocket('ws://aws_ip:20000');
+            socket = new WebSocket(`ws://${configData.AWS_IP}:20000`);
 
             socket.onopen = function(event) {
                 console.log("Conectado al WebSocket");
-                reconnectInterval = 1000;
-                reconnectAttempts = 0;
+                reconnectInterval = 1000; // Reinicia el intervalo de reconexión después de una conexión exitosa
+                reconnectAttempts = 0; // Reinicia el contador de intentos al conectarse
+
             };
 
             socket.onmessage = function(event) {
@@ -132,8 +117,73 @@
                 return;
             }
 
-            // Configura los parámetros para la solicitud de la ruta
-            const request = {
-                origin: lastLatLng,  // Última posición conocida
-           
+
+            // Realiza una solicitud para obtener la última ubicación almacenada
+            fetch(`http://${configData.AWS_IP}:50000/last_location`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.latitud && data.longitud) {
+                        let lastLatLng = new google.maps.LatLng(parseFloat(data.latitud), parseFloat(data.longitud));
+
+                        marker = new google.maps.Marker({
+                            position: lastLatLng,
+                            map: map
+                        });
+
+                        map.setCenter(lastLatLng);
+                        map.setZoom(15);
+                    }
+                })
+                .catch(error => console.error("Error al obtener la última ubicación:", error))
+                .finally(() => {
+                    // Una vez cargada la última ubicación, inicializa el WebSocket
+                    initializeWebSocket();
+                });
+        }
+
+        // Carga el archivo de configuración y luego inicializa el mapa
+        loadConfig();
+    </script>
+
+    <style>
+        /* Tamaño del mapa */
+        #map {
+            height: 90%; /* Ajustado para dejar espacio para el hipervínculo */
+        }
+
+        /* Asegurarse de que el cuerpo y el HTML ocupen el 100% del tamaño */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Contenedor del hipervínculo */
+        #link-container {
+            height: 10%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+        }
+
+        /* Estilo del enlace como botón */
+        #link-container a {
+            display: inline-block; /* Permite aplicar padding y margen */
+            background-color: #007BFF; /* Color de fondo */
+            color: white; /* Color del texto */
+            padding: 10px 20px; /* Espaciado interno */
+            text-decoration: none; /* Sin subrayado */
+            border-radius: 5px; /* Bordes redondeados */
+            transition: background-color 0.3s, transform 0.2s; /* Transiciones suaves */
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="link-container">
+        <a href="history.html">View Location History</a>
+    </div>
+</body>
+</html>
 

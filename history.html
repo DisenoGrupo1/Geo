@@ -3,47 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Geotaxi - Location History</title>
-    <script src="https://maps.googleapis.com/maps/api/js?key=GOOGLEMAPSAPIKEY&callback=initMap" defer></script>
-    <style>
-        #map {
-            height: 80%;
-        }
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-        #date-selection {
-            margin: 10px;
-            padding: 10px;
-            background-color: #f9f9f9;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        label {
-            margin-right: 10px;
-        }
-        input {
-            margin: 0 10px 10px 0;
-        }
-    </style>
-</head>
-<body>
-    <div id="date-selection">
-        <label for="start-date-history">Start Date:</label>
-        <input type="date" id="start-date-history" required>
-        <label for="end-date-history">End Date:</label>
-        <input type="date" id="end-date-history" required>
-        <label for="start-time-history">Start Time:</label>
-        <input type="time" id="start-time-history" required>
-        <label for="end-time-history">End Time:</label>
-        <input type="time" id="end-time-history" required>
-        <button onclick="loadHistory()">Load History</button>
-    </div>
-    <div id="map"></div>
-
+    <title id="page-title">Insert your title</title>
     <script>
+        let configData;
+
+        // Función para cargar la configuración desde el archivo config.json
+        function loadConfig() {
+            return fetch('config.json')
+                .then(response => response.json())
+                .then(config => {
+                    configData = config;
+                    console.log("Configuración cargada:", configData);
+
+                    // Cambia el título de la página
+                    document.getElementById('page-title').innerText = configData.TITLE;
+
+                    // Cambia la clave API en el script de Google Maps
+                    const script = document.createElement('script');
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
+                    script.defer = true;
+                    document.head.appendChild(script);
+                })
+                .catch(error => console.error("Error al cargar config.json:", error));
+        }
+
         let map, pathPolyline;
         let pathCoordinates = [];
         let endMarker;
@@ -104,7 +87,7 @@
                     end_time: endTime
                 };
 
-                fetch('http://AWS_IP:60000/location-history', {
+                fetch(`http://${configData.AWS_IP}:60000/location-history`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -159,7 +142,48 @@
             });
         }
 
-        window.onload = setMaxDate;
+        window.onload = function() {
+            setMaxDate();
+            loadConfig(); // Carga la configuración al iniciar la página
+        };
     </script>
+    <style>
+        #map {
+            height: 80%;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #date-selection {
+            margin: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        label {
+            margin-right: 10px;
+        }
+        input {
+            margin: 0 10px 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="date-selection">
+        <label for="start-date-history">Start Date:</label>
+        <input type="date" id="start-date-history" required>
+        <label for="end-date-history">End Date:</label>
+        <input type="date" id="end-date-history" required>
+        <label for="start-time-history">Start Time:</label>
+        <input type="time" id="start-time-history" required>
+        <label for="end-time-history">End Time:</label>
+        <input type="time" id="end-time-history" required>
+        <button onclick="loadHistory()">Load History</button>
+    </div>
+    <div id="map"></div>
 </body>
 </html>
+
