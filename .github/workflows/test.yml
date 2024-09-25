@@ -20,7 +20,7 @@ jobs:
       # Paso 2: Copiar los archivos al directorio de trabajo del runner (grupodiseno) en la instancia
       - name: Sync application code
         run: |
-          rsync -av --progress --exclude='.git' * /home/ubuntu/actions-runner/_work/grupodiseno/
+          sudo rsync -av --progress --exclude='.git' * /home/ubuntu/actions-runner/_work/grupodiseno/
           echo "Synced files to /home/ubuntu/actions-runner/_work/grupodiseno/"
 
       # Paso 3: Listar archivos para asegurar que 'index.html' esté en su lugar
