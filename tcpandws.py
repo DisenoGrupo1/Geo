@@ -179,7 +179,7 @@ async def notify_clients(latitud, longitud, fecha, hora):
 def start_websocket():
     """Inicia el servidor WebSocket."""
     global server
-    server = WebsocketServer(host='0.0.0.0', port=30000)
+    server = WebsocketServer(host='0.0.0.0', port=20000)
     server.set_fn_new_client(new_client)
     server.set_fn_client_left(client_left)
     server.set_fn_message_received(message_received)
