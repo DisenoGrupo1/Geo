@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Inserte su titulo</title>
+    <title>Insert your title/title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <script>
         let configData;
+
 
         // Función para cargar la configuración desde el archivo config.json
         function loadConfig() {
@@ -29,6 +30,7 @@
                 .catch(error => console.error("Error al cargar config.json:", error));
         }
 
+
         let map;
         let marker;
         let pathCoordinates = []; // Array para almacenar las coordenadas del recorrido
@@ -39,11 +41,13 @@
         const MAX_ATTEMPTS = 5; // Máximo número de intentos de reconexión
         let lastUpdateTime = null; // Almacena el último timestamp recibido
         let mapInitialized = false; // Bandera para indicar si el mapa ha sido centrado
+      
 
         function initializeWebSocket() {
             if (reconnectAttempts >= MAX_ATTEMPTS) {
                 console.log("Número máximo de intentos de reconexión alcanzado");
                 return; // Sale si se han alcanzado los intentos máximos
+
             }
 
             socket = new WebSocket(`ws://${configData.AWS_IP}:20000`);
@@ -52,6 +56,7 @@
                 console.log("Conectado al WebSocket");
                 reconnectInterval = 1000; // Reinicia el intervalo de reconexión después de una conexión exitosa
                 reconnectAttempts = 0; // Reinicia el contador de intentos al conectarse
+
             };
 
             socket.onmessage = function(event) {
@@ -62,6 +67,12 @@
                 let currentTime = new Date(`${data.fecha}T${data.hora}`);
                 if (!lastUpdateTime || (currentTime - lastUpdateTime) >= 10000) {
                     lastUpdateTime = currentTime;
+
+                    // Actualiza el trazado de la polilínea
+                    pathCoordinates.push(latLng);
+                    pathPolyline.setPath(pathCoordinates);
+
+                    // Mueve el marcador a la nueva posición
                     if (!marker) {
                         marker = new google.maps.Marker({
                             position: latLng,
@@ -71,20 +82,8 @@
                         marker.setPosition(latLng);
                     }
 
-                    pathCoordinates.push(latLng);
-
-                    if (pathPolyline) {
-                        pathPolyline.setPath(pathCoordinates);
-                    } else {
-                        pathPolyline = new google.maps.Polyline({
-                            path: pathCoordinates,
-                            geodesic: true,
-                            strokeColor: '#FF0000',
-                            strokeOpacity: 1.0,
-                            strokeWeight: 2,
-                            map: map
-                        });
-                    }
+                    // Ajusta la ruta a las carreteras
+                    updateRoute(latLng);
 
                     if (!mapInitialized) {
                         map.setCenter(latLng);
@@ -110,11 +109,13 @@
             };
         }
 
-        // Función para inicializar el mapa con la última ubicación desde la base de datos
-        function initMap() {
-            map = new google.maps.Map(document.getElementById('map'), {
-                zoom: 2,
-            });
+        function updateRoute(latLng) {
+            // Si no hay una última posición válida, usa la nueva como origen
+            if (!lastLatLng) {
+                lastLatLng = latLng;
+                return;
+            }
+
 
             // Realiza una solicitud para obtener la última ubicación almacenada
             fetch(`http://${configData.AWS_IP}:50000/last_location`)
@@ -184,3 +185,4 @@
     </div>
 </body>
 </html>
+
