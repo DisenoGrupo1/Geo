@@ -49,7 +49,7 @@ def get_last_location():
     except mysql.connector.Error as e:
         return jsonify({"error": str(e)}), 500
     finally:
-        # Cerrar el cursor y la conexión
+        # Cerrar la conexión
         cursor.close()
         connection.close()
 
