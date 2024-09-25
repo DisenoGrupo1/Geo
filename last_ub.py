@@ -20,11 +20,6 @@ db_config = {
     'database': os.getenv('DB_NAME')
 }
 
-@app.route('/')
-def index():
-    google_maps_api_key = os.getenv("GOOGLE_MAPS_API_KEY")
-    return render_template('index.html', google_maps_api_key=google_maps_api_key)
-
 # Ruta para obtener la última ubicación
 @app.route('/last_location', methods=['GET'])
 def get_last_location():
