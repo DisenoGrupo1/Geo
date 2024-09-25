@@ -38,6 +38,13 @@ connection_pool = pooling.MySQLConnectionPool(
 NOTIFICATION_THRESHOLD = 5  # Enviar notificaciones cada 5 segundos como máximo
 last_notification_time = time.time()
 
+# Parámetros para el filtrado de ubicaciones
+MINIMUM_CHANGE_THRESHOLD = 0.0001  # Umbral de cambio mínimo para la latitud y longitud
+LOCATION_BUFFER_SIZE = 5  # Tamaño del buffer de ubicaciones para el filtrado
+
+# Buffer para las últimas ubicaciones
+location_buffer = []
+
 def hash_message(message):
     """Crea un hash a partir del mensaje para evitar duplicados."""
     return hashlib.sha256(message.encode()).hexdigest()
@@ -82,9 +89,7 @@ async def handle_client(conn):
                     match = re.match(r'Latitude:\s*(-?\d+\.\d+)\s+Longitude:\s*(-?\d+\.\d+)\s+Timestamp:\s*(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})', message)
                     if match:
                         latitud, longitud, fecha, hora = match.groups()
-                        location_cache.append((latitud, longitud, fecha, hora))
-                        await save_locations_in_batch()
-                        await notify_clients(latitud, longitud, fecha, hora)
+                        await process_location(latitud, longitud, fecha, hora)
                         await asyncio.to_thread(conn.sendall, b"Datos recibidos y guardados.")
                     else:
                         print("Datos recibidos en formato incorrecto.")
@@ -93,6 +98,45 @@ async def handle_client(conn):
             print("Conexión TCP cerrada por timeout.")
         except Exception as e:
             print(f"Error en la conexión TCP: {e}")
+
+async def process_location(latitud, longitud, fecha, hora):
+    """Procesa la ubicación y decide si guardarla o no, aplicando filtrado."""
+    global location_buffer
+    
+    latitud = float(latitud)
+    longitud = float(longitud)
+
+    # Agrega la nueva ubicación al buffer
+    location_buffer.append((latitud, longitud, fecha, hora))
+
+    # Filtrado: si el buffer alcanza el tamaño especificado
+    if len(location_buffer) >= LOCATION_BUFFER_SIZE:
+        # Obtiene la ubicación más reciente
+        latest_location = location_buffer[-1]
+        
+        # Comprueba si los cambios en latitud y longitud son mínimos
+        if all(
+            abs(latest_location[0] - loc[0]) < MINIMUM_CHANGE_THRESHOLD and
+            abs(latest_location[1] - loc[1]) < MINIMUM_CHANGE_THRESHOLD
+            for loc in location_buffer[:-1]  # Compara solo con las ubicaciones anteriores
+        ):
+            # Redondea a 4 decimales
+            latitud = round(latitud, 4)
+            longitud = round(longitud, 4)
+            print(f"Ubicación filtrada: {latitud}, {longitud}")
+        else:
+            # Guarda la ubicación como está
+            print(f"Ubicación guardada: {latitud}, {longitud}")
+
+        # Borra el buffer para las siguientes ubicaciones
+        await save_location_to_cache(latitud, longitud, fecha, hora)
+        location_buffer.clear()  # Limpia el buffer para nuevas ubicaciones
+
+async def save_location_to_cache(latitud, longitud, fecha, hora):
+    """Guarda la ubicación en la caché y en la base de datos en lotes."""
+    global last_saved_timestamp
+    location_cache.append((latitud, longitud, fecha, hora))
+    await save_locations_in_batch()
 
 async def save_locations_in_batch():
     """Guarda las ubicaciones en la base de datos en lotes."""
