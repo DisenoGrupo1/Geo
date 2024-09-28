@@ -2,22 +2,12 @@
 <html lang="es">
 
 <head>
-    <title>insert your title</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscar por Dirección</title>
 
-    <script>
-        // Tu código JavaScript aquí (sin cambios)
-    </script>
-
+    <!-- Estilos CSS -->
     <style>
-        /* Tamaño del mapa */
-        #map {
-            height: 70%;
-            /* Ajustado para dejar espacio para el hipervínculo y la selección de fechas */
-        }
-
-        /* Asegurarse de que el cuerpo y el HTML ocupen el 100% del tamaño */
         html,
         body {
             height: 100%;
@@ -25,11 +15,14 @@
             padding: 0;
         }
 
-        /* Contenedor de selección de fechas */
-        #date-selection {
+        #map {
+            height: 80%;
+        }
+
+        #address-selection {
             margin: 10px;
             padding: 10px;
-            background-color: #000dff;
+            background-color: #f9f9f9;
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
@@ -40,69 +33,158 @@
 
         input {
             margin: 0 10px 10px 0;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
         }
 
-        /* Cambio de color al pasar el mouse */
-        #date-selection:hover {
-            background-color: #0000cc;
-            /* Color azul más oscuro al pasar el mouse */
-        }
-
-        /* Contenedor del hipervínculo */
-        #link-container {
-            height: 10%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #f8f9fa;
-            flex-direction: row;
-        }
-
-        /* Estilo del enlace como botón */
-        #link-container a {
-            display: inline-block;
-            /* Permite aplicar padding y margen */
+        button {
+            padding: 6px 12px;
             background-color: #000dff;
-            /* Color de fondo */
+            /* Color azul */
             color: white;
-            /* Color del texto */
-            padding: 10px 20px;
-            /* Espaciado interno */
-            text-decoration: none;
-            /* Sin subrayado */
-            margin: 0 10px;
-            border-radius: 5px;
-            /* Bordes redondeados */
-            transition: background-color 0.3s, transform 0.2s;
-            /* Transiciones suaves */
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
         }
 
-        /* Cambio de color al pasar el mouse */
-        #link-container a:hover {
+        button:hover {
             background-color: #0000cc;
             /* Color azul más oscuro al pasar el mouse */
+        }
+
+        .help-text {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: -10px;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            display: none;
+            font-weight: bold;
+            margin-top: 10px;
         }
     </style>
+
+    <!-- Script JavaScript -->
+    <script>
+        let configData;
+
+        // Cargar config.json y obtener la clave API
+        function loadConfig() {
+            return fetch('config.json')
+                .then(response => response.json())
+                .then(config => {
+                    configData = config;
+                    // Cambia la clave API en el script de Google Maps
+                    const script = document.createElement('script');
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
+                    script.defer = true;
+                    document.head.appendChild(script);
+
+                })
+                .catch(error => console.error("Error al cargar config.json:", error));
+        }
+
+        let map;
+
+        // Inicializa el mapa
+        function initMap() {
+            const barranquilla = { lat: 10.9878, lng: -74.7889 };
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 12,
+                center: barranquilla
+            });
+        }
+
+        // Función para convertir dirección en coordenadas
+        function geocodeAddress() {
+            const address = document.getElementById('address').value;
+            const button = document.querySelector('button');
+            const loadingText = document.querySelector('.loading');
+
+            if (address) {
+                button.disabled = true;
+                loadingText.style.display = 'block';
+
+                const geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ address: address }, function (results, status) {
+                    button.disabled = false;
+                    loadingText.style.display = 'none';
+
+                    if (status === 'OK') {
+                        const location = results[0].geometry.location;
+                        searchByCoordinates(location.lat(), location.lng());
+                    } else {
+                        alert('Geocoding falló por la siguiente razón: ' + status);
+                    }
+                });
+            } else {
+                alert("Por favor, ingrese una dirección válida.");
+            }
+        }
+
+        // Función para buscar por coordenadas en la base de datos
+        function searchByCoordinates(lat, lng) {
+            const requestBody = {
+                latitud: lat,
+                longitud: lng
+            };
+            console.log("Latitud:", lat, "Longitud:", lng);
+            fetch(`http://${configData.AWS_IP}:50005/location-at-place`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('No se encontraron ubicaciones cercanas a la dirección especificada.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        // Visualiza las ubicaciones en el mapa
+                        updatePolyline(data);
+                    } else {
+                        alert(data.message || "No se encontraron ubicaciones.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("Error al buscar ubicaciones: " + error.message);
+                });
+        }
+
+        // Actualiza la polilínea en el mapa
+        function updatePolyline(locations) {
+            const pathCoordinates = locations.map(loc => ({
+                lat: parseFloat(loc.latitud),
+                lng: parseFloat(loc.longitud)
+            }));
+
+            const pathPolyline = new google.maps.Polyline({
+                path: pathCoordinates,
+                geodesic: true,
+                strokeColor: '#FF0000',
+                strokeOpacity: 1.0,
+                strokeWeight: 2,
+                map: map
+            });
+
+            if (pathCoordinates.length > 0) {
+                const bounds = new google.maps.LatLngBounds();
+                pathCoordinates.forEach(coord => bounds.extend(coord));
+                map.fitBounds(bounds);
+            }
+        }
+
+        // Cargar configuración al cargar la ventana
+        window.onload = function () {
+            loadConfig();
+        };
+    </script>
 </head>
-
-<body>
-    <div id="date-selection">
-        <label for="start-date-history">Start Date:</label>
-        <input type="date" id="start-date-history" required>
-        <label for="end-date-history">End Date:</label>
-        <input type="date" id="end-date-history" required>
-        <label for="start-time-history">Start Time:</label>
-        <input type="time" id="start-time-history" required>
-        <label for="end-time-history">End Time:</label>
-        <input type="time" id="end-time-history" required>
-        <button onclick="loadHistory()">Load History</button>
-    </div>
-
-    <div id="map"></div>
-    <div id="link-container">
-        <a href="history.html">View Location History</a>
-        <a href="searchroute.html">Search Route</a>
-    </div>
-</body>
-
-</html>
