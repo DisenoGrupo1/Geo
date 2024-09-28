@@ -36,7 +36,7 @@ def get_location_at_place():
         # Consulta para buscar ubicaciones cercanas
         query = '''SELECT latitud, longitud
                    FROM ubicaciones
-                   WHERE ABS(latitud - %s) < 0.0001 AND ABS(longitud - %s) < 0.0001'''
+                   WHERE ABS(latitud - %s) < 0.01 AND ABS(longitud - %s) < 0.01'''
         cursor.execute(query, (latitud, longitud))
 
         locations = cursor.fetchall()
