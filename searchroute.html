@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <title>insert your title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script>
+        // Tu código JavaScript aquí (sin cambios)
+    </script>
+
+    <style>
+        /* Tamaño del mapa */
+        #map {
+            height: 70%;
+            /* Ajustado para dejar espacio para el hipervínculo y la selección de fechas */
+        }
+
+        /* Asegurarse de que el cuerpo y el HTML ocupen el 100% del tamaño */
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Contenedor de selección de fechas */
+        #date-selection {
+            margin: 10px;
+            padding: 10px;
+            background-color: #000dff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        label {
+            margin-right: 10px;
+        }
+
+        input {
+            margin: 0 10px 10px 0;
+        }
+
+        /* Cambio de color al pasar el mouse */
+        #date-selection:hover {
+            background-color: #0000cc;
+            /* Color azul más oscuro al pasar el mouse */
+        }
+
+        /* Contenedor del hipervínculo */
+        #link-container {
+            height: 10%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            flex-direction: row;
+        }
+
+        /* Estilo del enlace como botón */
+        #link-container a {
+            display: inline-block;
+            /* Permite aplicar padding y margen */
+            background-color: #000dff;
+            /* Color de fondo */
+            color: white;
+            /* Color del texto */
+            padding: 10px 20px;
+            /* Espaciado interno */
+            text-decoration: none;
+            /* Sin subrayado */
+            margin: 0 10px;
+            border-radius: 5px;
+            /* Bordes redondeados */
+            transition: background-color 0.3s, transform 0.2s;
+            /* Transiciones suaves */
+        }
+
+        /* Cambio de color al pasar el mouse */
+        #link-container a:hover {
+            background-color: #0000cc;
+            /* Color azul más oscuro al pasar el mouse */
+        }
+    </style>
+</head>
+
+<body>
+    <div id="date-selection">
+        <label for="start-date-history">Start Date:</label>
+        <input type="date" id="start-date-history" required>
+        <label for="end-date-history">End Date:</label>
+        <input type="date" id="end-date-history" required>
+        <label for="start-time-history">Start Time:</label>
+        <input type="time" id="start-time-history" required>
+        <label for="end-time-history">End Time:</label>
+        <input type="time" id="end-time-history" required>
+        <button onclick="loadHistory()">Load History</button>
+    </div>
+
+    <div id="map"></div>
+    <div id="link-container">
+        <a href="history.html">View Location History</a>
+        <a href="searchroute.html">Search Route</a>
+    </div>
+</body>
+
+</html>
