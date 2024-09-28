@@ -4,6 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buscar por Dirección</title>
+
+    <!-- Estilos CSS -->
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            height: 80%;
+        }
+        #address-selection {
+            margin: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        label {
+            margin-right: 10px;
+        }
+        input {
+            margin: 0 10px 10px 0;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        button {
+            padding: 6px 12px;
+            background-color: #000dff; /* Color azul */
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0000cc; /* Color azul más oscuro al pasar el mouse */
+        }
+        .help-text {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: -10px;
+            margin-bottom: 10px;
+        }
+        .loading {
+            display: none;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+
+    <!-- Script JavaScript -->
     <script>
         let configData;
 
@@ -13,6 +65,7 @@
                 .then(response => response.json())
                 .then(config => {
                     configData = config;
+                    // Cambia la clave API en el script de Google Maps
                     const script = document.createElement('script');
                     script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
                     script.defer = true;
@@ -22,6 +75,8 @@
         }
 
         let map;
+
+        // Inicializa el mapa
         function initMap() {
             const barranquilla = { lat: 10.9878, lng: -74.7889 };
             map = new google.maps.Map(document.getElementById('map'), {
@@ -33,9 +88,18 @@
         // Función para convertir dirección en coordenadas
         function geocodeAddress() {
             const address = document.getElementById('address').value;
+            const button = document.querySelector('button');
+            const loadingText = document.querySelector('.loading');
+
             if (address) {
+                button.disabled = true;
+                loadingText.style.display = 'block';
+
                 const geocoder = new google.maps.Geocoder();
                 geocoder.geocode({ address: address }, function (results, status) {
+                    button.disabled = false;
+                    loadingText.style.display = 'none';
+
                     if (status === 'OK') {
                         const location = results[0].geometry.location;
                         searchByCoordinates(location.lat(), location.lng());
@@ -54,6 +118,7 @@
                 latitud: lat,
                 longitud: lng
             };
+            console.log("Latitud:", lat, "Longitud:", lng);
             fetch(`http://${configData.AWS_IP}:50005/location-at-place`, {
                 method: 'POST',
                 headers: {
@@ -69,6 +134,7 @@
             })
             .then(data => {
                 if (Array.isArray(data)) {
+                    // Visualiza las ubicaciones en el mapa
                     updatePolyline(data);
                 } else {
                     alert(data.message || "No se encontraron ubicaciones.");
@@ -80,18 +146,12 @@
             });
         }
 
+        // Actualiza la polilínea en el mapa
         function updatePolyline(locations) {
             const pathCoordinates = locations.map(loc => ({
-                lat: parseFloat(loc.latitud),  // Asegúrate de que latitud sea un número
-                lng: parseFloat(loc.longitud)   // Asegúrate de que longitud sea un número
+                lat: parseFloat(loc.latitud),
+                lng: parseFloat(loc.longitud)
             }));
-
-            // Verifica si hay coordenadas válidas
-            if (pathCoordinates.some(coord => isNaN(coord.lat) || isNaN(coord.lng))) {
-                console.error("Coordenadas no válidas:", pathCoordinates);
-                alert("Error: coordenadas no válidas.");
-                return;
-            }
 
             const pathPolyline = new google.maps.Polyline({
                 path: pathCoordinates,
@@ -102,72 +162,29 @@
                 map: map
             });
 
-            // Agregar marcadores de inicio y final
             if (pathCoordinates.length > 0) {
-                const startMarker = new google.maps.Marker({
-                    position: pathCoordinates[0],
-                    map: map,
-                    title: 'Inicio'
-                });
-
-                const endMarker = new google.maps.Marker({
-                    position: pathCoordinates[pathCoordinates.length - 1],
-                    map: map,
-                    title: 'Fin'
-                });
-
                 const bounds = new google.maps.LatLngBounds();
                 pathCoordinates.forEach(coord => bounds.extend(coord));
                 map.fitBounds(bounds);
-
-                // Calcular y mostrar la fecha y hora de inicio y fin
-                const startDateTime = `${locations[0].fecha} ${locations[0].hora}`;
-                const endDateTime = `${locations[locations.length - 1].fecha} ${locations[locations.length - 1].hora}`;
-                alert(`Inicio: ${startDateTime}\nFin: ${endDateTime}`);
             }
         }
 
+        // Cargar configuración al cargar la ventana
         window.onload = function () {
             loadConfig();
         };
     </script>
-    <style>
-        #map {
-            height: 80%;
-        }
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-        #address-selection {
-            margin: 10px;
-            padding: 10px;
-            background-color: #f9f9f9;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        label {
-            margin-right: 10px;
-        }
-        input {
-            margin: 0 10px 10px 0;
-        }
-        .help-text {
-            color: #666;
-            font-size: 0.9em;
-            margin-top: -10px;
-            margin-bottom: 10px;
-        }
-    </style>
 </head>
 <body>
+    <!-- Sección para ingresar la dirección -->
     <div id="address-selection">
-        <label for="address">Dirección:</label>
+        <label for="address">Dirección:</label>  
         <input type="text" id="address" placeholder="Ingrese la dirección" required>
-        <div class="help-text">Ejemplo: "123 Calle 45, Barranquilla, Atlántico, Colombia"</div>
+        <div class="help-text">Ejemplo: "Área metropolitana de, Kilómetro 5, Vía Puerto Colombia, Barranquilla, Atlántico"</div>
         <button onclick="geocodeAddress()">Buscar por Dirección</button>
+        <div class="loading">Cargando...</div>
     </div>
+    <!-- Mapa -->
     <div id="map"></div>
 </body>
 </html>
