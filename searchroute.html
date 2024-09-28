@@ -1,72 +1,41 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buscar por Dirección</title>
-
+    
     <!-- Estilos CSS -->
     <style>
-        html,
-        body {
+        html, body {
             height: 100%;
             margin: 0;
             padding: 0;
         }
-
         #map {
             height: 80%;
         }
-
         #address-selection {
             margin: 10px;
             padding: 10px;
             background-color: #f9f9f9;
             border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-
         label {
             margin-right: 10px;
         }
-
         input {
             margin: 0 10px 10px 0;
-            padding: 5px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
         }
-
-        button {
-            padding: 6px 12px;
-            background-color: #000dff;
-            /* Color azul */
-            color: white;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #0000cc;
-            /* Color azul más oscuro al pasar el mouse */
-        }
-
         .help-text {
             color: #666;
             font-size: 0.9em;
             margin-top: -10px;
             margin-bottom: 10px;
         }
-
-        .loading {
-            display: none;
-            font-weight: bold;
-            margin-top: 10px;
-        }
     </style>
-
+    
     <!-- Script JavaScript -->
     <script>
         let configData;
@@ -82,7 +51,6 @@
                     script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
                     script.defer = true;
                     document.head.appendChild(script);
-
                 })
                 .catch(error => console.error("Error al cargar config.json:", error));
         }
@@ -101,18 +69,9 @@
         // Función para convertir dirección en coordenadas
         function geocodeAddress() {
             const address = document.getElementById('address').value;
-            const button = document.querySelector('button');
-            const loadingText = document.querySelector('.loading');
-
             if (address) {
-                button.disabled = true;
-                loadingText.style.display = 'block';
-
                 const geocoder = new google.maps.Geocoder();
                 geocoder.geocode({ address: address }, function (results, status) {
-                    button.disabled = false;
-                    loadingText.style.display = 'none';
-
                     if (status === 'OK') {
                         const location = results[0].geometry.location;
                         searchByCoordinates(location.lat(), location.lng());
@@ -139,24 +98,24 @@
                 },
                 body: JSON.stringify(requestBody)
             })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('No se encontraron ubicaciones cercanas a la dirección especificada.');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (Array.isArray(data)) {
-                        // Visualiza las ubicaciones en el mapa
-                        updatePolyline(data);
-                    } else {
-                        alert(data.message || "No se encontraron ubicaciones.");
-                    }
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    alert("Error al buscar ubicaciones: " + error.message);
-                });
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('No se encontraron ubicaciones cercanas a la dirección especificada.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (Array.isArray(data)) {
+                    // Visualiza las ubicaciones en el mapa
+                    updatePolyline(data);
+                } else {
+                    alert(data.message || "No se encontraron ubicaciones.");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Error al buscar ubicaciones: " + error.message);
+            });
         }
 
         // Actualiza la polilínea en el mapa
@@ -188,19 +147,15 @@
         };
     </script>
 </head>
-
-<body></body>
-<!-- Sección para ingresar la dirección -->
-<div id="address-selection">
-    <label for="address">Dirección:</label>
-    <input type="text" id="address" placeholder="Ingrese la dirección" required>
-    <div class="help-text">Ejemplo: "Área metropolitana de, Kilómetro 5, Vía Puerto Colombia, Barranquilla, Atlántico"
+<body>
+    <!-- Sección para ingresar la dirección -->
+    <div id="address-selection">
+        <label for="address">Dirección:</label>
+        <input type="text" id="address" placeholder="Ingrese la dirección" required>
+        <div class="help-text">Ejemplo: "Cra. 53, Sabanilla Montecarmelo, Puerto Colombia, Barranquilla, Atlántico"</div>
+        <button onclick="geocodeAddress()">Buscar por Dirección</button>
     </div>
-    <button onclick="geocodeAddress()">Buscar por Dirección</button>
-    <div class="loading">Cargando...</div>
-</div>
-<!-- Mapa -->
-<div id="map"></div>
+    <!-- Mapa -->
+    <div id="map"></div>
 </body>
-
 </html>
