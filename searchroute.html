@@ -188,3 +188,19 @@
         };
     </script>
 </head>
+
+<body></body>
+<!-- Sección para ingresar la dirección -->
+<div id="address-selection">
+    <label for="address">Dirección:</label>
+    <input type="text" id="address" placeholder="Ingrese la dirección" required>
+    <div class="help-text">Ejemplo: "Área metropolitana de, Kilómetro 5, Vía Puerto Colombia, Barranquilla, Atlántico"
+    </div>
+    <button onclick="geocodeAddress()">Buscar por Dirección</button>
+    <div class="loading">Cargando...</div>
+</div>
+<!-- Mapa -->
+<div id="map"></div>
+</body>
+
+</html>
