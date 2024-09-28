@@ -47,7 +47,7 @@ def get_location_at_place():
         query = '''
         SELECT latitud, longitud
         FROM ubicaciones
-        WHERE ABS(latitud - %s) < 0.01 AND ABS(longitud - %s) < 0.01
+        WHERE ABS(latitud - %s) < 0.001 AND ABS(longitud - %s) < 0.001
         '''
         cursor.execute(query, (latitud, longitud))
 
