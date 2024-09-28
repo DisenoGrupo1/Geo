@@ -33,7 +33,12 @@
         let endMarker;
 
         function initMap() {
-            map = new google.maps.Map(document.getElementById('map'), { zoom: 2 });
+            const barranquilla = {lat: 10.9878, lng: -74.7889};
+            map = new google.maps.Map(document.getElementById('map'),{
+            zoom: 12,
+            center: barranquilla
+            });  
+
             pathPolyline = new google.maps.Polyline({
                 path: pathCoordinates,
                 geodesic: true,
