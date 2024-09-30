@@ -40,12 +40,6 @@
         button:hover {
             background-color: #0000cc;
         }
-        .help-text {
-            color: #666;
-            font-size: 0.9em;
-            margin-top: -10px;
-            margin-bottom: 10px;
-        }
         .loading {
             display: none;
             font-weight: bold;
@@ -59,8 +53,7 @@
         let configData;
         let map;
         let pathPolyline;
-        let startMarker;
-        let endMarker;
+        let marker;
 
         function loadConfig() {
             return fetch('config.json')
@@ -87,11 +80,8 @@
             if (pathPolyline) {
                 pathPolyline.setMap(null);
             }
-            if (startMarker) {
-                startMarker.setMap(null);
-            }
-            if (endMarker) {
-                endMarker.setMap(null);
+            if (marker) {
+                marker.setMap(null);
             }
             document.getElementById('routes').innerHTML = ''; // Limpiar rutas anteriores
         }
@@ -176,21 +166,17 @@
                 map: map
             });
 
-            // Marcadores de inicio y fin
+            // Agregar marcadores al inicio y al final
             if (locations.length > 0) {
-                const startLocation = pathCoordinates[0];
-                const endLocation = pathCoordinates[pathCoordinates.length - 1];
-
-                startMarker = new google.maps.Marker({
-                    position: startLocation,
+                const startMarker = new google.maps.Marker({
+                    position: pathCoordinates[0],
                     map: map,
-                    title: "Inicio del trayecto"
+                    title: 'Inicio del trayecto'
                 });
-
-                endMarker = new google.maps.Marker({
-                    position: endLocation,
+                const endMarker = new google.maps.Marker({
+                    position: pathCoordinates[pathCoordinates.length - 1],
                     map: map,
-                    title: "Fin del trayecto"
+                    title: 'Fin del trayecto'
                 });
 
                 const bounds = new google.maps.LatLngBounds();
@@ -206,18 +192,18 @@
             locations.forEach(location => {
                 const routeOption = document.createElement('option');
                 routeOption.value = location.hora;
-                routeOption.textContent = `${location.fecha} - ${location.hora} - ${location.descripcion || 'Trayecto'}`;
+                routeOption.textContent = `${location.fecha} - ${location.hora}`;
                 routeOption.onclick = () => {
-                    clearPreviousData(); // Limpiar marcadores y polilínea anterior
-                    updatePolyline([location]); // Actualiza solo la polilínea para la ubicación seleccionada
-                    const marker = new google.maps.Marker({
-                        position: {
-                            lat: parseFloat(location.latitud),
-                            lng: parseFloat(location.longitud)
-                        },
+                    if (marker) {
+                        marker.setMap(null); // Eliminar marcador anterior
+                    }
+                    const position = { lat: parseFloat(location.latitud), lng: parseFloat(location.longitud) };
+                    marker = new google.maps.Marker({
+                        position: position,
                         map: map,
-                        title: "Ubicación seleccionada"
+                        title: 'Ubicación seleccionada'
                     });
+                    map.setCenter(position); // Centrar el mapa en la nueva ubicación
                 };
                 routesContainer.appendChild(routeOption);
             });
@@ -237,19 +223,15 @@
                 geocoder.geocode({ address: address }, function (results, status) {
                     if (status === 'OK') {
                         const location = results[0].geometry.location;
-                        if (!startDate && !endDate && !startTime && !endTime) {
-                            searchByCoordinates(location.lat(), location.lng());
-                        } else {
-                            searchByDateAndTime(startDate, endDate, startTime, endTime);
-                        }
+                        searchByCoordinates(location.lat(), location.lng());
                     } else {
                         alert('Geocoding falló por la siguiente razón: ' + status);
                     }
                 });
-            } else if (startDate && endDate && startTime && endTime) {
+            }
+
+            if (startDate && endDate && startTime && endTime) {
                 searchByDateAndTime(startDate, endDate, startTime, endTime);
-            } else {
-                alert("Por favor, ingrese una dirección o un rango de fechas y horas válidas.");
             }
         }
 
