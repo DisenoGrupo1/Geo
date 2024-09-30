@@ -59,7 +59,7 @@
         let configData;
         let map;
         let pathPolyline;
-        let markers = []; // Array para mantener los marcadores
+        let markers = [];
 
         function loadConfig() {
             return fetch('config.json')
@@ -86,9 +86,9 @@
             if (pathPolyline) {
                 pathPolyline.setMap(null);
             }
-            markers.forEach(marker => marker.setMap(null)); // Eliminar marcadores anteriores
-            markers = []; // Reiniciar el array de marcadores
-            document.getElementById('routes').innerHTML = ''; // Limpiar rutas anteriores
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
+            document.getElementById('routes').innerHTML = '';
         }
 
         function searchByCoordinates(lat, lng) {
@@ -145,7 +145,11 @@
             })
             .then(data => {
                 if (Array.isArray(data)) {
-                    updatePolyline(data, startAddress);
+                    if (startAddress) {
+                        geocodeAddress(startAddress, data);
+                    } else {
+                        updatePolyline(data, null);
+                    }
                 } else {
                     alert(data.message || "No se encontraron ubicaciones para el rango de fechas especificado.");
                 }
@@ -156,13 +160,26 @@
             });
         }
 
+        function geocodeAddress(address, locations) {
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ address: address }, function (results, status) {
+                if (status === 'OK') {
+                    const location = results[0].geometry.location;
+                    const startLocation = { lat: location.lat(), lng: location.lng() };
+                    const updatedLocations = [{ latitud: startLocation.lat, longitud: startLocation.lng }, ...locations];
+                    updatePolyline(updatedLocations, address);
+                } else {
+                    alert('Geocoding falló por la siguiente razón: ' + status);
+                }
+            });
+        }
+
         function updatePolyline(locations, startAddress) {
             const pathCoordinates = locations.map(loc => ({
                 lat: parseFloat(loc.latitud),
                 lng: parseFloat(loc.longitud)
             }));
 
-            // Crear y mostrar marcadores de inicio y fin si hay ubicaciones
             if (pathCoordinates.length > 0) {
                 const startMarker = new google.maps.Marker({
                     position: pathCoordinates[0],
@@ -197,14 +214,16 @@
 
         function populateRoutes(locations) {
             const routesContainer = document.getElementById('routes');
-            routesContainer.innerHTML = ''; // Limpiar rutas anteriores
+            routesContainer.innerHTML = '';
 
             locations.forEach(location => {
                 const routeOption = document.createElement('option');
+                const formattedDate = formatDate(location.fecha);
+                const formattedTime = formatTime(location.hora);
                 routeOption.value = location.hora;
-                routeOption.textContent = `${location.fecha} - ${location.hora} - ${location.descripcion || 'Trayecto'}`;
+                routeOption.textContent = `(fecha: ${formattedDate} - hora: ${formattedTime})`;
                 routeOption.onclick = () => {
-                    clearPreviousData(); // Limpiar datos anteriores
+                    clearPreviousData();
                     const latLng = { lat: parseFloat(location.latitud), lng: parseFloat(location.longitud) };
                     const marker = new google.maps.Marker({
                         position: latLng,
@@ -217,6 +236,15 @@
             });
         }
 
+        function formatDate(dateString) {
+            const [year, month, day] = dateString.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        function formatTime(timeString) {
+            return timeString;
+        }
+
         function loadHistory() {
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
@@ -227,22 +255,13 @@
             clearPreviousData();
 
             if (address) {
-                const geocoder = new google.maps.Geocoder();
-                geocoder.geocode({ address: address }, function (results, status) {
-                    if (status === 'OK') {
-                        const location = results[0].geometry.location;
-                        if (!startDate && !endDate && !startTime && !endTime) {
-                            searchByCoordinates(location.lat(), location.lng());
-                        } else {
-                            // Mostrar listado, incluso si hay fechas
-                            searchByDateAndTime(startDate, endDate, startTime, endTime, address);
-                        }
-                    } else {
-                        alert('Geocoding falló por la siguiente razón: ' + status);
-                    }
-                });
+                if (!startDate && !endDate && !startTime && !endTime) {
+                    searchByCoordinates(address);
+                } else {
+                    searchByDateAndTime(startDate, endDate, startTime, endTime, address);
+                }
             } else if (startDate && endDate && startTime && endTime) {
-                searchByDateAndTime(startDate, endDate, startTime, endTime, null); // Sin dirección
+                searchByDateAndTime(startDate, endDate, startTime, endTime, null);
             } else {
                 alert("Por favor, ingrese una dirección o un rango de fechas y horas válidas.");
             }
