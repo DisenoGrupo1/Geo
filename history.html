@@ -59,6 +59,8 @@
         let configData;
         let map;
         let pathPolyline;
+        let startMarker;
+        let endMarker;
 
         function loadConfig() {
             return fetch('config.json')
@@ -84,6 +86,12 @@
         function clearPreviousData() {
             if (pathPolyline) {
                 pathPolyline.setMap(null);
+            }
+            if (startMarker) {
+                startMarker.setMap(null);
+            }
+            if (endMarker) {
+                endMarker.setMap(null);
             }
             document.getElementById('routes').innerHTML = ''; // Limpiar rutas anteriores
         }
@@ -168,7 +176,23 @@
                 map: map
             });
 
-            if (pathCoordinates.length > 0) {
+            // Marcadores de inicio y fin
+            if (locations.length > 0) {
+                const startLocation = pathCoordinates[0];
+                const endLocation = pathCoordinates[pathCoordinates.length - 1];
+
+                startMarker = new google.maps.Marker({
+                    position: startLocation,
+                    map: map,
+                    title: "Inicio del trayecto"
+                });
+
+                endMarker = new google.maps.Marker({
+                    position: endLocation,
+                    map: map,
+                    title: "Fin del trayecto"
+                });
+
                 const bounds = new google.maps.LatLngBounds();
                 pathCoordinates.forEach(coord => bounds.extend(coord));
                 map.fitBounds(bounds);
@@ -182,17 +206,18 @@
             locations.forEach(location => {
                 const routeOption = document.createElement('option');
                 routeOption.value = location.hora;
-                routeOption.textContent = `${location.fecha} - ${location.hora}`;
+                routeOption.textContent = `${location.fecha} - ${location.hora} - ${location.descripcion || 'Trayecto'}`;
                 routeOption.onclick = () => {
-                    const coords = {
-                        lat: parseFloat(location.latitud),
-                        lng: parseFloat(location.longitud)
-                    };
+                    clearPreviousData(); // Limpiar marcadores y polilínea anterior
+                    updatePolyline([location]); // Actualiza solo la polilínea para la ubicación seleccionada
                     const marker = new google.maps.Marker({
-                        position: coords,
-                        map: map
+                        position: {
+                            lat: parseFloat(location.latitud),
+                            lng: parseFloat(location.longitud)
+                        },
+                        map: map,
+                        title: "Ubicación seleccionada"
                     });
-                    map.setCenter(coords); // Centrar el mapa en el marcador
                 };
                 routesContainer.appendChild(routeOption);
             });
@@ -215,8 +240,6 @@
                         if (!startDate && !endDate && !startTime && !endTime) {
                             searchByCoordinates(location.lat(), location.lng());
                         } else {
-                            // Si hay fecha y hora, ocultar listado y trazar todas las ubicaciones
-                            clearPreviousData();
                             searchByDateAndTime(startDate, endDate, startTime, endTime);
                         }
                     } else {
@@ -224,8 +247,6 @@
                     }
                 });
             } else if (startDate && endDate && startTime && endTime) {
-                // Si solo hay fecha y hora, ocultar listado y trazar
-                clearPreviousData();
                 searchByDateAndTime(startDate, endDate, startTime, endTime);
             } else {
                 alert("Por favor, ingrese una dirección o un rango de fechas y horas válidas.");
