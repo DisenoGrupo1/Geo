@@ -122,7 +122,7 @@
             });
         }
 
-        function searchByDateAndTime(startDate, endDate, startTime, endTime, address) {
+        function searchByDateAndTime(startDate, endDate, startTime, endTime, startAddress) {
             const requestBody = {
                 start_date: startDate,
                 end_date: endDate,
@@ -145,7 +145,7 @@
             })
             .then(data => {
                 if (Array.isArray(data)) {
-                    updatePolyline(data, address);
+                    updatePolyline(data, startAddress);
                 } else {
                     alert(data.message || "No se encontraron ubicaciones para el rango de fechas especificado.");
                 }
@@ -156,7 +156,7 @@
             });
         }
 
-        function updatePolyline(locations, address) {
+        function updatePolyline(locations, startAddress) {
             const pathCoordinates = locations.map(loc => ({
                 lat: parseFloat(loc.latitud),
                 lng: parseFloat(loc.longitud)
@@ -234,8 +234,7 @@
                         if (!startDate && !endDate && !startTime && !endTime) {
                             searchByCoordinates(location.lat(), location.lng());
                         } else {
-                            // Si hay dirección y fechas, esconder listado
-                            document.getElementById('routes').style.display = 'none';
+                            // Mostrar listado, incluso si hay fechas
                             searchByDateAndTime(startDate, endDate, startTime, endTime, address);
                         }
                     } else {
