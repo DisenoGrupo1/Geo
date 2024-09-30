@@ -182,8 +182,18 @@
             locations.forEach(location => {
                 const routeOption = document.createElement('option');
                 routeOption.value = location.hora;
-                routeOption.textContent = `${location.fecha} - ${location.hora} - ${location.descripcion || 'Trayecto'}`;
-                routeOption.onclick = () => updatePolyline([location]);
+                routeOption.textContent = `${location.fecha} - ${location.hora}`;
+                routeOption.onclick = () => {
+                    const coords = {
+                        lat: parseFloat(location.latitud),
+                        lng: parseFloat(location.longitud)
+                    };
+                    const marker = new google.maps.Marker({
+                        position: coords,
+                        map: map
+                    });
+                    map.setCenter(coords); // Centrar el mapa en el marcador
+                };
                 routesContainer.appendChild(routeOption);
             });
         }
@@ -202,12 +212,20 @@
                 geocoder.geocode({ address: address }, function (results, status) {
                     if (status === 'OK') {
                         const location = results[0].geometry.location;
-                        searchByCoordinates(location.lat(), location.lng());
+                        if (!startDate && !endDate && !startTime && !endTime) {
+                            searchByCoordinates(location.lat(), location.lng());
+                        } else {
+                            // Si hay fecha y hora, ocultar listado y trazar todas las ubicaciones
+                            clearPreviousData();
+                            searchByDateAndTime(startDate, endDate, startTime, endTime);
+                        }
                     } else {
                         alert('Geocoding falló por la siguiente razón: ' + status);
                     }
                 });
             } else if (startDate && endDate && startTime && endTime) {
+                // Si solo hay fecha y hora, ocultar listado y trazar
+                clearPreviousData();
                 searchByDateAndTime(startDate, endDate, startTime, endTime);
             } else {
                 alert("Por favor, ingrese una dirección o un rango de fechas y horas válidas.");
@@ -234,7 +252,7 @@
         <button onclick="loadHistory()">Cargar Trazado</button>
         <div class="loading">Cargando...</div>
     </div>
-    <select id="routes" size="5" onchange="updatePolyline([this.options[this.selectedIndex].value])"></select>
+    <select id="routes" size="5"></select>
     <div id="map"></div>
 </body>
 </html>
