@@ -183,10 +183,7 @@
                 const routeOption = document.createElement('option');
                 routeOption.value = location.hora;
                 routeOption.textContent = `${location.fecha} - ${location.hora} - ${location.descripcion || 'Trayecto'}`;
-                routeOption.onclick = () => {
-                    clearPreviousData(); // Limpiar datos anteriores
-                    updatePolyline([location]); // Trazar solo la ubicación seleccionada
-                };
+                routeOption.onclick = () => updatePolyline([location]);
                 routesContainer.appendChild(routeOption);
             });
         }
@@ -237,7 +234,7 @@
         <button onclick="loadHistory()">Cargar Trazado</button>
         <div class="loading">Cargando...</div>
     </div>
-    <select id="routes" size="5"></select>
+    <select id="routes" size="5" onchange="updatePolyline([this.options[this.selectedIndex].value])"></select>
     <div id="map"></div>
 </body>
 </html>
