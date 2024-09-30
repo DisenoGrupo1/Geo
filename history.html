@@ -61,7 +61,6 @@
         let pathPolyline;
         let startMarker;
         let endMarker;
-        let routeMarkers = []; // Array para almacenar todos los marcadores
 
         function loadConfig() {
             return fetch('config.json')
@@ -69,7 +68,7 @@
                 .then(config => {
                     configData = config;
                     const script = document.createElement('script');
-                    script.src = https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap;
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
                     script.defer = true;
                     document.head.appendChild(script);
                 })
@@ -94,9 +93,7 @@
             if (endMarker) {
                 endMarker.setMap(null);
             }
-            // Limpiar marcadores previos
-            routeMarkers.forEach(marker => marker.setMap(null));
-            routeMarkers = [];
+            document.getElementById('routes').innerHTML = ''; // Limpiar rutas anteriores
         }
 
         function searchByCoordinates(lat, lng) {
@@ -104,7 +101,7 @@
                 latitud: lat,
                 longitud: lng
             };
-            fetch(http://${configData.AWS_IP}:50005/location-at-place, {
+            fetch(`http://${configData.AWS_IP}:50005/location-at-place`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -138,7 +135,7 @@
                 end_time: endTime
             };
 
-            fetch(http://${configData.AWS_IP}:60000/location-history, {
+            fetch(`http://${configData.AWS_IP}:60000/location-history`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -209,7 +206,7 @@
             locations.forEach(location => {
                 const routeOption = document.createElement('option');
                 routeOption.value = location.hora;
-                routeOption.textContent = ${location.fecha} - ${location.hora} - ${location.descripcion || 'Trayecto'};
+                routeOption.textContent = `${location.fecha} - ${location.hora} - ${location.descripcion || 'Trayecto'}`;
                 routeOption.onclick = () => {
                     clearPreviousData(); // Limpiar marcadores y polilínea anterior
                     updatePolyline([location]); // Actualiza solo la polilínea para la ubicación seleccionada
@@ -221,7 +218,6 @@
                         map: map,
                         title: "Ubicación seleccionada"
                     });
-                    routeMarkers.push(marker); // Agregar marcador al array
                 };
                 routesContainer.appendChild(routeOption);
             });
