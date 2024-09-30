@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, resources={r"/location-history": {"origins": "*"}, r"/location-at-place": {"origins": "*"}})
+CORS(app, resources={r"/location-history": {"origins": "*"}})
 
 # Configuración de la base de datos
 db_config = {
@@ -56,10 +56,11 @@ def get_location_history():
         for loc in locations:
             loc['fecha'] = loc['fecha'].strftime('%Y-%m-%d')  # Formato de fecha
 
+            # Verifica si 'hora' es un objeto datetime.time
             if isinstance(loc['hora'], time):
                 loc['hora'] = loc['hora'].strftime('%H:%M:%S')  # Formato de hora
             else:
-                loc['hora'] = str(loc['hora'])  # Manejo de errores
+                loc['hora'] = str(loc['hora'])  # Maneja el caso de timedelta, si es necesario
 
         if locations:
             return jsonify(locations), 200
@@ -76,42 +77,5 @@ def get_location_history():
         if connection:
             connection.close()
 
-# Ruta para obtener el historial en una ubicación específica (latitud/longitud)
-@app.route('/location-at-place', methods=['POST'])
-def get_location_at_place():
-    request_data = request.get_json()
-    latitud = request_data['latitud']
-    longitud = request_data['longitud']
-
-    connection = None
-    cursor = None
-
-    try:
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor(dictionary=True)
-
-        # Consulta para buscar ubicaciones cercanas
-        query = '''SELECT latitud, longitud, fecha, hora, descripcion
-                   FROM ubicaciones
-                   WHERE ABS(latitud - %s) < 0.01 AND ABS(longitud - %s) < 0.01'''
-        cursor.execute(query, (latitud, longitud))
-
-        locations = cursor.fetchall()
-
-        if locations:
-            return jsonify(locations), 200
-        else:
-            return jsonify({"message": "No se encontraron ubicaciones para la dirección especificada."}), 404
-
-    except mysql.connector.Error as e:
-        return jsonify({"error": str(e)}), 500
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=60000)  # Puerto unificado
+    app.run(host='0.0.0.0', port=60000)  # Puerto para la API de fechas y horas
