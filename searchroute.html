@@ -3,42 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscar Fechas</title>
+    <title>Buscar Rutas</title>
 </head>
 <body>
-    <h1>Buscar Fechas por Dirección</h1>
-    <input type="text" id="address" placeholder="Ingresa una dirección">
-    <button id="searchBtn">Buscar</button>
-    <div id="result"></div>
+    <h1>Buscar Rutas por Dirección</h1>
+    <form action="/" method="post">
+        <label for="address">Ingrese la dirección:</label>
+        <input type="text" id="address" name="address" required>
+        <button type="submit">Buscar</button>
+    </form>
 
-    <script>
-        document.getElementById('searchBtn').onclick = function() {
-            const address = document.getElementById('address').value;
-            fetch('http://18.224.228.215:50005/dates-at-location', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ address: address })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Error en la respuesta de la API');
-                }
-                return response.json();
-            })
-            .then(data => {
-                document.getElementById('result').innerHTML = `
-                    <h2>Resultados para ${data.address}</h2>
-                    <ul>
-                        ${data.dates.map(date => `<li>${date}</li>`).join('')}
-                    </ul>
-                `;
-            })
-            .catch(error => {
-                document.getElementById('result').innerText = 'Error: ' + error.message;
-            });
-        }
-    </script>
+    {% if dates %}
+        <h2>Fechas para la dirección: {{ address }}</h2>
+        <ul>
+            {% for date in dates %}
+                <li>{{ date }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 </body>
 </html>

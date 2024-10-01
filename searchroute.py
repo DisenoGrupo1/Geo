@@ -1,21 +1,40 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-
-print("CORS habilitado.")
+from flask import Flask, render_template, request
+import mysql.connector
 
 app = Flask(__name__)
-CORS(app)  # Esto habilita CORS para todas las rutas
 
-@app.route('/dates-at-location', methods=['POST'])
-def get_dates_at_location():
-    data = request.get_json()
-    address = data.get('address', '')
-    # Aquí iría la lógica para convertir la dirección a latitud y longitud y buscar en la base de datos
-    return jsonify({
-        "message": "Datos recibidos",
-        "address": address,
-        "dates": ["2024-10-01 10:00", "2024-10-02 12:00"]  # Ejemplo de fechas
-    })
+# Configura la conexión a la base de datos
+db = mysql.connector.connect(
+    host='localhost',
+    user='tu_usuario',
+    password='tu_contraseña',
+    database='tu_base_de_datos'
+)
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    dates = []
+    address = ""
+
+    if request.method == 'POST':
+        address = request.form['address']
+        
+        # Aquí debes convertir la dirección en latitud y longitud (puedes usar geopy o una API)
+        latitude, longitude = get_lat_long(address)
+
+        cursor = db.cursor()
+        query = "SELECT fecha_hora FROM tu_tabla WHERE latitud = %s AND longitud = %s"
+        cursor.execute(query, (latitude, longitude))
+        results = cursor.fetchall()
+
+        dates = [result[0] for result in results]
+        cursor.close()
+
+    return render_template('searchroute.html', dates=dates, address=address)
+
+def get_lat_long(address):
+    # Aquí va tu lógica para obtener latitud y longitud
+    return 10.0, -74.0  # Ejemplo: debes reemplazar esto con la lógica real
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=50005)
+    app.run(debug=True)
