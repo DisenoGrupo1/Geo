@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
+print("CORS habilitado.")
+
 app = Flask(__name__)
 CORS(app)  # Esto habilita CORS para todas las rutas
 
@@ -9,7 +11,6 @@ def get_dates_at_location():
     data = request.get_json()
     address = data.get('address', '')
     # Aquí iría la lógica para convertir la dirección a latitud y longitud y buscar en la base de datos
-    # Por ahora, simplemente devolveremos un ejemplo de respuesta
     return jsonify({
         "message": "Datos recibidos",
         "address": address,
