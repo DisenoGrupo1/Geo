@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(_name_)
+
 
 # Configuración de la base de datos
 db_config = {
@@ -16,8 +17,6 @@ db_config = {
     'database': os.getenv('DB_NAME')
 }
 
-
-# Ruta para obtener el historial de ubicaciones basado en fechas y horas
 @app.route('/location-history', methods=['POST'])
 def get_location_history():
     request_data = request.get_json()
@@ -40,7 +39,6 @@ def get_location_history():
     try:
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
-
 
         query = '''SELECT latitud, longitud, fecha
 
@@ -71,7 +69,5 @@ def get_location_history():
         if connection:
             connection.close()
 
-if __name__ == '__main__':
-
+if _name_ == '_main_':
     app.run(host='0.0.0.0', port=60000)
-
