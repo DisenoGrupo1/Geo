@@ -4,11 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title id="page-title">Inserte su título</title>
+    <title id="page-title">Inserte su titulo</title>
     <script>
         let configData;
-        let geocoder;
 
         // Función para cargar la configuración desde el archivo config.json
         function loadConfig() {
@@ -16,9 +14,12 @@
                 .then(response => response.json())
                 .then(config => {
                     configData = config;
+                    //console.log("Configuración cargada:", configData);
+
+                    // Cambia el título de la página
                     document.getElementById('page-title').innerText = configData.TITLE;
 
-
+                    // Cambia la clave API en el script de Google Maps
                     const script = document.createElement('script');
                     script.src = https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap;
                     script.defer = true;
@@ -27,9 +28,9 @@
                 .catch(error => console.error("Error al cargar config.json:", error));
         }
 
-        let map, pathPolyline, addressMarker;
+        let map, pathPolyline;
         let pathCoordinates = [];
-        let startMarker;
+        let startMarker; // Marcador de inicio
         let endMarker;
 
         function initMap() {
@@ -38,8 +39,6 @@
                 zoom: 12,
                 center: barranquilla
             });
-
-            geocoder = new google.maps.Geocoder();
 
             pathPolyline = new google.maps.Polyline({
                 path: pathCoordinates,
@@ -57,18 +56,16 @@
                 const bounds = new google.maps.LatLngBounds();
                 pathCoordinates.forEach(coord => bounds.extend(new google.maps.LatLng(coord.latitud, coord.longitud)));
                 map.fitBounds(bounds);
-                addStartMarker();
+                addStartMarker(); // Agregar marcador de inicio
                 addEndMarker();
-
             }
         }
 
-
         function addStartMarker() {
             if (startMarker) {
-                startMarker.setMap(null);
+                startMarker.setMap(null); // Elimina el marcador anterior si existe
             }
-            const startLocation = pathCoordinates[0];
+            const startLocation = pathCoordinates[0]; // Primera ubicación
             startMarker = new google.maps.Marker({
                 position: new google.maps.LatLng(startLocation.latitud, startLocation.longitud),
                 map: map,
@@ -93,86 +90,81 @@
             const endDate = document.getElementById('end-date-history').value;
             const startTime = document.getElementById('start-time-history').value;
             const endTime = document.getElementById('end-time-history').value;
-            const address = document.getElementById('address-input').value;
 
-            if (!startDate || !endDate || !startTime || !endTime || !address) {
-                alert("Por favor, seleccione fechas y horas válidas y una dirección.");
-                return;
-            }
+            if (startDate && endDate && startTime && endTime) {
+                const startDateTime = new Date(${startDate}T${startTime});
+                const endDateTime = new Date(${endDate}T${endTime});
 
-            const startDateTime = new Date(${startDate}T${startTime});
-            const endDateTime = new Date(${endDate}T${endTime});
-
-
-            if (endDateTime <= startDateTime) {
-                alert("La fecha y hora de finalización debe ser posterior a la fecha y hora de inicio.");
-                return;
-            }
-
-            const requestBody = {
-                start_date: startDate,
-                end_date: endDate,
-                start_time: startTime,
-                end_time: endTime,
-                address: address
-            };
-
-            fetch(http://${configData.AWS_IP}:60000/location-history, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestBody)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(No existen ubicaciones para la ventana de tiempo especificada.);
-
+                if (endDateTime <= startDateTime) {
+                    alert("La fecha y hora de finalización debe ser posterior a la fecha y hora de inicio.");
+                    return;
                 }
-                return response.json();
-            })
-            .then(data => {
-                pathCoordinates = data.map(loc => ({
-                    latitud: loc.latitud,
-                    longitud: loc.longitud
-                }));
-                updatePolyline();
-            })
-            .catch(error => {
-                console.error("Error fetching location history:", error);
-                alert("Error al consultar los históricos de ubicación: " + error.message);
-            });
+
+                const requestBody = {
+                    start_date: startDate,
+                    end_date: endDate,
+                    start_time: startTime,
+                    end_time: endTime
+                };
+
+                fetch(http://${configData.AWS_IP}:60000/location-history, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(No existen ubicaciones para la ventana de tiempo especificada);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (Array.isArray(data)) {
+                            pathCoordinates = data.map(loc => ({
+                                latitud: loc.latitud,
+                                longitud: loc.longitud
+                            }));
+                            updatePolyline();
+                        } else {
+                            alert(data.message || "No se encontraron ubicaciones para el rango de fechas especificado.");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error fetching location history:", error);
+                        alert("Error al consultar los históricos de ubicación: " + error.message);
+                    });
+            } else {
+                alert("Por favor, seleccione fechas y horas válidas.");
+            }
         }
 
-        function geocodeAddress() {
-            const address = document.getElementById('address-input').value;
-            if (!address) {
-                alert("Por favor, ingrese una dirección válida.");
-                return;
-            }
+        function setMaxDate() {
+            const today = new Date();
+            const localDate = today.toLocaleDateString('en-CA'); // Obtiene la fecha en formato YYYY-MM-DD
+            document.getElementById('start-date-history').setAttribute('max', localDate);
+            document.getElementById('end-date-history').setAttribute('max', localDate);
 
-            geocoder.geocode({ address: address }, (results, status) => {
-                if (status === 'OK') {
-                    const location = results[0].geometry.location;
-                    map.setCenter(location);
+            // Validaciones adicionales
+            document.getElementById('start-date-history').addEventListener('input', function () {
+                if (this.value > localDate) {
+                    this.value = localDate;
+                    alert('No puedes seleccionar una fecha futura.');
+                }
+            });
 
-                    if (addressMarker) {
-                        addressMarker.setMap(null);
-                    }
-
-                    addressMarker = new google.maps.Marker({
-                        map: map,
-                        position: location,
-                        title: 'Dirección'
-                    });
-                } else {
-                    alert("Geocodificación fallida debido a: " + status);
+            document.getElementById('end-date-history').addEventListener('input', function () {
+                if (this.value > localDate) {
+                    this.value = localDate;
+                    alert('No puedes seleccionar una fecha futura.');
                 }
             });
         }
 
         window.onload = function () {
-            loadConfig();
+            setMaxDate();
+            loadConfig(); // Carga la configuración al iniciar la página
         };
     </script>
     <style>
@@ -187,54 +179,51 @@
             padding: 0;
         }
 
-        #date-selection,
-        #address-input-section {
+        #date-selection {
             margin: 10px;
             padding: 10px;
             background-color: #f9f9f9;
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-
         }
-    </style>
 
         label {
             margin-right: 10px;
         }
 
         input {
-            margin: 5px;
+            margin: 0 10px 10px 0;
+        }
+
+        .btn-load-history {
+            background-color: #000dff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn-load-history:hover {
+            background-color: #0000cc;
         }
     </style>
-
 </head>
 
 <body>
     <div id="date-selection">
-        <h2>Seleccionar ventana de tiempo</h2>
-        <label for="start-date-history">Fecha de inicio:</label>
+        <label for="start-date-history">Start Date:</label>
         <input type="date" id="start-date-history" required>
-        <label for="start-time-history">Hora de inicio:</label>
-        <input type="time" id="start-time-history" required>
-
-        <br>
-        <label for="end-date-history">Fecha de fin:</label>
+        <label for="end-date-history">End Date:</label>
         <input type="date" id="end-date-history" required>
-        <label for="end-time-history">Hora de fin:</label>
+        <label for="start-time-history">Start Time:</label>
+        <input type="time" id="start-time-history" required>
+        <label for="end-time-history">End Time:</label>
         <input type="time" id="end-time-history" required>
-        <br>
-        <button onclick="loadHistory()">Cargar historial</button>
-    </div>
+        <button class="btn-load-history" onclick="loadHistory()">Load History</button>
 
-    <div id="address-input-section">
-        <h2>Buscar dirección</h2>
-        <input type="text" id="address-input" placeholder="Ingrese una dirección" required>
-        <button onclick="geocodeAddress()">Buscar</button>
     </div>
-
     <div id="map"></div>
 </body>
-
-
 </html>
-
