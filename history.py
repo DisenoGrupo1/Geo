@@ -16,6 +16,8 @@ db_config = {
     'database': os.getenv('DB_NAME')
 }
 
+
+# Ruta para obtener el historial de ubicaciones basado en fechas y horas
 @app.route('/location-history', methods=['POST'])
 def get_location_history():
     request_data = request.get_json()
@@ -39,7 +41,9 @@ def get_location_history():
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
 
+
         query = '''SELECT latitud, longitud, fecha
+
                    FROM ubicaciones
                    WHERE direccion = %s AND
                          (fecha > %s OR (fecha = %s AND hora >= %s)) AND
@@ -68,4 +72,6 @@ def get_location_history():
             connection.close()
 
 if __name__ == '__main__':
+
     app.run(host='0.0.0.0', port=60000)
+

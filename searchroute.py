@@ -4,6 +4,7 @@ from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 
+# Cargar variables de entorno
 load_dotenv()
 
 app = Flask(__name__)
@@ -17,12 +18,10 @@ db_config = {
     'database': os.getenv('DB_NAME')
 }
 
-# Ruta para obtener el historial en una ubicación específica
+# Ruta para obtener el historial en una ubicación específica (latitud/longitud)
 @app.route('/location-at-place', methods=['POST'])
 def get_location_at_place():
-    print("Solicitud recibida")  # Mensaje de depuración
     request_data = request.get_json()
-    print("Datos recibidos:", request_data)  # Muestra los datos recibidos
     latitud = request_data['latitud']
     longitud = request_data['longitud']
 
@@ -35,12 +34,11 @@ def get_location_at_place():
 
         # Consulta para buscar ubicaciones cercanas
         query = '''SELECT latitud, longitud
-  FROM ubicaciones
+                   FROM ubicaciones
                    WHERE ABS(latitud - %s) < 0.01 AND ABS(longitud - %s) < 0.01'''
         cursor.execute(query, (latitud, longitud))
 
         locations = cursor.fetchall()
-        print("Ubicaciones encontradas:", locations)  # Mensaje de depuración
 
         if locations:
             return jsonify(locations), 200
@@ -48,10 +46,8 @@ def get_location_at_place():
             return jsonify({"message": "No se encontraron ubicaciones para la dirección especificada."}), 404
 
     except mysql.connector.Error as e:
-        print("Error en la base de datos:", e)  # Mensaje de depuración
         return jsonify({"error": str(e)}), 500
     except Exception as e:
-        print("Error inesperado:", e)  # Mensaje de depuración
         return jsonify({"error": str(e)}), 500
     finally:
         if cursor:
@@ -60,4 +56,4 @@ def get_location_at_place():
             connection.close()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=50005)  # Asegúrate de que el puerto sea 50005
+    app.run(host='0.0.0.0', port=50005)  # Puerto para la API de búsqueda por ubicación

@@ -1,21 +1,23 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title id="page-title">Inserte su título</title>
     <script>
         let configData;
         let geocoder;
 
-        // Función para cargar la configuración desde el archivo config.json
+
         function loadConfig() {
             return fetch('config.json')
                 .then(response => response.json())
                 .then(config => {
                     configData = config;
+
                     document.getElementById('page-title').innerText = configData.TITLE;
+
 
                     const script = document.createElement('script');
                     script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
@@ -25,10 +27,12 @@
                 .catch(error => console.error("Error al cargar config.json:", error));
         }
 
+
         let map, pathPolyline, addressMarker;
         let pathCoordinates = [];
         let startMarker;
         let endMarker;
+
 
         function initMap() {
             const barranquilla = { lat: 10.9878, lng: -74.7889 };
@@ -36,6 +40,7 @@
                 zoom: 12,
                 center: barranquilla
             });
+
 
             geocoder = new google.maps.Geocoder();
 
@@ -57,8 +62,13 @@
                 map.fitBounds(bounds);
                 addStartMarker();
                 addEndMarker();
+
             }
+            markers.forEach(marker => marker.setMap(null)); // Eliminar marcadores anteriores
+            markers = []; // Reiniciar el array de marcadores
+            document.getElementById('routes').innerHTML = ''; // Limpiar rutas anteriores
         }
+
 
         function addStartMarker() {
             if (startMarker) {
@@ -69,20 +79,45 @@
                 position: new google.maps.LatLng(startLocation.latitud, startLocation.longitud),
                 map: map,
                 title: 'Inicio'
+
             });
         }
 
-        function addEndMarker() {
-            if (endMarker) {
-                endMarker.setMap(null);
-            }
-            const endLocation = pathCoordinates[pathCoordinates.length - 1];
-            endMarker = new google.maps.Marker({
-                position: new google.maps.LatLng(endLocation.latitud, endLocation.longitud),
-                map: map,
-                title: 'Fin'
+        // Filtrar por fechas y horas
+        function searchByDateAndTime(startDate, endDate, startTime, endTime, endAddress) {
+            const requestBody = {
+                start_date: startDate,
+                end_date: endDate,
+                start_time: startTime,
+                end_time: endTime
+            };
+
+            fetch(`http://${configData.AWS_IP}:60000/location-history`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('No existen ubicaciones para la ventana de tiempo especificada');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (Array.isArray(data)) {
+                    updatePolyline(data, endAddress);
+                } else {
+                    alert(data.message || "No se encontraron ubicaciones para el rango de fechas especificado.");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Error al consultar los históricos de ubicación: " + error.message);
             });
         }
+
 
         function loadHistory() {
             const startDate = document.getElementById('start-date-history').value;
@@ -102,7 +137,9 @@
             if (endDateTime <= startDateTime) {
                 alert("La fecha y hora de finalización debe ser posterior a la fecha y hora de inicio.");
                 return;
+
             }
+
 
             const requestBody = {
                 start_date: startDate,
@@ -162,8 +199,9 @@
                 } else {
                     alert("Geocodificación fallida debido a: " + status);
                 }
+
             });
-        }
+
 
         window.onload = function () {
             loadConfig();
@@ -172,14 +210,14 @@
     <style>
         #map {
             height: 80%;
+
+
         }
 
-        html,
-        body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
+        function populateRoutes(locations) {
+            const routesContainer = document.getElementById('routes');
+            routesContainer.innerHTML = ''; // Limpiar rutas anteriores
+
 
         #date-selection,
         #address-input-section {
@@ -188,19 +226,25 @@
             background-color: #f9f9f9;
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+
         }
 
-        label {
-            margin-right: 10px;
-        }
+        function loadHistory() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const startTime = document.getElementById('start-time').value;
+            const endTime = document.getElementById('end-time').value;
+            const address = document.getElementById('address').value;
+
 
         input {
             margin: 5px;
         }
     </style>
-</head>
 
+</head>
 <body>
+
     <div id="date-selection">
         <h2>Seleccionar ventana de tiempo</h2>
         <label for="start-date-history">Fecha de inicio:</label>
@@ -222,7 +266,28 @@
         <button onclick="geocodeAddress()">Buscar</button>
     </div>
 
+
     <div id="map"></div>
+    <div id="controls">
+        <label for="address">Dirección:</label>
+        <input type="text" id="address" placeholder="Escribe una dirección">
+        <br>
+        <label for="start-date">Fecha Inicio:</label>
+        <input type="date" id="start-date">
+        <label for="end-date">Fecha Fin:</label>
+        <input type="date" id="end-date">
+        <br>
+        <label for="start-time">Hora Inicio:</label>
+        <input type="time" id="start-time">
+        <label for="end-time">Hora Fin:</label>
+        <input type="time" id="end-time">
+        <br>
+        <button onclick="loadHistory()">Cargar Recorrido</button>
+        <div id="routes"></div>
+        <div class="loading">Cargando...</div>
+    </div>
 </body>
 
+
 </html>
+
