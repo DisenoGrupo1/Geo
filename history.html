@@ -5,7 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trazar Recorridos</title>
     <style>
-        /* Estilos */
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+        #routes {
+            width: 100%;
+            height: 100px;
+            margin-top: 10px;
+        }
     </style>
     <script>
         let configData;
@@ -19,7 +27,7 @@
                 .then(config => {
                     configData = config;
                     const script = document.createElement('script');
-                    script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap&libraries=geometry`;
                     script.defer = true;
                     document.head.appendChild(script);
                 })
@@ -56,13 +64,12 @@
                 },
                 body: JSON.stringify(requestBody)
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('No se encontraron ubicaciones cercanas.');
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
+                if (data.length === 0) {
+                    alert('No se encontraron ubicaciones cercanas.');
+                    return;
+                }
                 populateRoutes(data); // Llenar el selector con fechas y horas
             })
             .catch(error => {
@@ -86,13 +93,12 @@
                 },
                 body: JSON.stringify(requestBody)
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('No existen ubicaciones para la ventana de tiempo especificada');
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
+                if (data.length === 0) {
+                    alert('No se encontraron ubicaciones para el rango de tiempo.');
+                    return;
+                }
                 updatePolyline(data, addressLatLng); // Trazar hasta la dirección especificada
             })
             .catch(error => {
