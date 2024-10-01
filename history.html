@@ -15,11 +15,8 @@
                 .then(response => response.json())
                 .then(config => {
                     configData = config;
-
-                    // Cambia el título de la página
                     document.getElementById('page-title').innerText = configData.TITLE;
 
-                    // Cambia la clave API en el script de Google Maps
                     const script = document.createElement('script');
                     script.src = https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap;
                     script.defer = true;
@@ -30,7 +27,7 @@
 
         let map, pathPolyline, addressMarker;
         let pathCoordinates = [];
-        let startMarker; // Marcador de inicio
+        let startMarker;
         let endMarker;
 
         function initMap() {
@@ -58,16 +55,16 @@
                 const bounds = new google.maps.LatLngBounds();
                 pathCoordinates.forEach(coord => bounds.extend(new google.maps.LatLng(coord.latitud, coord.longitud)));
                 map.fitBounds(bounds);
-                addStartMarker(); // Agregar marcador de inicio
+                addStartMarker();
                 addEndMarker();
             }
         }
 
         function addStartMarker() {
             if (startMarker) {
-                startMarker.setMap(null); // Elimina el marcador anterior si existe
+                startMarker.setMap(null);
             }
-            const startLocation = pathCoordinates[0]; // Primera ubicación
+            const startLocation = pathCoordinates[0];
             startMarker = new google.maps.Marker({
                 position: new google.maps.LatLng(startLocation.latitud, startLocation.longitud),
                 map: map,
@@ -87,42 +84,6 @@
             });
         }
 
-        function loadDates() {
-            const address = document.getElementById('address-input').value;
-
-            if (!address) {
-                alert("Por favor, ingrese una dirección válida.");
-                return;
-            }
-
-            fetch(http://${configData.AWS_IP}:60000/location-dates, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ address: address })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(No existen fechas para la dirección especificada.);
-                }
-                return response.json();
-            })
-            .then(data => {
-                const datesUl = document.getElementById('dates-ul');
-                datesUl.innerHTML = ''; // Limpiar lista anterior
-                data.forEach(date => {
-                    const li = document.createElement('li');
-                    li.innerText = date.fecha; // Asumiendo que la columna se llama 'fecha'
-                    datesUl.appendChild(li);
-                });
-            })
-            .catch(error => {
-                console.error("Error fetching location dates:", error);
-                alert("Error al consultar las fechas: " + error.message);
-            });
-        }
-
         function loadHistory() {
             const startDate = document.getElementById('start-date-history').value;
             const endDate = document.getElementById('end-date-history').value;
@@ -130,9 +91,8 @@
             const endTime = document.getElementById('end-time-history').value;
             const address = document.getElementById('address-input').value;
 
-            // Verificar que la dirección esté ingresada y que las fechas sean válidas
-            if (!startDate || !endDate || !startTime || !endTime) {
-                alert("Por favor, seleccione fechas y horas válidas.");
+            if (!startDate || !endDate || !startTime || !endTime || !address) {
+                alert("Por favor, seleccione fechas y horas válidas y una dirección.");
                 return;
             }
 
@@ -149,7 +109,7 @@
                 end_date: endDate,
                 start_time: startTime,
                 end_time: endTime,
-                address: address // Incluir dirección en la solicitud
+                address: address
             };
 
             fetch(http://${configData.AWS_IP}:60000/location-history, {
@@ -161,25 +121,15 @@
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(No existen ubicaciones para la ventana de tiempo especificada);
+                    throw new Error(No existen ubicaciones para la ventana de tiempo especificada.);
                 }
                 return response.json();
             })
             .then(data => {
-                // Filtrar ubicaciones por dirección, si se proporciona
-                if (address) {
-                    pathCoordinates = data.filter(loc => loc.direccion === address).map(loc => ({
-                        latitud: loc.latitud,
-                        longitud: loc.longitud
-                    }));
-                } else {
-                    pathCoordinates = data.map(loc => ({
-                        latitud: loc.latitud,
-                        longitud: loc.longitud
-                    }));
-                }
-
-                // Actualizar la polilínea y los marcadores
+                pathCoordinates = data.map(loc => ({
+                    latitud: loc.latitud,
+                    longitud: loc.longitud
+                }));
                 updatePolyline();
             })
             .catch(error => {
@@ -188,7 +138,6 @@
             });
         }
 
-        // Actualizar la función geocodeAddress para también cargar las fechas
         function geocodeAddress() {
             const address = document.getElementById('address-input').value;
             if (!address) {
@@ -201,63 +150,79 @@
                     const location = results[0].geometry.location;
                     map.setCenter(location);
 
-                    // Si ya hay un marcador anterior, eliminarlo
                     if (addressMarker) {
                         addressMarker.setMap(null);
                     }
 
-                    // Crear nuevo marcador en la dirección geocodificada
                     addressMarker = new google.maps.Marker({
                         map: map,
                         position: location,
                         title: 'Dirección'
                     });
-
-                    // Cargar las fechas para la dirección ingresada
-                    loadDates();
                 } else {
                     alert("Geocodificación fallida debido a: " + status);
                 }
             });
         }
 
-        // Cargar la configuración al iniciar
-        window.onload = loadConfig;
-
+        window.onload = function () {
+            loadConfig();
+        };
     </script>
+    <style>
+        #map {
+            height: 80%;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #date-selection,
+        #address-input-section {
+            margin: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        label {
+            margin-right: 10px;
+        }
+
+        input {
+            margin: 5px;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Consulta de Ubicaciones</h1>
-    
-    <div>
-        <label for="address-input">Dirección:</label>
-        <input type="text" id="address-input" placeholder="Ingrese la dirección">
+    <div id="date-selection">
+        <h2>Seleccionar ventana de tiempo</h2>
+        <label for="start-date-history">Fecha de inicio:</label>
+        <input type="date" id="start-date-history" required>
+        <label for="start-time-history">Hora de inicio:</label>
+        <input type="time" id="start-time-history" required>
+        <br>
+        <label for="end-date-history">Fecha de fin:</label>
+        <input type="date" id="end-date-history" required>
+        <label for="end-time-history">Hora de fin:</label>
+        <input type="time" id="end-time-history" required>
+        <br>
+        <button onclick="loadHistory()">Cargar historial</button>
+    </div>
+
+    <div id="address-input-section">
+        <h2>Buscar dirección</h2>
+        <input type="text" id="address-input" placeholder="Ingrese una dirección" required>
         <button onclick="geocodeAddress()">Buscar</button>
     </div>
 
-    <div>
-        <label for="start-date-history">Fecha de inicio:</label>
-        <input type="date" id="start-date-history">
-        <label for="start-time-history">Hora de inicio:</label>
-        <input type="time" id="start-time-history">
-    </div>
-
-    <div>
-        <label for="end-date-history">Fecha de fin:</label>
-        <input type="date" id="end-date-history">
-        <label for="end-time-history">Hora de fin:</label>
-        <input type="time" id="end-time-history">
-    </div>
-
-    <button onclick="loadHistory()">Cargar Historial</button>
-
-    <div id="dates-list" style="margin: 10px; padding: 10px; background-color: #f9f9f9; border-radius: 5px;">
-        <h3>Fechas de paso:</h3>
-        <ul id="dates-ul"></ul>
-    </div>
-
-    <div id="map" style="width: 100%; height: 500px;"></div>
-
+    <div id="map"></div>
 </body>
+
 </html>
