@@ -1,64 +1,20 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import mysql.connector
-from geopy.geocoders import Nominatim
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Esto habilita CORS para todas las rutas
 
-# Configura el geolocalizador
-geolocator = Nominatim(user_agent="myGeocoder")
-
-def get_lat_long(address):
-    location = geolocator.geocode(address)
-    if location:
-        return (location.latitude, location.longitude)
-    return None
-
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')  # Permitir todos los orígenes
-    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-    return response
-
-@app.route('/dates-at-location', methods=['OPTIONS', 'POST'])
+@app.route('/dates-at-location', methods=['POST'])
 def get_dates_at_location():
-    if request.method == 'OPTIONS':
-        return '', 200  # Responder a la solicitud OPTIONS
-
-    data = request.json
-    address = data.get('address')
-
-
-    # Convierte la dirección a latitud y longitud
-    lat_long = get_lat_long(address)
-    if not lat_long:
-        return jsonify({"error": "Dirección no encontrada"}), 404
-
-    latitude, longitude = lat_long
-
-    # Conectar a la base de datos y buscar las fechas/horas
-    connection = mysql.connector.connect(
-        host='tu_host',
-        user='tu_usuario',
-        password='tu_contraseña',
-        database='tu_base_de_datos'
-    )
-    cursor = connection.cursor(dictionary=True)
-
-    # Consulta para encontrar fechas/horas cercanas a la latitud y longitud
-    query = """
-    SELECT fecha_hora FROM tu_tabla 
-    WHERE ABS(latitud - %s) < 0.01 AND ABS(longitud - %s) < 0.01
-    """
-    cursor.execute(query, (latitude, longitude))
-    results = cursor.fetchall()
-
-    cursor.close()
-    connection.close()
-
-    return jsonify(results)
+    data = request.get_json()
+    address = data.get('address', '')
+    # Aquí iría la lógica para convertir la dirección a latitud y longitud y buscar en la base de datos
+    # Por ahora, simplemente devolveremos un ejemplo de respuesta
+    return jsonify({
+        "message": "Datos recibidos",
+        "address": address,
+        "dates": ["2024-10-01 10:00", "2024-10-02 12:00"]  # Ejemplo de fechas
+    })
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=50005)

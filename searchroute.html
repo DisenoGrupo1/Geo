@@ -3,45 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscar Fechas por Dirección</title>
+    <title>Buscar Fechas</title>
 </head>
 <body>
     <h1>Buscar Fechas por Dirección</h1>
-    <input type="text" id="address" placeholder="Ingresa la dirección">
-    <button onclick="searchDatesByAddress()">Buscar</button>
-
-    <ul id="dates-list"></ul>
+    <input type="text" id="address" placeholder="Ingresa una dirección">
+    <button id="searchBtn">Buscar</button>
+    <div id="result"></div>
 
     <script>
-        function searchDatesByAddress() {
+        document.getElementById('searchBtn').onclick = function() {
             const address = document.getElementById('address').value;
-
             fetch('http://18.224.228.215:50005/dates-at-location', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ address })
+                body: JSON.stringify({ address: address })
             })
-            .then(response => response.json())
-            .then(data => {
-                const datesList = document.getElementById('dates-list');
-                datesList.innerHTML = '';  // Limpiar lista anterior
-
-                if (data.error) {
-                    alert(data.error);  // Mostrar error si no se encontró la dirección
-                    return;
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta de la API');
                 }
-
-                // Mostrar las fechas/horas en la lista
-                data.forEach(item => {
-                    const li = document.createElement('li');
-                    li.textContent = item.fecha_hora;  // Asegúrate de que este campo coincida con tu base de datos
-                    datesList.appendChild(li);
-                });
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('result').innerHTML = `
+                    <h2>Resultados para ${data.address}</h2>
+                    <ul>
+                        ${data.dates.map(date => `<li>${date}</li>`).join('')}
+                    </ul>
+                `;
             })
             .catch(error => {
-                console.error('Error:', error);
+                document.getElementById('result').innerText = 'Error: ' + error.message;
             });
         }
     </script>
