@@ -3,221 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscar por Dirección</title>
-    <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-        #map {
-            height: 80%;
-        }
-        #address-selection {
-            margin: 10px;
-            padding: 10px;
-            background-color: #f9f9f9;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        label {
-            margin-right: 10px;
-        }
-        input {
-            margin: 0 10px 10px 0;
-            padding: 5px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-        }
-        button {
-            padding: 6px 12px;
-            background-color: #000dff;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0000cc;
-        }
-        .help-text {
-            color: #666;
-            font-size: 0.9em;
-            margin-top: -10px;
-            margin-bottom: 10px;
-        }
-        .loading {
-            display: none;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        #routes {
-            margin-top: 10px;
-        }
-    </style>
-    <script>
-        let configData;
-        let map;
-        let pathPolyline;
-
-        function loadConfig() {
-            return fetch('config.json')
-                .then(response => response.json())
-                .then(config => {
-                    configData = config;
-                    const script = document.createElement('script');
-                    script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
-                    script.defer = true;
-                    document.head.appendChild(script);
-                })
-                .catch(error => console.error("Error al cargar config.json:", error));
-        }
-
-        function initMap() {
-            const barranquilla = { lat: 10.9878, lng: -74.7889 };
-            map = new google.maps.Map(document.getElementById('map'), {
-                zoom: 12,
-                center: barranquilla
-            });
-        }
-
-        function geocodeAddress() {
-            const address = document.getElementById('address').value;
-            const button = document.querySelector('button');
-            const loadingText = document.querySelector('.loading');
-
-            if (address) {
-                button.disabled = true;
-                loadingText.style.display = 'block';
-
-                const geocoder = new google.maps.Geocoder();
-                geocoder.geocode({ address: address }, function (results, status) {
-                    button.disabled = false;
-                    loadingText.style.display = 'none';
-
-                    if (status === 'OK') {
-                        const location = results[0].geometry.location;
-                        clearPreviousData(); // Limpiar datos anteriores
-                        searchDatesByAddress(address);
-                    } else {
-                        alert('Geocoding falló por la siguiente razón: ' + status);
-                    }
-                });
-            } else {
-                alert("Por favor, ingrese una dirección válida.");
-            }
-        }
-
-        function clearPreviousData() {
-            // Limpiar polilínea anterior si existe
-            if (pathPolyline) {
-                pathPolyline.setMap(null);
-            }
-            document.getElementById('routes').innerHTML = ''; // Limpiar rutas anteriores
-        }
-
-        function searchDatesByAddress(address) {
-            fetch(`http://${configData.AWS_IP}:50005/dates-at-location`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ direccion: address })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('No se encontraron fechas para la dirección especificada.');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (Array.isArray(data)) {
-                    populateDates(data);
-                } else {
-                    alert(data.message || "No se encontraron fechas.");
-                }
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                alert("Error al buscar fechas: " + error.message);
-            });
-        }
-
-        function populateDates(locations) {
-            const routesContainer = document.getElementById('routes');
-            routesContainer.innerHTML = ''; // Limpiar rutas anteriores
-
-            locations.forEach(location => {
-                const routeOption = document.createElement('option');
-                routeOption.value = `${location.fecha} ${location.hora}`; // Combinar fecha y hora
-                routeOption.textContent = `${location.fecha} ${location.hora} - Trayecto`;
-                routeOption.onclick = function () {
-                    traceRoute(location.fecha, location.hora); // Llamar a la función para trazar el recorrido
-                };
-                routesContainer.appendChild(routeOption);
-            });
-        }
-
-        function traceRoute(fecha, hora) {
-            // Aquí implementar la lógica para trazar el recorrido basado en fecha y hora seleccionadas
-            fetch(`http://${configData.AWS_IP}:50005/trace-route`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ fecha: fecha, hora: hora })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('No se pudo trazar el recorrido.');
-                }
-                return response.json();
-            })
-            .then(data => {
-                updatePolyline(data);
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                alert("Error al trazar el recorrido: " + error.message);
-            });
-        }
-
-        function updatePolyline(locations) {
-            const pathCoordinates = locations.map(loc => ({
-                lat: parseFloat(loc.latitud),
-                lng: parseFloat(loc.longitud)
-            }));
-
-            pathPolyline = new google.maps.Polyline({
-                path: pathCoordinates,
-                geodesic: true,
-                strokeColor: '#FF0000',
-                strokeOpacity: 1.0,
-                strokeWeight: 2,
-                map: map
-            });
-
-            if (pathCoordinates.length > 0) {
-                const bounds = new google.maps.LatLngBounds();
-                pathCoordinates.forEach(coord => bounds.extend(coord));
-                map.fitBounds(bounds);
-            }
-        }
-
-        window.onload = function () {
-            loadConfig();
-        };
-    </script>
+    <title>Buscar Fechas por Dirección</title>
 </head>
 <body>
-    <div id="address-selection">
-        <label for="address">Dirección:</label>  
-        <input type="text" id="address" placeholder="Ingrese la dirección" required>
-        <div class="help-text">Ejemplo: "Kilómetro 5, Vía Puerto Colombia, Barranquilla"</div>
-        <button onclick="geocodeAddress()">Buscar por Dirección</button>
-        <div class="loading">Cargando...</div>
-        <select id="routes" size="5" style="width: 100%; margin-top: 10px;"></select>
-    </div>
-    <div id="map"></div>
+    <h1>Buscar Fechas por Dirección</h1>
+    <input type="text" id="address" placeholder="Ingresa la dirección">
+    <button onclick="searchDatesByAddress()">Buscar</button>
+
+    <ul id="dates-list"></ul>
+
+    <script>
+        function searchDatesByAddress() {
+            const address = document.getElementById('address').value;
+
+            fetch('http://18.224.228.215:50005/dates-at-location', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ address })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const datesList = document.getElementById('dates-list');
+                datesList.innerHTML = '';  // Limpiar lista anterior
+
+                if (data.error) {
+                    alert(data.error);  // Mostrar error si no se encontró la dirección
+                    return;
+                }
+
+                // Mostrar las fechas/horas en la lista
+                data.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item.fecha_hora;  // Asegúrate de que este campo coincida con tu base de datos
+                    datesList.appendChild(li);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
 </body>
 </html>

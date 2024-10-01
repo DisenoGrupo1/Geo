@@ -1,51 +1,57 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS  # Importar CORS
+from flask_cors import CORS
 import mysql.connector
+from geopy.geocoders import Nominatim
 
 app = Flask(__name__)
-CORS(app)  # Habilitar CORS para todas las ruta
+CORS(app)
 
-# Conexión a la base de datos
-def get_db_connection():
-    return mysql.connector.connect(
+# Configura el geolocalizador
+geolocator = Nominatim(user_agent="myGeocoder")
+
+def get_lat_long(address):
+    location = geolocator.geocode(address)
+    if location:
+        return (location.latitude, location.longitude)
+    return None
+
+@app.route('/dates-at-location', methods=['OPTIONS', 'POST'])
+def get_dates_at_location():
+    if request.method == 'OPTIONS':
+        return '', 200  # Responder a la solicitud OPTIONS
+
+    data = request.json
+    address = data.get('address')
+
+    # Convierte la dirección a latitud y longitud
+    lat_long = get_lat_long(address)
+    if not lat_long:
+        return jsonify({"error": "Dirección no encontrada"}), 404
+
+    latitude, longitude = lat_long
+
+    # Conectar a la base de datos y buscar las fechas/horas
+    # Asegúrate de que tienes una tabla con columnas que incluyan latitud y longitud
+    connection = mysql.connector.connect(
         host='tu_host',
         user='tu_usuario',
         password='tu_contraseña',
-        database='dbbuscataxi'
+        database='tu_base_de_datos'
     )
+    cursor = connection.cursor(dictionary=True)
 
-@app.route('/dates-at-location', methods=['POST'])
-def get_dates_at_location():
-    data = request.json
-    direccion = data.get('direccion')
-
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-
-    cursor.execute("SELECT DISTINCT fecha, hora FROM ubicaciones WHERE direccion LIKE %s", (direccion,))
-    dates = cursor.fetchall()
+    # Consulta para encontrar fechas/horas cercanas a la latitud y longitud
+    query = """
+    SELECT fecha_hora FROM tu_tabla 
+    WHERE ABS(latitud - %s) < 0.01 AND ABS(longitud - %s) < 0.01
+    """
+    cursor.execute(query, (latitude, longitude))
+    results = cursor.fetchall()
 
     cursor.close()
-    conn.close()
+    connection.close()
 
-    return jsonify(dates)
-
-@app.route('/trace-route', methods=['POST'])
-def trace_route():
-    data = request.json
-    fecha = data.get('fecha')
-    hora = data.get('hora')
-
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-
-    cursor.execute("SELECT latitud, longitud FROM ubicaciones WHERE fecha = %s AND hora = %s", (fecha, hora))
-    locations = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-
-    return jsonify(locations)
+    return jsonify(results)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=50005)
