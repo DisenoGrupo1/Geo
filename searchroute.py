@@ -1,59 +1,49 @@
-from flask import Flask, jsonify, request
+from flask import Flask, request, jsonify
 import mysql.connector
-from flask_cors import CORS
-import os
-from dotenv import load_dotenv
-
-# Cargar variables de entorno
-load_dotenv()
 
 app = Flask(__name__)
-CORS(app, resources={r"/location-at-place": {"origins": "*"}})
 
-# Configuración de la base de datos
-db_config = {
-    'host': os.getenv('DB_HOST'),
-    'user': os.getenv('DB_USER'),
-    'password': os.getenv('DB_PASSWORD'),
-    'database': os.getenv('DB_NAME')
-}
+# Conexión a la base de datos
+def get_db_connection():
+    return mysql.connector.connect(
+        host='tu_host',
+        user='tu_usuario',
+        password='tu_contraseña',
+        database='dbbuscataxi'
+    )
 
-# Ruta para obtener el historial en una ubicación específica (latitud/longitud)
-@app.route('/location-at-place', methods=['POST'])
-def get_location_at_place():
-    request_data = request.get_json()
-    latitud = request_data['latitud']
-    longitud = request_data['longitud']
+@app.route('/dates-at-location', methods=['POST'])
+def get_dates_at_location():
+    data = request.json
+    direccion = data.get('direccion')
 
-    connection = None
-    cursor = None
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
 
-    try:
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor(dictionary=True)
+    cursor.execute("SELECT DISTINCT fecha, hora FROM ubicaciones WHERE direccion LIKE %s", (direccion,))
+    dates = cursor.fetchall()
 
-        # Consulta para buscar ubicaciones cercanas
-        query = '''SELECT latitud, longitud
-                   FROM ubicaciones
-                   WHERE ABS(latitud - %s) < 0.01 AND ABS(longitud - %s) < 0.01'''
-        cursor.execute(query, (latitud, longitud))
+    cursor.close()
+    conn.close()
 
-        locations = cursor.fetchall()
+    return jsonify(dates)
 
-        if locations:
-            return jsonify(locations), 200
-        else:
-            return jsonify({"message": "No se encontraron ubicaciones para la dirección especificada."}), 404
+@app.route('/trace-route', methods=['POST'])
+def trace_route():
+    data = request.json
+    fecha = data.get('fecha')
+    hora = data.get('hora')
 
-    except mysql.connector.Error as e:
-        return jsonify({"error": str(e)}), 500
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT latitud, longitud FROM ubicaciones WHERE fecha = %s AND hora = %s", (fecha, hora))
+    locations = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify(locations)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=50005)  # Puerto para la API de búsqueda por ubicación
+    app.run(host='0.0.0.0', port=50005)
