@@ -91,8 +91,8 @@
             const endTime = document.getElementById('end-time-history').value;
             const address = document.getElementById('address-input').value;
 
-            if (!startDate || !endDate || !startTime || !endTime || !address) {
-                alert("Por favor, seleccione fechas y horas válidas y una dirección.");
+            if (!startDate || !endDate || !startTime || !endTime) {
+                alert("Por favor, seleccione fechas y horas válidas.");
                 return;
             }
 
@@ -110,6 +110,214 @@
                 start_time: startTime,
                 end_time: endTime,
                 address: address
+            };
+
+            fetch(`http://${configData.AWS_IP}:60000/location-history`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("No existen ubicaciones para la ventana de tiempo especificada.");
+                }
+                return response.json();
+            })
+            .then(data => {
+                pathCoordinates = data.map(loc => ({
+                    latitud: loc.latitud,
+                    long: loc.long
+                }));
+                updatePolyline();
+            })
+            .catch(error => {
+                console.error("Error fetching location history:", error);
+                alert("Error al consultar los históricos de ubicación: " + error.message);
+            });
+        }
+
+        function geocodeAddress() {
+            const address = document.getElementById('address-input').value;
+            const startDate = document.getElementById('start-date-history').value;
+            const endDate = document.getElementById('end-date-history').value;
+            const startTime = document.getElementById('start-time-history').value;
+            const endTime = document.getElementById('end-time-history').value;
+
+            if (!address) {
+                alert("Por favor, ingrese una dirección válida.");
+                return;
+            }
+
+            geocoder.geocode({ address: address }, (results, status) => {
+                if (status === 'OK') {
+                    const location = results[0].geometry.location;
+                    map.setCenter(location);
+
+                    if (addressMarker) {
+                        addressMarker.setMap(null);
+                    }
+
+                    addressMarker = new google.maps.Marker({
+                        map: map,
+                        position: location,
+                        title: 'Dirección'
+                    });
+
+                    // Solo si no se han ingresado fechas y horas
+                    if (!startDate && !endDate && !startTime && !endTime) {
+                        fetchDatesForAddress(address, location);
+                    }
+
+                    // Nueva funcionalidad para cargar el trazado si se ingresan fechas y horas
+                    if (startDate && endDate && startTime && endTime) {
+                        loadHistory(); // Cargar el historial si hay fechas y horas
+                    }
+
+                } else {
+                    alert("Geocodificación fallida debido a: " + status);
+                }
+            });
+        }
+
+        function fetchDatesForAddress(address, location) {
+            fetch(`http://${configData.AWS_IP}:60000/location-dates`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ address: address, lat: location.lat(), lng: location.lng() })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.length === 0) {
+                    alert("No hay trayectos que pasen por esta dirección.");
+                    return;
+                }
+                displayDateOptions(data);
+            })
+            .catch(error => {
+                console.error("Error fetching location dates:", error);
+                alert("Error al consultar las fechas y horas: " + error.message);
+            });
+        }
+
+        function displayDateOptions(dates) {
+            const dateList = document.getElementById('date-list');
+            dateList.innerHTML = ""; // Limpiar lista previa
+
+            dates.forEach(date => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${date.date} - ${date.time}`;
+                listItem.onclick = function() {
+                    loadRouteForDate(date.date, date.time);
+                };
+                dateList.appendChild(listItem);
+            });
+
+            dateList.style.display = 'block'; // Mostrar la lista
+        }
+
+        function loadRouteForDate(date, time) {
+            fetch(`http://${configData.AWS_IP}:60000/location-route`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ date: date, time: time, address: document.getElementById('address-input').value })
+            })
+            .then(response => response.json())
+            .then(data => {
+                pathCoordinates = data.map(loc => ({
+                    latitud: loc.latitud,
+                    long: loc.long
+                }));
+                updatePolyline();
+            })
+            .catch(error => {
+                console.error("Error fetching route:", error);
+                alert("Error al consultar el trazado: " + error.message);
+            });
+        }
+
+        window.onload = function () {
+            loadConfig();
+        };
+    </script>
+    <style>
+        #map {
+            height: 80%;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #date-selection, #address-input-section {
+            margin: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        label {
+            margin-right: 10px;
+        }
+
+        input {
+            margin: 5px;
+        }
+
+        #date-options-section {
+            display: none;
+            margin:History() {
+            const startDate = document.getElementById('start-date-history').value;
+            const endDate = document.getElementById('end-date-history').value;
+            const startTime = document.getElementById('start-time-history').value;
+            const endTime = document.getElementById('end-time-history').value;
+            const address = document.getElementById('address-input').value;
+
+            if (!startDate || !endDate || !startTime || !endTime) {
+                alert("Por favor, seleccione fechas y horas válidas.");
+                return;
+            }
+
+            const startDateTime = new Date(`${startDate}T${startTime}`);
+            const endDateTime = new Date(`${endDate}T${endTime}`);
+
+            if (endDateTime <= startDateTime) {
+                alert("La fecha y hora de finalización debe ser posterior a la fecha y hora de inicio.");
+                return;
+            }
+
+            // Si se ingresó una dirección, primero geocodificamos para obtener la latitud y longitud
+            if (address) {
+                geocoder.geocode({ address: address }, (results, status) => {
+                    if (status === 'OK') {
+                        const location = results[0].geometry.location;
+                        fetchHistoricalData(location.lat(), location.lng(), startDate, endDate, startTime, endTime);
+                    } else {
+                        alert("Geocodificación fallida debido a: " + status);
+                    }
+                });
+            } else {
+                // Si no hay dirección, solo buscar historial de acuerdo a las fechas y horas
+                fetchHistoricalData(null, null, startDate, endDate, startTime, endTime);
+            }
+        }
+
+        function fetchHistoricalData(lat, lng, startDate, endDate, startTime, endTime) {
+            const requestBody = {
+                start_date: startDate,
+                end_date: endDate,
+                start_time: startTime,
+                end_time: endTime,
+                lat: lat,
+                lng: lng
             };
 
             fetch(`http://${configData.AWS_IP}:60000/location-history`, {
@@ -215,12 +423,13 @@
         }
 
         function loadRouteForDate(date, time) {
+            const address = document.getElementById('address-input').value;
             fetch(`http://${configData.AWS_IP}:60000/location-route`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ date: date, time: time, address: document.getElementById('address-input').value })
+                body: JSON.stringify({ date: date, time: time, address: address })
             })
             .then(response => response.json())
             .then(data => {
