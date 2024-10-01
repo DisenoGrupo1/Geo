@@ -15,6 +15,13 @@ def get_lat_long(address):
         return (location.latitude, location.longitude)
     return None
 
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')  # Permitir todos los orígenes
+    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+    return response
+
 @app.route('/dates-at-location', methods=['OPTIONS', 'POST'])
 def get_dates_at_location():
     if request.method == 'OPTIONS':
@@ -22,6 +29,7 @@ def get_dates_at_location():
 
     data = request.json
     address = data.get('address')
+
 
     # Convierte la dirección a latitud y longitud
     lat_long = get_lat_long(address)
