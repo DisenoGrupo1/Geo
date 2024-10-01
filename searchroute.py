@@ -31,7 +31,6 @@ def get_dates_at_location():
     latitude, longitude = lat_long
 
     # Conectar a la base de datos y buscar las fechas/horas
-    # Asegúrate de que tienes una tabla con columnas que incluyan latitud y longitud
     connection = mysql.connector.connect(
         host='tu_host',
         user='tu_usuario',
