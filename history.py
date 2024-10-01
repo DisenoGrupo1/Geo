@@ -8,6 +8,7 @@ load_dotenv()
 
 app = Flask(_name_)
 
+
 # Configuración de la base de datos
 db_config = {
     'host': os.getenv('DB_HOST'),
@@ -40,6 +41,7 @@ def get_location_history():
         cursor = connection.cursor(dictionary=True)
 
         query = '''SELECT latitud, longitud, fecha
+
                    FROM ubicaciones
                    WHERE direccion = %s AND
                          (fecha > %s OR (fecha = %s AND hora >= %s)) AND
