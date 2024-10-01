@@ -18,7 +18,7 @@
                     document.getElementById('page-title').innerText = configData.TITLE;
 
                     const script = document.createElement('script');
-                    script.src = https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap;
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`; // Comillas invertidas corregidas
                     script.defer = true;
                     document.head.appendChild(script);
                 })
@@ -50,10 +50,10 @@
         }
 
         function updatePolyline() {
-            pathPolyline.setPath(pathCoordinates.map(coord => new google.maps.LatLng(coord.latitud, coord.longitud)));
+            pathPolyline.setPath(pathCoordinates.map(coord => new google.maps.LatLng(coord.latitud, coord.long)) );
             if (pathCoordinates.length > 0) {
                 const bounds = new google.maps.LatLngBounds();
-                pathCoordinates.forEach(coord => bounds.extend(new google.maps.LatLng(coord.latitud, coord.longitud)));
+                pathCoordinates.forEach(coord => bounds.extend(new google.maps.LatLng(coord.latitud, coord.long)));
                 map.fitBounds(bounds);
                 addStartMarker();
                 addEndMarker();
@@ -66,7 +66,7 @@
             }
             const startLocation = pathCoordinates[0];
             startMarker = new google.maps.Marker({
-                position: new google.maps.LatLng(startLocation.latitud, startLocation.longitud),
+                position: new google.maps.LatLng(startLocation.latitud, startLocation.long),
                 map: map,
                 title: 'Inicio'
             });
@@ -78,7 +78,7 @@
             }
             const endLocation = pathCoordinates[pathCoordinates.length - 1];
             endMarker = new google.maps.Marker({
-                position: new google.maps.LatLng(endLocation.latitud, endLocation.longitud),
+                position: new google.maps.LatLng(endLocation.latitud, endLocation.long),
                 map: map,
                 title: 'Fin'
             });
@@ -96,8 +96,8 @@
                 return;
             }
 
-            const startDateTime = new Date(${startDate}T${startTime});
-            const endDateTime = new Date(${endDate}T${endTime});
+            const startDateTime = new Date(`${startDate}T${startTime}`);  // Uso de comillas invertidas
+            const endDateTime = new Date(`${endDate}T${endTime}`);  // Uso de comillas invertidas
 
             if (endDateTime <= startDateTime) {
                 alert("La fecha y hora de finalización debe ser posterior a la fecha y hora de inicio.");
@@ -112,7 +112,7 @@
                 address: address
             };
 
-            fetch(http://${configData.AWS_IP}:60000/location-history, {
+            fetch(`http://${configData.AWS_IP}:60000/location-history`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -121,14 +121,14 @@
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(No existen ubicaciones para la ventana de tiempo especificada.);
+                    throw new Error("No existen ubicaciones para la ventana de tiempo especificada.");
                 }
                 return response.json();
             })
             .then(data => {
                 pathCoordinates = data.map(loc => ({
                     latitud: loc.latitud,
-                    longitud: loc.longitud
+                    long: loc.long
                 }));
                 updatePolyline();
             })
@@ -174,15 +174,13 @@
             height: 80%;
         }
 
-        html,
-        body {
+        html, body {
             height: 100%;
             margin: 0;
             padding: 0;
         }
 
-        #date-selection,
-        #address-input-section {
+        #date-selection, #address-input-section {
             margin: 10px;
             padding: 10px;
             background-color: #f9f9f9;
