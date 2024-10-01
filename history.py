@@ -22,6 +22,8 @@ def get_location_history():
     end_date = request_data['end_date']
     start_time = request_data['start_time']
     end_time = request_data['end_time']
+    latitud = request_data.get('latitud')  # Obtener latitud
+    longitud = request_data.get('longitud')  # Obtener longitud
 
     # Inicializa las variables para evitar errores en el bloque 'finally'
     connection = None
@@ -59,6 +61,10 @@ def get_location_history():
                 loc['hora'] = str(loc['hora'])  # Maneja el caso de timedelta, si es necesario
 
         if locations:
+            # Aquí podrías comparar las coordenadas obtenidas con las de la base de datos, 
+            # o utilizar latitud y longitud en otra lógica
+            # Por ejemplo, podrías agregar condiciones para filtrar ubicaciones cercanas:
+            # locations = [loc for loc in locations if is_within_radius(loc, latitud, longitud)]
             return jsonify(locations), 200
         else:
             return jsonify({"message": "No se encontraron ubicaciones para el rango especificado"}), 404
