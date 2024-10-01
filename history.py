@@ -1,14 +1,12 @@
 from flask import Flask, jsonify, request
 import mysql.connector
-from datetime import datetime, time
-from flask_cors import CORS
+from datetime import datetime
 import os
 from dotenv import load_dotenv
 
-load_dotenv()   
+load_dotenv()
 
 app = Flask(_name_)
-CORS(app, resources={r"/location-history": {"origins": ""}, r"/location-dates": {"origins": ""}})
 
 # Configuración de la base de datos
 db_config = {
@@ -18,7 +16,6 @@ db_config = {
     'database': os.getenv('DB_NAME')
 }
 
-# Ruta para obtener el historial de ubicaciones
 @app.route('/location-history', methods=['POST'])
 def get_location_history():
     request_data = request.get_json()
@@ -26,30 +23,29 @@ def get_location_history():
     end_date = request_data['end_date']
     start_time = request_data['start_time']
     end_time = request_data['end_time']
-    address = request_data['address']  # Obtener dirección de la solicitud
+    address = request_data['address']
 
-    # Inicializa las variables para evitar errores en el bloque 'finally'
+    # Combina fecha y hora en un solo datetime
+    start_datetime = datetime.strptime(f"{start_date} {start_time}", '%Y-%m-%d %H:%M')
+    end_datetime = datetime.strptime(f"{end_date} {end_time}", '%Y-%m-%d %H:%M')
+
+    # Validación: si la fecha de finalización es anterior a la fecha de inicio
+    if end_datetime < start_datetime:
+        return jsonify({"error": "La fecha y hora de finalización no puede ser anterior a la fecha y hora de inicio"}), 400
+
     connection = None
-    cursor = None   
+    cursor = None
 
     try:
-        # Combina fecha y hora en un solo datetime
-        start_datetime = datetime.strptime(f"{start_date} {start_time}", '%Y-%m-%d %H:%M')
-        end_datetime = datetime.strptime(f"{end_date} {end_time}", '%Y-%m-%d %H:%M')
-
-        # Validación: si la fecha de finalización es anterior a la fecha de inicio
-        if end_datetime < start_datetime:
-            return jsonify({"error": "La fecha y hora de finalización no puede ser anterior a la fecha y hora de inicio"}), 400
-
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
 
-        # Modificación de la consulta SQL para manejar fecha y hora por separado
-        query = '''SELECT latitud, longitud, fecha, hora, direccion
+        query = '''SELECT latitud, longitud, fecha
                    FROM ubicaciones
-                   WHERE (fecha > %s OR (fecha = %s AND hora >= %s)) AND
+                   WHERE direccion = %s AND 
+                         (fecha > %s OR (fecha = %s AND hora >= %s)) AND
                          (fecha < %s OR (fecha = %s AND hora <= %s))'''
-        cursor.execute(query, (start_datetime.date(), start_datetime.date(), start_datetime.time(),
+        cursor.execute(query, (address, start_datetime.date(), start_datetime.date(), start_datetime.time(),
                                end_datetime.date(), end_datetime.date(), end_datetime.time()))
 
         locations = cursor.fetchall()
@@ -57,50 +53,10 @@ def get_location_history():
         for loc in locations:
             loc['fecha'] = loc['fecha'].strftime('%Y-%m-%d')  # Formato de fecha
 
-            # Verifica si 'hora' es un objeto datetime.time
-            if isinstance(loc['hora'], time):
-                loc['hora'] = loc['hora'].strftime('%H:%M:%S')  # Formato de hora
-            else:
-                loc['hora'] = str(loc['hora'])  # Maneja el caso de timedelta, si es necesario
-
         if locations:
             return jsonify(locations), 200
         else:
             return jsonify({"message": "No se encontraron ubicaciones para el rango especificado"}), 404
-
-    except mysql.connector.Error as e:
-        return jsonify({"error": str(e)}), 500
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        # Verifica que el cursor y la conexión existan antes de cerrarlos
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
-
-# Ruta para obtener fechas por dirección
-@app.route('/location-dates', methods=['POST'])
-def get_location_dates():
-    request_data = request.get_json()
-    address = request_data['address']
-    
-    try:
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor(dictionary=True)
-
-        # Consulta para obtener las fechas en las que el vehículo pasó por la dirección especificada
-        query = '''SELECT DISTINCT fecha
-                   FROM ubicaciones
-                   WHERE direccion = %s'''
-        cursor.execute(query, (address,))
-        
-        dates = cursor.fetchall()
-
-        if dates:
-            return jsonify(dates), 200
-        else:
-            return jsonify({"message": "No se encontraron fechas para la dirección especificada."}), 404
 
     except mysql.connector.Error as e:
         return jsonify({"error": str(e)}), 500
