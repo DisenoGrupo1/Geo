@@ -13,14 +13,16 @@
             width: 100%;
             height: 100px;
             margin-top: 10px;
+            overflow-y: auto;
         }
     </style>
     <script>
         let configData;
         let map;
         let pathPolyline;
-        let marker;
+        let markers = [];
 
+        // Cargar config.json y la API de Google Maps
         function loadConfig() {
             return fetch('config.json')
                 .then(response => response.json())
@@ -46,12 +48,11 @@
             if (pathPolyline) {
                 pathPolyline.setMap(null);
             }
-            if (marker) {
-                marker.setMap(null);
-            }
-            document.getElementById('routes').innerHTML = '';
+            markers.forEach(marker => marker.setMap(null)); // Limpiar todos los marcadores
+            markers = [];
         }
 
+        // Función para buscar ubicaciones por dirección
         function searchByCoordinates(lat, lng) {
             const requestBody = {
                 latitud: lat,
@@ -70,7 +71,7 @@
                     alert('No se encontraron ubicaciones cercanas.');
                     return;
                 }
-                populateRoutes(data); // Llenar el selector con fechas y horas
+                populateRoutes(data); // Llenar la lista con las fechas y horas
             })
             .catch(error => {
                 console.error("Error:", error);
@@ -78,6 +79,7 @@
             });
         }
 
+        // Función para realizar el trazado hasta la dirección especificada
         function searchByDateAndTime(startDate, endDate, startTime, endTime, addressLatLng) {
             const requestBody = {
                 start_date: startDate,
@@ -99,7 +101,7 @@
                     alert('No se encontraron ubicaciones para el rango de tiempo.');
                     return;
                 }
-                updatePolyline(data, addressLatLng); // Trazar hasta la dirección especificada
+                updatePolyline(data, addressLatLng); // Dibujar el trazado hasta la dirección
             })
             .catch(error => {
                 console.error("Error:", error);
@@ -107,6 +109,7 @@
             });
         }
 
+        // Función para dibujar el trazado hasta la dirección especificada
         function updatePolyline(locations, addressLatLng) {
             const pathCoordinates = [];
             let reachedAddress = false;
@@ -117,11 +120,11 @@
                     lng: parseFloat(loc.longitud)
                 };
 
-                if (reachedAddress) return; // Dejar de agregar puntos al camino si ya llegó a la dirección
+                if (reachedAddress) return; // Detener el trazado si llegó a la dirección
 
                 pathCoordinates.push(coord);
 
-                // Comprobar si está cerca de la dirección
+                // Comprobar si el vehículo llegó a la dirección
                 if (google.maps.geometry.spherical.computeDistanceBetween(
                     new google.maps.LatLng(coord.lat, coord.lng),
                     new google.maps.LatLng(addressLatLng.lat, addressLatLng.lng)
@@ -130,6 +133,7 @@
                 }
             });
 
+            // Dibujar la polilínea en el mapa
             pathPolyline = new google.maps.Polyline({
                 path: pathCoordinates,
                 geodesic: true,
@@ -145,18 +149,22 @@
                 map.fitBounds(bounds);
             }
 
-            // Colocar marcador en la dirección
+            // Colocar marcador en la dirección final
             if (addressLatLng) {
-                if (marker) {
-                    marker.setMap(null); // Borrar marcador anterior
-                }
-                marker = new google.maps.Marker({
-                    position: addressLatLng,
-                    map: map
-                });
+                addMarker(addressLatLng);
             }
         }
 
+        // Añadir un marcador en la posición especificada
+        function addMarker(position) {
+            const marker = new google.maps.Marker({
+                position: position,
+                map: map
+            });
+            markers.push(marker);
+        }
+
+        // Llenar la lista con fechas y horas cercanas a la dirección
         function populateRoutes(locations) {
             const routesContainer = document.getElementById('routes');
             routesContainer.innerHTML = '';
