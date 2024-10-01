@@ -7,8 +7,9 @@ from dotenv import load_dotenv
 
 load_dotenv()   
 
-app = Flask(_name_)
-CORS(app, resources={r"/location-history": {"origins": ""}, r"/location-dates": {"origins": ""}})
+app = Flask(__name__)
+CORS(app, resources={r"/location-history": {"origins": "*"}})
+
 
 # Configuración de la base de datos
 db_config = {
@@ -26,11 +27,10 @@ def get_location_history():
     end_date = request_data['end_date']
     start_time = request_data['start_time']
     end_time = request_data['end_time']
-    address = request_data['address']  # Obtener dirección de la solicitud
 
     # Inicializa las variables para evitar errores en el bloque 'finally'
     connection = None
-    cursor = None   
+    cursor = None
 
     try:
         # Combina fecha y hora en un solo datetime
@@ -45,7 +45,7 @@ def get_location_history():
         cursor = connection.cursor(dictionary=True)
 
         # Modificación de la consulta SQL para manejar fecha y hora por separado
-        query = '''SELECT latitud, longitud, fecha, hora, direccion
+        query = '''SELECT latitud, longitud, fecha, hora
                    FROM ubicaciones
                    WHERE (fecha > %s OR (fecha = %s AND hora >= %s)) AND
                          (fecha < %s OR (fecha = %s AND hora <= %s))'''
@@ -79,38 +79,5 @@ def get_location_history():
         if connection:
             connection.close()
 
-# Ruta para obtener fechas por dirección
-@app.route('/location-dates', methods=['POST'])
-def get_location_dates():
-    request_data = request.get_json()
-    address = request_data['address']
-    
-    try:
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor(dictionary=True)
-
-        # Consulta para obtener las fechas en las que el vehículo pasó por la dirección especificada
-        query = '''SELECT DISTINCT fecha
-                   FROM ubicaciones
-                   WHERE direccion = %s'''
-        cursor.execute(query, (address,))
-        
-        dates = cursor.fetchall()
-
-        if dates:
-            return jsonify(dates), 200
-        else:
-            return jsonify({"message": "No se encontraron fechas para la dirección especificada."}), 404
-
-    except mysql.connector.Error as e:
-        return jsonify({"error": str(e)}), 500
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
-
-if _name_ == '_main_':
+if __name__ == '__main__':
     app.run(host='0.0.0.0', port=60000)
