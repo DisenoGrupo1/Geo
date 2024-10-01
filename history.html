@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trazar Recorridos</title>
     <style>
+        /* Estilos generales */
         html, body {
             height: 100%;
             margin: 0;
@@ -59,7 +60,7 @@
         let configData;
         let map;
         let pathPolyline;
-        let markers = []; // Array para mantener los marcadores
+        let markers = [];
 
         function loadConfig() {
             return fetch('config.json')
@@ -67,7 +68,7 @@
                 .then(config => {
                     configData = config;
                     const script = document.createElement('script');
-                    script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
+                    script.src = https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap;
                     script.defer = true;
                     document.head.appendChild(script);
                 })
@@ -86,26 +87,21 @@
             if (pathPolyline) {
                 pathPolyline.setMap(null);
             }
-            markers.forEach(marker => marker.setMap(null)); // Eliminar marcadores anteriores
-            markers = []; // Reiniciar el array de marcadores
-            document.getElementById('routes').innerHTML = ''; // Limpiar rutas anteriores
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
+            document.getElementById('routes').innerHTML = '';
         }
 
         function searchByCoordinates(lat, lng) {
-            const requestBody = {
-                latitud: lat,
-                longitud: lng
-            };
-            fetch(`http://${configData.AWS_IP}:50005/location-at-place`, {
+            const requestBody = { latitud: lat, longitud: lng };
+            fetch(http://${configData.AWS_IP}:50005/location-at-place, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody)
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('No se encontraron ubicaciones cercanas a la dirección especificada.');
+                    throw new Error('No se encontraron ubicaciones cercanas.');
                 }
                 return response.json();
             })
@@ -123,18 +119,11 @@
         }
 
         function searchByDateAndTime(startDate, endDate, startTime, endTime, startAddress) {
-            const requestBody = {
-                start_date: startDate,
-                end_date: endDate,
-                start_time: startTime,
-                end_time: endTime
-            };
+            const requestBody = { start_date: startDate, end_date: endDate, start_time: startTime, end_time: endTime };
 
-            fetch(`http://${configData.AWS_IP}:60000/location-history`, {
+            fetch(http://${configData.AWS_IP}:60000/location-history, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody)
             })
             .then(response => {
@@ -145,9 +134,22 @@
             })
             .then(data => {
                 if (Array.isArray(data)) {
-                    updatePolyline(data, startAddress);
+                    if (startAddress) {
+                        const geocoder = new google.maps.Geocoder();
+                        geocoder.geocode({ address: startAddress }, function (results, status) {
+                            if (status === 'OK') {
+                                const endLocation = results[0].geometry.location;
+                                data.push({ latitud: endLocation.lat(), longitud: endLocation.lng() });
+                                updatePolyline(data);
+                            } else {
+                                alert('Geocoding falló por la siguiente razón: ' + status);
+                            }
+                        });
+                    } else {
+                        updatePolyline(data);
+                    }
                 } else {
-                    alert(data.message || "No se encontraron ubicaciones para el rango de fechas especificado.");
+                    alert(data.message || "No se encontraron ubicaciones.");
                 }
             })
             .catch(error => {
@@ -156,13 +158,9 @@
             });
         }
 
-        function updatePolyline(locations, startAddress) {
-            const pathCoordinates = locations.map(loc => ({
-                lat: parseFloat(loc.latitud),
-                lng: parseFloat(loc.longitud)
-            }));
+        function updatePolyline(locations) {
+            const pathCoordinates = locations.map(loc => ({ lat: parseFloat(loc.latitud), lng: parseFloat(loc.longitud) }));
 
-            // Crear y mostrar marcadores de inicio y fin si hay ubicaciones
             if (pathCoordinates.length > 0) {
                 const startMarker = new google.maps.Marker({
                     position: pathCoordinates[0],
@@ -197,14 +195,17 @@
 
         function populateRoutes(locations) {
             const routesContainer = document.getElementById('routes');
-            routesContainer.innerHTML = ''; // Limpiar rutas anteriores
+            routesContainer.innerHTML = '';
 
             locations.forEach(location => {
                 const routeOption = document.createElement('option');
+                const date = new Date(location.fecha);
+                const formattedDate = date.toLocaleDateString('es-ES');
+                const formattedTime = location.hora;
                 routeOption.value = location.hora;
-                routeOption.textContent = `${location.fecha} - ${location.hora} - ${location.descripcion || 'Trayecto'}`;
+                routeOption.textContent = Fecha: ${formattedDate} - Hora: ${formattedTime};
                 routeOption.onclick = () => {
-                    clearPreviousData(); // Limpiar datos anteriores
+                    clearPreviousData();
                     const latLng = { lat: parseFloat(location.latitud), lng: parseFloat(location.longitud) };
                     const marker = new google.maps.Marker({
                         position: latLng,
@@ -234,7 +235,6 @@
                         if (!startDate && !endDate && !startTime && !endTime) {
                             searchByCoordinates(location.lat(), location.lng());
                         } else {
-                            // Mostrar listado, incluso si hay fechas
                             searchByDateAndTime(startDate, endDate, startTime, endTime, address);
                         }
                     } else {
@@ -242,7 +242,7 @@
                     }
                 });
             } else if (startDate && endDate && startTime && endTime) {
-                searchByDateAndTime(startDate, endDate, startTime, endTime, null); // Sin dirección
+                searchByDateAndTime(startDate, endDate, startTime, endTime, null);
             } else {
                 alert("Por favor, ingrese una dirección o un rango de fechas y horas válidas.");
             }
