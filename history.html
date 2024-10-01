@@ -91,6 +91,7 @@
             document.getElementById('routes').innerHTML = ''; // Limpiar rutas anteriores
         }
 
+        // Filtrar por coordenadas
         function searchByCoordinates(lat, lng) {
             const requestBody = {
                 latitud: lat,
@@ -122,6 +123,7 @@
             });
         }
 
+        // Filtrar por fechas y horas
         function searchByDateAndTime(startDate, endDate, startTime, endTime, endAddress) {
             const requestBody = {
                 start_date: startDate,
@@ -162,16 +164,24 @@
                 lng: parseFloat(loc.longitud)
             }));
 
-            // Usar la dirección ingresada como punto final si está disponible
             if (endAddress) {
                 const geocoder = new google.maps.Geocoder();
                 geocoder.geocode({ address: endAddress }, function (results, status) {
                     if (status === 'OK') {
                         const finalLocation = results[0].geometry.location;
-                        pathCoordinates.push({
-                            lat: finalLocation.lat(),
-                            lng: finalLocation.lng()
+                        const cutoffIndex = pathCoordinates.findIndex(coord => {
+                            return coord.lat === finalLocation.lat() && coord.lng === finalLocation.lng();
                         });
+
+                        if (cutoffIndex !== -1) {
+                            pathCoordinates.length = cutoffIndex + 1; // Omite el resto del recorrido después de la dirección
+                        } else {
+                            pathCoordinates.push({
+                                lat: finalLocation.lat(),
+                                lng: finalLocation.lng()
+                            });
+                        }
+
                         drawPolyline(pathCoordinates);
                     } else {
                         alert('Geocoding falló por la siguiente razón: ' + status);
@@ -183,7 +193,6 @@
         }
 
         function drawPolyline(pathCoordinates) {
-            // Crear y mostrar marcadores de inicio y fin si hay ubicaciones
             if (pathCoordinates.length > 0) {
                 const startMarker = new google.maps.Marker({
                     position: pathCoordinates[0],
@@ -255,7 +264,6 @@
                         if (!startDate && !endDate && !startTime && !endTime) {
                             searchByCoordinates(location.lat(), location.lng());
                         } else {
-                            // Mostrar listado, incluso si hay fechas
                             searchByDateAndTime(startDate, endDate, startTime, endTime, address);
                         }
                     } else {
