@@ -5,31 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trazar Recorridos</title>
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
         #map {
-            height: 400px;
-            width: 100%;
+            height: 80%;
+        }
+        #controls {
+            margin: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        label {
+            margin-right: 10px;
+        }
+        input {
+            margin: 0 10px 10px 0;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        button {
+            padding: 6px 12px;
+            background-color: #000dff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0000cc;
+        }
+        .help-text {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: -10px;
+            margin-bottom: 10px;
+        }
+        .loading {
+            display: none;
+            font-weight: bold;
+            margin-top: 10px;
         }
         #routes {
-            width: 100%;
-            height: 100px;
             margin-top: 10px;
-            overflow-y: auto;
         }
     </style>
     <script>
         let configData;
         let map;
         let pathPolyline;
-        let markers = [];
+        let markers = []; // Array para mantener los marcadores
 
-        // Cargar config.json y la API de Google Maps
         function loadConfig() {
             return fetch('config.json')
                 .then(response => response.json())
                 .then(config => {
                     configData = config;
                     const script = document.createElement('script');
-                    script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap&libraries=geometry`;
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
                     script.defer = true;
                     document.head.appendChild(script);
                 })
@@ -48,11 +86,12 @@
             if (pathPolyline) {
                 pathPolyline.setMap(null);
             }
-            markers.forEach(marker => marker.setMap(null)); // Limpiar todos los marcadores
-            markers = [];
+            markers.forEach(marker => marker.setMap(null)); // Eliminar marcadores anteriores
+            markers = []; // Reiniciar el array de marcadores
+            document.getElementById('routes').innerHTML = ''; // Limpiar rutas anteriores
         }
 
-        // Función para buscar ubicaciones por dirección
+        // Filtrar por coordenadas
         function searchByCoordinates(lat, lng) {
             const requestBody = {
                 latitud: lat,
@@ -65,13 +104,18 @@
                 },
                 body: JSON.stringify(requestBody)
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.length === 0) {
-                    alert('No se encontraron ubicaciones cercanas.');
-                    return;
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('No se encontraron ubicaciones cercanas a la dirección especificada.');
                 }
-                populateRoutes(data); // Llenar la lista con las fechas y horas
+                return response.json();
+            })
+            .then(data => {
+                if (Array.isArray(data)) {
+                    populateRoutes(data);
+                } else {
+                    alert(data.message || "No se encontraron ubicaciones.");
+                }
             })
             .catch(error => {
                 console.error("Error:", error);
@@ -79,8 +123,8 @@
             });
         }
 
-        // Función para realizar el trazado hasta la dirección especificada
-        function searchByDateAndTime(startDate, endDate, startTime, endTime, addressLatLng) {
+        // Filtrar por fechas y horas
+        function searchByDateAndTime(startDate, endDate, startTime, endTime, endAddress) {
             const requestBody = {
                 start_date: startDate,
                 end_date: endDate,
@@ -95,13 +139,18 @@
                 },
                 body: JSON.stringify(requestBody)
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.length === 0) {
-                    alert('No se encontraron ubicaciones para el rango de tiempo.');
-                    return;
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('No existen ubicaciones para la ventana de tiempo especificada');
                 }
-                updatePolyline(data, addressLatLng); // Dibujar el trazado hasta la dirección
+                return response.json();
+            })
+            .then(data => {
+                if (Array.isArray(data)) {
+                    updatePolyline(data, endAddress);
+                } else {
+                    alert(data.message || "No se encontraron ubicaciones para el rango de fechas especificado.");
+                }
             })
             .catch(error => {
                 console.error("Error:", error);
@@ -109,31 +158,57 @@
             });
         }
 
-        // Función para dibujar el trazado hasta la dirección especificada
-        function updatePolyline(locations, addressLatLng) {
-            const pathCoordinates = [];
-            let reachedAddress = false;
+        function updatePolyline(locations, endAddress) {
+            const pathCoordinates = locations.map(loc => ({
+                lat: parseFloat(loc.latitud),
+                lng: parseFloat(loc.longitud)
+            }));
 
-            locations.forEach(loc => {
-                const coord = {
-                    lat: parseFloat(loc.latitud),
-                    lng: parseFloat(loc.longitud)
-                };
+            if (endAddress) {
+                const geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ address: endAddress }, function (results, status) {
+                    if (status === 'OK') {
+                        const finalLocation = results[0].geometry.location;
+                        const cutoffIndex = pathCoordinates.findIndex(coord => {
+                            return coord.lat === finalLocation.lat() && coord.lng === finalLocation.lng();
+                        });
 
-                if (reachedAddress) return; // Detener el trazado si llegó a la dirección
+                        if (cutoffIndex !== -1) {
+                            pathCoordinates.length = cutoffIndex + 1; // Omite el resto del recorrido después de la dirección
+                        } else {
+                            pathCoordinates.push({
+                                lat: finalLocation.lat(),
+                                lng: finalLocation.lng()
+                            });
+                        }
 
-                pathCoordinates.push(coord);
+                        drawPolyline(pathCoordinates);
+                    } else {
+                        alert('Geocoding falló por la siguiente razón: ' + status);
+                    }
+                });
+            } else {
+                drawPolyline(pathCoordinates);
+            }
+        }
 
-                // Comprobar si el vehículo llegó a la dirección
-                if (google.maps.geometry.spherical.computeDistanceBetween(
-                    new google.maps.LatLng(coord.lat, coord.lng),
-                    new google.maps.LatLng(addressLatLng.lat, addressLatLng.lng)
-                ) < 50) {
-                    reachedAddress = true;
-                }
-            });
+        function drawPolyline(pathCoordinates) {
+            if (pathCoordinates.length > 0) {
+                const startMarker = new google.maps.Marker({
+                    position: pathCoordinates[0],
+                    map: map,
+                    title: "Inicio del trayecto"
+                });
+                markers.push(startMarker);
 
-            // Dibujar la polilínea en el mapa
+                const endMarker = new google.maps.Marker({
+                    position: pathCoordinates[pathCoordinates.length - 1],
+                    map: map,
+                    title: "Fin del trayecto"
+                });
+                markers.push(endMarker);
+            }
+
             pathPolyline = new google.maps.Polyline({
                 path: pathCoordinates,
                 geodesic: true,
@@ -148,31 +223,27 @@
                 pathCoordinates.forEach(coord => bounds.extend(coord));
                 map.fitBounds(bounds);
             }
-
-            // Colocar marcador en la dirección final
-            if (addressLatLng) {
-                addMarker(addressLatLng);
-            }
         }
 
-        // Añadir un marcador en la posición especificada
-        function addMarker(position) {
-            const marker = new google.maps.Marker({
-                position: position,
-                map: map
-            });
-            markers.push(marker);
-        }
-
-        // Llenar la lista con fechas y horas cercanas a la dirección
         function populateRoutes(locations) {
             const routesContainer = document.getElementById('routes');
-            routesContainer.innerHTML = '';
+            routesContainer.innerHTML = ''; // Limpiar rutas anteriores
 
             locations.forEach(location => {
-                const option = document.createElement('option');
-                option.textContent = `${location.fecha} - ${location.hora}`;
-                routesContainer.appendChild(option);
+                const routeOption = document.createElement('option');
+                routeOption.value = location.hora;
+                routeOption.textContent = `${location.fecha} - ${location.hora} - ${location.descripcion || 'Trayecto'}`;
+                routeOption.onclick = () => {
+                    clearPreviousData(); // Limpiar datos anteriores
+                    const latLng = { lat: parseFloat(location.latitud), lng: parseFloat(location.longitud) };
+                    const marker = new google.maps.Marker({
+                        position: latLng,
+                        map: map,
+                        title: "Ubicación seleccionada"
+                    });
+                    markers.push(marker);
+                };
+                routesContainer.appendChild(routeOption);
             });
         }
 
@@ -189,42 +260,43 @@
                 const geocoder = new google.maps.Geocoder();
                 geocoder.geocode({ address: address }, function (results, status) {
                     if (status === 'OK') {
-                        const addressLatLng = results[0].geometry.location;
-
+                        const location = results[0].geometry.location;
                         if (!startDate && !endDate && !startTime && !endTime) {
-                            searchByCoordinates(addressLatLng.lat(), addressLatLng.lng());
+                            searchByCoordinates(location.lat(), location.lng());
                         } else {
-                            searchByDateAndTime(startDate, endDate, startTime, endTime, addressLatLng);
+                            searchByDateAndTime(startDate, endDate, startTime, endTime, address);
                         }
                     } else {
-                        alert('Geocoding falló: ' + status);
+                        alert('Geocoding falló por la siguiente razón: ' + status);
                     }
                 });
-            } else {
-                alert("Por favor, ingrese una dirección.");
+            } else if (startDate && endDate && startTime && endTime) {
+                searchByDateAndTime(startDate, endDate, startTime, endTime, null);
             }
         }
 
-        window.onload = function () {
-            loadConfig();
-        };
+        window.onload = loadConfig;
     </script>
 </head>
 <body>
+    <div id="map"></div>
     <div id="controls">
         <label for="address">Dirección:</label>
-        <input type="text" id="address" placeholder="Ingrese la dirección">
-        <label for="start-date">Fecha de Inicio:</label>
+        <input type="text" id="address" placeholder="Escribe una dirección">
+        <br>
+        <label for="start-date">Fecha Inicio:</label>
         <input type="date" id="start-date">
-        <label for="end-date">Fecha de Fin:</label>
+        <label for="end-date">Fecha Fin:</label>
         <input type="date" id="end-date">
-        <label for="start-time">Hora de Inicio:</label>
+        <br>
+        <label for="start-time">Hora Inicio:</label>
         <input type="time" id="start-time">
-        <label for="end-time">Hora de Fin:</label>
+        <label for="end-time">Hora Fin:</label>
         <input type="time" id="end-time">
-        <button onclick="loadHistory()">Cargar Trazado</button>
+        <br>
+        <button onclick="loadHistory()">Cargar Recorrido</button>
+        <div id="routes"></div>
+        <div class="loading">Cargando...</div>
     </div>
-    <select id="routes" size="5"></select>
-    <div id="map"></div>
 </body>
 </html>
