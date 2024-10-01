@@ -8,7 +8,8 @@ from dotenv import load_dotenv
 load_dotenv()   
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+# Permitir CORS para todos los orígenes
+CORS(app)
 
 # Configuración de la base de datos
 db_config = {
@@ -47,24 +48,8 @@ def get_location_history():
             latitud = result['latitud']
             longitud = result['longitud']
 
-            # Si solo se proporciona la dirección, buscar las fechas y horas correspondientes
-            if not start_date or not end_date or not start_time or not end_time:
-                query = '''
-                    SELECT DISTINCT fecha, hora
-                    FROM ubicaciones
-                    WHERE latitud = %s AND longitud = %s
-                '''
-                cursor.execute(query, (latitud, longitud))
-                dates = cursor.fetchall()
-
-                if dates:
-                    for date in dates:
-                        date['fecha'] = date['fecha'].strftime('%Y-%m-%d')
-                        date['hora'] = date['hora'].strftime('%H:%M:%S')
-                    return jsonify(dates), 200
-                else:
-                    return jsonify({"message": "No se encontraron trayectos para la dirección especificada"}), 404
-            else:
+            # Si se proporciona dirección y fechas, buscar el historial
+            if start_date and end_date and start_time and end_time:
                 # Combina fecha y hora en un solo datetime
                 start_datetime = datetime.strptime(f"{start_date} {start_time}", '%Y-%m-%d %H:%M')
                 end_datetime = datetime.strptime(f"{end_date} {end_time}", '%Y-%m-%d %H:%M')
@@ -73,7 +58,6 @@ def get_location_history():
                 if end_datetime < start_datetime:
                     return jsonify({"error": "La fecha y hora de finalización no puede ser anterior a la fecha y hora de inicio"}), 400
 
-                # Modificación de la consulta SQL para manejar fecha y hora por separado
                 query = '''SELECT latitud, longitud, fecha, hora
                         FROM ubicaciones
                         WHERE (fecha > %s OR (fecha = %s AND hora >= %s)) AND
@@ -93,6 +77,56 @@ def get_location_history():
                     return jsonify(locations), 200
                 else:
                     return jsonify({"message": "No se encontraron ubicaciones para el rango especificado"}), 404
+
+            # Si solo se proporciona la dirección, buscar las fechas y horas correspondientes
+            else:
+                query = '''
+                    SELECT DISTINCT fecha, hora
+                    FROM ubicaciones
+                    WHERE latitud = %s AND longitud = %s
+                '''
+                cursor.execute(query, (latitud, longitud))
+                dates = cursor.fetchall()
+
+                if dates:
+                    for date in dates:
+                        date['fecha'] = date['fecha'].strftime('%Y-%m-%d')
+                        date['hora'] = date['hora'].strftime('%H:%M:%S')
+                    return jsonify(dates), 200
+                else:
+                    return jsonify({"message": "No se encontraron trayectos para la dirección especificada"}), 404
+
+        # Si no se proporciona dirección pero se ingresan fechas, mostrar trazado
+        elif start_date and end_date and start_time and end_time:
+            # Combina fecha y hora en un solo datetime
+            start_datetime = datetime.strptime(f"{start_date} {start_time}", '%Y-%m-%d %H:%M')
+            end_datetime = datetime.strptime(f"{end_date} {end_time}", '%Y-%m-%d %H:%M')
+
+            # Validación: si la fecha de finalización es anterior a la fecha de inicio
+            if end_datetime < start_datetime:
+                return jsonify({"error": "La fecha y hora de finalización no puede ser anterior a la fecha y hora de inicio"}), 400
+
+            query = '''SELECT latitud, longitud, fecha, hora
+                    FROM ubicaciones
+                    WHERE (fecha > %s OR (fecha = %s AND hora >= %s)) AND
+                        (fecha < %s OR (fecha = %s AND hora <= %s))'''
+            cursor.execute(query, (start_datetime.date(), start_datetime.date(), start_datetime.time(),
+                                end_datetime.date(), end_datetime.date(), end_datetime.time()))
+
+            locations = cursor.fetchall()
+
+            for loc in locations:
+                loc['fecha'] = loc['fecha'].strftime('%Y-%m-%d')  # Formato de fecha
+                loc['hora'] = loc['hora'].strftime('%H:%M:%S')  # Formato de hora
+
+            if locations:
+                return jsonify(locations), 200
+            else:
+                return jsonify({"message": "No se encontraron ubicaciones para el rango especificado"}), 404
+
+        else:
+            return jsonify({"error": "Se requieren campos de dirección, fechas y horas para la búsqueda"}), 400
+
     except mysql.connector.Error as e:
         return jsonify({"error": str(e)}), 500
     except Exception as e:
