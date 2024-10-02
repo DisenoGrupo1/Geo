@@ -13,7 +13,7 @@
             padding: 0;
         }
         #map {
-            height: 80%;
+            height: 70%; /* Se reduce el tamaño del mapa para hacer espacio para la lista */
         }
         #address-selection {
             margin: 10px;
@@ -53,6 +53,19 @@
             font-weight: bold;
             margin-top: 10px;
         }
+        #date-list {
+            margin-top: 10px;
+        }
+        .date-item {
+            cursor: pointer;
+            padding: 5px;
+            background-color: #e0e0e0;
+            border-radius: 3px;
+            margin-bottom: 5px;
+        }
+        .date-item:hover {
+            background-color: #ccc;
+        }
     </style>
 
     <!-- Script JavaScript -->
@@ -75,6 +88,7 @@
         }
 
         let map;
+        let polyline;  // Variable para la polilínea en el mapa
 
         // Inicializa el mapa
         function initMap() {
@@ -84,6 +98,7 @@
                 center: barranquilla
             });
         }
+
         // Función para convertir dirección en coordenadas
         function geocodeAddress() {
             const address = document.getElementById('address').value;
@@ -110,6 +125,7 @@
                 alert("Por favor, ingrese una dirección válida.");
             }
         }
+
         // Función para buscar por coordenadas en la base de datos
         function searchByCoordinates(lat, lng) {
             const requestBody = {
@@ -132,8 +148,8 @@
             })
             .then(data => {
                 if (Array.isArray(data)) {
-                    // Visualiza las ubicaciones en el mapa
-                    updatePolyline(data);
+                    // Visualiza las fechas en una lista
+                    displayDateList(data);
                 } else {
                     alert(data.message || "No se encontraron ubicaciones.");
                 }
@@ -144,13 +160,33 @@
             });
         }
 
+        // Función para mostrar las fechas/hora en una lista
+        function displayDateList(locations) {
+            const dateListContainer = document.getElementById('date-list');
+            dateListContainer.innerHTML = '';  // Limpiar lista existente
+
+            locations.forEach(location => {
+                const dateItem = document.createElement('div');
+                dateItem.className = 'date-item';
+                dateItem.textContent = `Fecha: ${location.timestamp}`;  // Mostrar la fecha/hora
+                dateItem.onclick = function() {
+                    updatePolyline([location]);  // Al hacer clic, se dibuja la ruta
+                };
+                dateListContainer.appendChild(dateItem);
+            });
+        }
+
         // Actualiza la polilínea en el mapa
         function updatePolyline(locations) {
+            if (polyline) {
+                polyline.setMap(null);  // Eliminar la polilínea anterior si existe
+            }
+
             const pathCoordinates = locations.map(loc => ({
                 lat: parseFloat(loc.latitud),
                 lng: parseFloat(loc.longitud)
             }));
-            const pathPolyline = new google.maps.Polyline({
+            polyline = new google.maps.Polyline({
                 path: pathCoordinates,
                 geodesic: true,
                 strokeColor: '#FF0000',
@@ -158,6 +194,7 @@
                 strokeWeight: 2,
                 map: map
             });
+
             if (pathCoordinates.length > 0) {
                 const bounds = new google.maps.LatLngBounds();
                 pathCoordinates.forEach(coord => bounds.extend(coord));
@@ -170,17 +207,19 @@
             loadConfig();
         };
     </script>
-    </head>
-    <body>
-        <!-- Sección para ingresar la dirección -->
-        <div id="address-selection">
-            <label for="address">Dirección:</label>  
-            <input type="text" id="address" placeholder="Ingrese la dirección" required>
-            <div class="help-text">Ejemplo: "Área metropolitana de, Kilómetro 5, Vía Puerto Colombia, Barranquilla, Atlántico"</div>
-            <button onclick="geocodeAddress()">Buscar por Dirección</button>
-            <div class="loading">Cargando...</div>
-        </div>
-        <!-- Mapa -->
-        <div id="map"></div>
-    </body>
-    </html>
+</head>
+<body>
+    <!-- Sección para ingresar la dirección -->
+    <div id="address-selection">
+        <label for="address">Dirección:</label>  
+        <input type="text" id="address" placeholder="Ingrese la dirección" required>
+        <div class="help-text">Ejemplo: "Área metropolitana de, Kilómetro 5, Vía Puerto Colombia, Barranquilla, Atlántico"</div>
+        <button onclick="geocodeAddress()">Buscar por Dirección</button>
+        <div class="loading">Cargando...</div>
+        <!-- Contenedor para la lista de fechas -->
+        <div id="date-list"></div>
+    </div>
+    <!-- Mapa -->
+    <div id="map"></div>
+</body>
+</html>
