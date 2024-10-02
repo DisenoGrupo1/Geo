@@ -2,16 +2,19 @@ from flask import Flask, jsonify, request
 import mysql.connector
 from datetime import datetime, time
 from flask_cors import CORS
+import os
+from dotenv import load_dotenv
+load_dotenv()   
 
 app = Flask(__name__)
 CORS(app, resources={r"/location-history": {"origins": "*"}})
 
 # Configuración de la base de datos
 db_config = {
-    'host': 'ENDPOINT',
-    'user': 'USER',
-    'password': 'PASSWORD',
-    'database': 'DATABASE'
+    'host': os.getenv('DB_HOST'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'database': os.getenv('DB_NAME')
 }
 
 # Ruta para obtener el historial de ubicaciones
