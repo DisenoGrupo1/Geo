@@ -4,7 +4,7 @@ from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 
-radius = 50  # Radio en metros
+radius = 50 
 
 load_dotenv()
 
@@ -36,20 +36,20 @@ def get_location_at_place():
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
 
-        # Consulta para buscar ubicaciones cercanas
+        # Consulta ajustada para considerar fecha y hora en columnas separadas
         query = '''
-        SELECT 
-            DATE_FORMAT(timestamp, '%Y-%m-%d %H:%i:%s') as fecha, 
-            latitud, 
-            longitud,
-            COUNT(DISTINCT id) as cantidad
-        FROM ubicaciones
-        WHERE 
-        (6371000 * acos(cos(radians(%s)) * cos(radians(latitud)) * 
-        cos(radians(longitud) - radians(%s)) + 
-        sin(radians(%s)) * sin(radians(latitud)))) <= %s
-        GROUP BY fecha, latitud, longitud
-        ORDER BY fecha ASC;
+            SELECT 
+                CONCAT(fecha, ' ', hora) AS timestamp,
+                latitud, 
+                longitud,
+                COUNT(DISTINCT id) AS cantidad
+            FROM ubicaciones
+            WHERE 
+                (6371000 * acos(cos(radians(%s)) * cos(radians(latitud)) * 
+                cos(radians(longitud) - radians(%s)) + 
+                sin(radians(%s)) * sin(radians(latitud)))) <= %s
+            GROUP BY fecha, hora, latitud, longitud
+            ORDER BY fecha ASC, hora ASC;
         '''
 
         cursor.execute(query, (latitud, longitud, latitud, radius))
