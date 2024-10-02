@@ -1,9 +1,12 @@
+e
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buscar por Dirección</title>
+
+    <!-- Estilos CSS -->
     <style>
         html, body {
             height: 100%;
@@ -31,14 +34,14 @@
         }
         button {
             padding: 6px 12px;
-            background-color: #000dff;
+            background-color: #000dff; /* Color azul */
             color: white;
             border: none;
             border-radius: 3px;
             cursor: pointer;
         }
         button:hover {
-            background-color: #0000cc;
+            background-color: #0000cc; /* Color azul más oscuro al pasar el mouse */
         }
         .help-text {
             color: #666;
@@ -51,28 +54,30 @@
             font-weight: bold;
             margin-top: 10px;
         }
-        #routes {
-            margin-top: 10px;
-        }
     </style>
+
+    <!-- Script JavaScript -->
     <script>
         let configData;
-        let map;
-        let pathPolyline;
 
+        // Cargar config.json y obtener la clave API
         function loadConfig() {
             return fetch('config.json')
                 .then(response => response.json())
                 .then(config => {
                     configData = config;
+                    // Cambia la clave API en el script de Google Maps
                     const script = document.createElement('script');
-                    script.src = https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap;
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
                     script.defer = true;
                     document.head.appendChild(script);
                 })
                 .catch(error => console.error("Error al cargar config.json:", error));
         }
 
+        let map;
+
+        // Inicializa el mapa
         function initMap() {
             const barranquilla = { lat: 10.9878, lng: -74.7889 };
             map = new google.maps.Map(document.getElementById('map'), {
@@ -80,7 +85,7 @@
                 center: barranquilla
             });
         }
-
+        // Función para convertir dirección en coordenadas
         function geocodeAddress() {
             const address = document.getElementById('address').value;
             const button = document.querySelector('button');
@@ -97,7 +102,6 @@
 
                     if (status === 'OK') {
                         const location = results[0].geometry.location;
-                        clearPreviousData(); // Limpiar datos anteriores
                         searchByCoordinates(location.lat(), location.lng());
                     } else {
                         alert('Geocoding falló por la siguiente razón: ' + status);
@@ -107,22 +111,14 @@
                 alert("Por favor, ingrese una dirección válida.");
             }
         }
-
-        function clearPreviousData() {
-            // Limpiar polilínea anterior si existe
-            if (pathPolyline) {
-                pathPolyline.setMap(null);
-            }
-            document.getElementById('routes').innerHTML = ''; // Limpiar rutas anteriores
-        }
-
+        // Función para buscar por coordenadas en la base de datos
         function searchByCoordinates(lat, lng) {
             const requestBody = {
                 latitud: lat,
                 longitud: lng
             };
             console.log("Latitud:", lat, "Longitud:", lng);
-            fetch(http://${configData.AWS_IP}:50005/location-at-place, {
+            fetch(`http://${configData.AWS_IP}:50005/location-at-place`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -137,8 +133,8 @@
             })
             .then(data => {
                 if (Array.isArray(data)) {
+                    // Visualiza las ubicaciones en el mapa
                     updatePolyline(data);
-                    populateRoutes(data);
                 } else {
                     alert(data.message || "No se encontraron ubicaciones.");
                 }
@@ -149,13 +145,13 @@
             });
         }
 
+        // Actualiza la polilínea en el mapa
         function updatePolyline(locations) {
             const pathCoordinates = locations.map(loc => ({
                 lat: parseFloat(loc.latitud),
                 lng: parseFloat(loc.longitud)
             }));
-
-            pathPolyline = new google.maps.Polyline({
+            const pathPolyline = new google.maps.Polyline({
                 path: pathCoordinates,
                 geodesic: true,
                 strokeColor: '#FF0000',
@@ -163,7 +159,6 @@
                 strokeWeight: 2,
                 map: map
             });
-
             if (pathCoordinates.length > 0) {
                 const bounds = new google.maps.LatLngBounds();
                 pathCoordinates.forEach(coord => bounds.extend(coord));
@@ -171,32 +166,22 @@
             }
         }
 
-        function populateRoutes(locations) {
-            const routesContainer = document.getElementById('routes');
-            routesContainer.innerHTML = ''; // Limpiar rutas anteriores
-
-            locations.forEach(location => {
-                const routeOption = document.createElement('option');
-                routeOption.value = location.hora; // Asumimos que hora es un campo en el objeto location
-                routeOption.textContent = ${location.hora} - ${location.descripcion || 'Trayecto'};
-                routesContainer.appendChild(routeOption);
-            });
-        }
-
+        // Cargar configuración al cargar la ventana
         window.onload = function () {
             loadConfig();
         };
     </script>
-</head>
-<body>
-    <div id="address-selection">
-        <label for="address">Dirección:</label>  
-        <input type="text" id="address" placeholder="Ingrese la dirección" required>
-        <div class="help-text">Ejemplo: "Kilómetro 5, Vía Puerto Colombia, Barranquilla"</div>
-        <button onclick="geocodeAddress()">Buscar por Dirección</button>
-        <div class="loading">Cargando...</div>
-    </div>
-    <select id="routes" size="5"></select>
-    <div id="map"></div>
-</body>
-</html>
+    </head>
+    <body>
+        <!-- Sección para ingresar la dirección -->
+        <div id="address-selection">
+            <label for="address">Dirección:</label>  
+            <input type="text" id="address" placeholder="Ingrese la dirección" required>
+            <div class="help-text">Ejemplo: "Área metropolitana de, Kilómetro 5, Vía Puerto Colombia, Barranquilla, Atlántico"</div>
+            <button onclick="geocodeAddress()">Buscar por Dirección</button>
+            <div class="loading">Cargando...</div>
+        </div>
+        <!-- Mapa -->
+        <div id="map"></div>
+    </body>
+    </html>
