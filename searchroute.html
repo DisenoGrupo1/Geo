@@ -202,7 +202,7 @@
         function centerMapOnLocation(location) {
             const latLng = { lat: location.lat(), lng: location.lng() };
             map.setCenter(latLng);
-
+            zoom(15)
             // Si ya existe un marcador, lo elimina
             if (marker) {
                 marker.setMap(null);
