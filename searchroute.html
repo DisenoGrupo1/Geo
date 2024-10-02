@@ -202,7 +202,8 @@
         function centerMapOnLocation(location) {
             const latLng = { lat: location.lat(), lng: location.lng() };
             map.setCenter(latLng);
-            zoom(15)
+            map.setZoom(15); // Establecer el nivel de zoom aquí
+
             // Si ya existe un marcador, lo elimina
             if (marker) {
                 marker.setMap(null);
@@ -234,33 +235,6 @@
                                 </tr>`;
                     resultsContainer.innerHTML += row;
                 });
-            }
-        }
-
-        // Actualiza la polilínea en el mapa
-        function updatePolyline(locations) {
-            if (polyline) {
-                polyline.setMap(null);
-            }
-
-            const pathCoordinates = locations.map(loc => ({
-                lat: parseFloat(loc.latitud),
-                lng: parseFloat(loc.longitud)
-            }));
-
-            polyline = new google.maps.Polyline({
-                path: pathCoordinates,
-                geodesic: true,
-                strokeColor: '#FF0000',
-                strokeOpacity: 1.0,
-                strokeWeight: 2,
-                map: map
-            });
-
-            if (pathCoordinates.length > 0) {
-                const bounds = new google.maps.LatLngBounds();
-                pathCoordinates.forEach(coord => bounds.extend(coord));
-                map.fitBounds(bounds);
             }
         }
 
