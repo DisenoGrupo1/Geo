@@ -39,8 +39,7 @@
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            align-items: center; /* Alinea verticalmente al centro */
             margin: 20px;
         }
 
@@ -255,7 +254,7 @@
     <!-- Sección para ingresar la dirección -->
     <div id="address-selection">
         <label for="address">Dirección:</label>
-        <input type="text" id="address" placeholder="Ingrese la dirección" required>   
+        <input type="text" id="address" placeholder="Ingrese la dirección" required>
         <button onclick="geocodeAddress()">Buscar por Dirección</button>
         <div class="loading">Cargando...</div>
     </div>
