@@ -3,14 +3,13 @@ import mysql.connector
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 
-radius = 50/1000 
-
+# Cargar las variables de entorno
 load_dotenv()
 
 app = Flask(__name__)
-
-CORS(app, resources={r"/location-at-place": {"origins": "*"}})
+CORS(app)
 
 # Configuración de la base de datos
 db_config = {
@@ -20,59 +19,62 @@ db_config = {
     'database': os.getenv('DB_NAME')
 }
 
-# Ruta para obtener el historial en una ubicación específica
 @app.route('/location-at-place', methods=['POST'])
-def get_location_at_place():
-    print("Solicitud recibida")  # Mensaje de depuración
-    request_data = request.get_json()
-    print("Datos recibidos:", request_data)  # Muestra los datos recibidos
-    latitud = request_data['latitud']
-    longitud = request_data['longitud']
+def location_at_place():
+    data = request.get_json()
+    lat = data.get('latitud')
+    lng = data.get('longitud')
 
-    connection = None
-    cursor = None
+    if lat is None or lng is None:
+        return jsonify({'error': 'Latitud y longitud son requeridas'}), 400
 
+    radius = 50  # Radio en metros
+
+    # Conectar a la base de datos
     try:
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor(dictionary=True)
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+  # Consulta SQL utilizando Haversine
+        sql = """
+        SELECT
+            fecha, hora, latitud, longitud
+        FROM
+            ubicaciones
+        WHERE
+            (6371000 * acos(cos(radians(%s)) * cos(radians(latitud)) *
+            cos(radians(longitud) - radians(%s)) +
+            sin(radians(%s)) * sin(radians(latitud)))) <= %s
+        ORDER BY fecha ASC, hora ASC
+        """
 
-        # Consulta ajustada para utilizar fecha_completa
-        query = '''
-            SELECT 
-                DATE_FORMAT(CONCAT(fecha, ' ', hora), '%%Y-%%m-%%d %%H:%%i:%%s') AS fecha_completa, 
-                latitud, 
-                longitud,
-                COUNT(DISTINCT id) AS cantidad
-            FROM ubicaciones
-            WHERE 
-                (6371000 * acos(cos(radians(%s)) * cos(radians(latitud)) * 
-                cos(radians(longitud) - radians(%s)) + 
-                sin(radians(%s)) * sin(radians(latitud)))) <= %s
-            GROUP BY fecha_completa, latitud, longitud
-            ORDER BY fecha_completa ASC;
-        '''
-
-        cursor.execute(query, (latitud, longitud, latitud, radius))
-
+        cursor.execute(sql, (lat, lng, lat, radius))
         locations = cursor.fetchall()
-        print("Ubicaciones encontradas:", locations)  # Mensaje de depuración
-        
-        if locations:
-            return jsonify(locations), 200
-        else:
-            return jsonify({"message": "No se encontraron ubicaciones para la dirección especificada."}), 404
+
+        if not locations:
+            return jsonify({'message': 'No se encontraron ubicaciones cercanas.'}), 404
+
+        # Devolver los resultados en formato JSON
+        location_list = []
+        for row in locations:
+            # Asegúrate de que `fecha` y `hora` son manejados correctamente
+            fecha_str = row[0].strftime('%Y-%m-%d') if isinstance(row[0], datetime) else str(row[0])
+            hora_str = row[1].strftime('%H:%M:%S') if isinstance(row[1], datetime) else str(row[1])
+            location_list.append({
+                'fecha': fecha_str,
+                'hora': hora_str,
+                'latitud': row[2],
+                'longitud': row[3]
+            })
+
+        return jsonify(location_list)
 
     except mysql.connector.Error as e:
-        print("Error en la base de datos:", e)  # Mensaje de depuración
-        return jsonify({"error": str(e)}), 500
-    except Exception as e:
-        print("Error inesperado:", e)  # Mensaje de depuración
-        return jsonify({"error": str(e)}), 500
+        return jsonify({'error': 'Error de conexión a la base de datos: ' + str(e)}), 500
+
     finally:
-        if cursor:
+        if conn:
             cursor.close()
-        if connection:
-            connection.close()
+            conn.close()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=50005)  # Asegúrate de que el puerto sea 50005
+    app.run(host='0.0.0.0', port=50005)

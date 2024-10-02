@@ -11,36 +11,55 @@
             height: 100%;
             margin: 0;
             padding: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+        #map-and-results {
+            display: flex;
+            height: 80%;
         }
         #map {
-            height: 70%;
+            width: 50%;
+        }
+        #results-container {
+            width: 50%;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
         #address-selection {
-            margin: 10px;
             padding: 10px;
-            background-color: #f9f9f9;
+            background-color: #f1f1f1;
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 20px;
         }
         label {
             margin-right: 10px;
         }
         input {
-            margin: 0 10px 10px 0;
+            margin: 0 10px 0 0;
             padding: 5px;
             border: 1px solid #ccc;
             border-radius: 3px;
+            width: 300px;
         }
         button {
             padding: 6px 12px;
-            background-color: #000dff;
+            background-color: #007bff;
             color: white;
             border: none;
             border-radius: 3px;
             cursor: pointer;
+            transition: background-color 0.3s;
         }
         button:hover {
-            background-color: #0000cc;
+            background-color: #0056b3;
         }
         .help-text {
             color: #666;
@@ -53,18 +72,27 @@
             font-weight: bold;
             margin-top: 10px;
         }
-        #date-list {
-            margin-top: 10px;
+        #results {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
         }
-        .date-item {
-            cursor: pointer;
-            padding: 5px;
-            background-color: #e0e0e0;
-            border-radius: 3px;
-            margin-bottom: 5px;
+        #results th, #results td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
         }
-        .date-item:hover {
-            background-color: #ccc;
+        #results th {
+            background-color: #f2f2f2;
+        }
+        .no-results {
+            text-align: center;
+            font-size: 1.2em;
+            margin-top: 20px;
+            color: #999;
+        }
+        .error {
+            color: red;
         }
     </style>
 
@@ -146,11 +174,7 @@
                 return response.json();
             })
             .then(data => {
-                if (Array.isArray(data)) {
-                    displayDateList(data);
-                } else {
-                    alert(data.message || "No se encontraron ubicaciones.");
-                }
+                displayResults(data);
             })
             .catch(error => {
                 console.error("Error:", error);
@@ -158,20 +182,25 @@
             });
         }
 
-        // Función para mostrar las fechas/hora en una lista
-        function displayDateList(locations) {
-            const dateListContainer = document.getElementById('date-list');
-            dateListContainer.innerHTML = '';
+        // Función para mostrar los resultados en una tabla
+        function displayResults(locations) {
+            const resultsContainer = document.getElementById('results-body');
+            const noResultsMessage = document.getElementById('no-results');
+            resultsContainer.innerHTML = ''; // Limpiar resultados previos
 
-            locations.forEach(location => {
-                const dateItem = document.createElement('div');
-                dateItem.className = 'date-item';
-                dateItem.textContent = `Fecha: ${location.timestamp}`;
-                dateItem.onclick = function() {
-                    updatePolyline([location]);
-                };
-                dateListContainer.appendChild(dateItem);
-            });
+            if (locations.length === 0) {
+                noResultsMessage.style.display = 'block';
+            } else {
+                noResultsMessage.style.display = 'none';
+
+                locations.forEach(location => {
+                    const row = `<tr onclick="updatePolyline([${JSON.stringify(location)}])">
+                                    <td>${location.fecha}</td>
+                                    <td>${location.hora}</td>
+                                </tr>`;
+                    resultsContainer.innerHTML += row;
+                });
+            }
         }
 
         // Actualiza la polilínea en el mapa
@@ -215,9 +244,26 @@
         <div class="help-text">Ejemplo: "Área metropolitana de, Kilómetro 5, Vía Puerto Colombia, Barranquilla, Atlántico"</div>
         <button onclick="geocodeAddress()">Buscar por Dirección</button>
         <div class="loading">Cargando...</div>
-        <div id="date-list"></div>
     </div>
-    <!-- Mapa -->
-    <div id="map"></div>
+
+    <!-- Contenedor para mapa y resultados -->
+    <div id="map-and-results">
+        <!-- Mapa -->
+        <div id="map"></div>
+
+        <!-- Resultados -->
+        <div id="results-container">
+            <div id="no-results" class="no-results" style="display: none;">No se encontraron ubicaciones.</div>
+            <table id="results">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                    </tr>
+                </thead>
+                <tbody id="results-body"></tbody>
+            </table>
+        </div>
+    </div>
 </body>
 </html>
