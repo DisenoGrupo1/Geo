@@ -37,7 +37,7 @@ def location_at_place():
         logger.error("Latitud y longitud son requeridas")
         return jsonify({'error': 'Latitud y longitud son requeridas'}), 400
 
-    radius = 100  # Radio en metros
+    radius = 150  # Radio en metros
 
     # Conectar a la base de datos
     try:
