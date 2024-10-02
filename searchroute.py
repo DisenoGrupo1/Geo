@@ -28,7 +28,7 @@ def location_at_place():
     if lat is None or lng is None:
         return jsonify({'error': 'Latitud y longitud son requeridas'}), 400
 
-    radius = 50  # Radio en metros
+    radius = 40  # Radio en metros
 
     # Conectar a la base de datos
     try:
@@ -48,6 +48,7 @@ def location_at_place():
 
         cursor.execute(sql, (lat, lng, lat, radius))
         locations = cursor.fetchall()
+        print(f"Resultados de la consulta: {locations}")
 
         if not locations:
             return jsonify({'message': 'No se encontraron ubicaciones cercanas.'}), 404
