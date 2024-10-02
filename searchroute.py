@@ -4,6 +4,7 @@ from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 
+radius = 50  # Radio en metros
 
 load_dotenv()
 
@@ -35,15 +36,28 @@ def get_location_at_place():
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
 
-         # Consulta para buscar ubicaciones cercanas
-        query = '''SELECT latitud, longitud
-  FROM ubicaciones
-                   WHERE ABS(latitud - %s) < 0.01 AND ABS(longitud - %s) < 0.01'''
-        cursor.execute(query, (latitud, longitud))
+        # Consulta para buscar ubicaciones cercanas
+        query = '''
+        SELECT 
+            DATE_FORMAT(timestamp, '%Y-%m-%d %H:%i:%s') as fecha, 
+            latitud, 
+            longitud,
+            COUNT(DISTINCT id) as cantidad
+        FROM ubicaciones
+        WHERE 
+        (6371000 * acos(cos(radians(%s)) * cos(radians(latitud)) * 
+        cos(radians(longitud) - radians(%s)) + 
+        sin(radians(%s)) * sin(radians(latitud)))) <= %s
+        GROUP BY fecha, latitud, longitud
+        ORDER BY fecha ASC;
+        '''
+
+        cursor.execute(query, (latitud, longitud, latitud, radius))
 
         locations = cursor.fetchall()
         print("Ubicaciones encontradas:", locations)  # Mensaje de depuración
-         if locations:
+        
+        if locations:
             return jsonify(locations), 200
         else:
             return jsonify({"message": "No se encontraron ubicaciones para la dirección especificada."}), 404
@@ -59,5 +73,6 @@ def get_location_at_place():
             cursor.close()
         if connection:
             connection.close()
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=50005)  # Asegúrate de que el puerto sea 50005
