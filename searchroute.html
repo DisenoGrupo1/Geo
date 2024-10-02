@@ -115,6 +115,7 @@
         let configData;
         let map;
         let polyline;
+        let marker; // Variable para el marcador
 
         // Cargar config.json y obtener la clave API
         function loadConfig() {
@@ -157,6 +158,7 @@
                     if (status === 'OK') {
                         const location = results[0].geometry.location;
                         searchByCoordinates(location.lat(), location.lng());
+                        centerMapOnLocation(location); // Centrar el mapa en la ubicación
                     } else {
                         alert('Geocoding falló por la siguiente razón: ' + status);
                     }
@@ -193,6 +195,24 @@
             .catch(error => {
                 console.error("Error:", error);
                 alert("Error al buscar ubicaciones: " + error.message);
+            });
+        }
+
+        // Función para centrar el mapa y agregar un marcador
+        function centerMapOnLocation(location) {
+            const latLng = { lat: location.lat(), lng: location.lng() };
+            map.setCenter(latLng);
+
+            // Si ya existe un marcador, lo elimina
+            if (marker) {
+                marker.setMap(null);
+            }
+
+            // Crea un nuevo marcador
+            marker = new google.maps.Marker({
+                position: latLng,
+                map: map,
+                title: 'Ubicación seleccionada'
             });
         }
 
