@@ -2,14 +2,12 @@ from flask import Flask, jsonify, request
 import mysql.connector
 from datetime import datetime, time
 from flask_cors import CORS
-import os
-from dotenv import load_dotenv
-load_dotenv()   
+import os  # Importa el módulo os
 
 app = Flask(__name__)
 CORS(app, resources={r"/location-history": {"origins": "*"}})
 
-# Configuración de la base de datos
+# Configuración de la base de datos usando variables de entorno
 db_config = {
     'host': os.getenv('DB_HOST'),
     'user': os.getenv('DB_USER'),
@@ -37,7 +35,7 @@ def get_location_history():
 
         # Validación: si la fecha de finalización es anterior a la fecha de inicio
         if end_datetime < start_datetime:
-            return jsonify({"error": "La fecha y hora de finalización no puede ser anterior a la fecha y hora de inicio"}), 400
+            return jsonify({"error": "La fecha y hora de finalización no puede ser anterior a la fecha y hora de inicio."}), 400
 
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
@@ -47,8 +45,10 @@ def get_location_history():
                    FROM ubicaciones
                    WHERE (fecha > %s OR (fecha = %s AND hora >= %s)) AND
                          (fecha < %s OR (fecha = %s AND hora <= %s))'''
-        cursor.execute(query, (start_datetime.date(), start_datetime.date(), start_datetime.time(),
-                               end_datetime.date(), end_datetime.date(), end_datetime.time()))
+        cursor.execute(query, (
+            start_datetime.date(), start_datetime.date(), start_datetime.time(),
+            end_datetime.date(), end_datetime.date(), end_datetime.time()
+        ))
 
         locations = cursor.fetchall()
 
@@ -65,7 +65,6 @@ def get_location_history():
             return jsonify(locations), 200
         else:
             return jsonify({"message": "No se encontraron ubicaciones para el rango especificado"}), 404
-
     except mysql.connector.Error as e:
         return jsonify({"error": str(e)}), 500
     except Exception as e:
