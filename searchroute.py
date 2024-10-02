@@ -36,10 +36,10 @@ def get_location_at_place():
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
 
-        # Consulta ajustada para considerar fecha y hora en columnas separadas
+        # Consulta ajustada para utilizar fecha_completa
         query = '''
             SELECT 
-                CONCAT(fecha, ' ', hora) AS timestamp,
+                DATE_FORMAT(CONCAT(fecha, ' ', hora), '%%Y-%%m-%%d %%H:%%i:%%s') AS fecha_completa, 
                 latitud, 
                 longitud,
                 COUNT(DISTINCT id) AS cantidad
@@ -48,8 +48,8 @@ def get_location_at_place():
                 (6371000 * acos(cos(radians(%s)) * cos(radians(latitud)) * 
                 cos(radians(longitud) - radians(%s)) + 
                 sin(radians(%s)) * sin(radians(latitud)))) <= %s
-            GROUP BY fecha, hora, latitud, longitud
-            ORDER BY fecha ASC, hora ASC;
+            GROUP BY fecha_completa, latitud, longitud
+            ORDER BY fecha_completa ASC;
         '''
 
         cursor.execute(query, (latitud, longitud, latitud, radius))
