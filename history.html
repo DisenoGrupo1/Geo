@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="page-title">Inserte su titulo</title>
     <script>
         let configData;
+
         // Función para cargar la configuración desde el archivo config.json
         function loadConfig() {
             return fetch('config.json')
@@ -13,8 +15,10 @@
                 .then(config => {
                     configData = config;
                     //console.log("Configuración cargada:", configData);
+
                     // Cambia el título de la página
                     document.getElementById('page-title').innerText = configData.TITLE;
+
                     // Cambia la clave API en el script de Google Maps
                     const script = document.createElement('script');
                     script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
@@ -23,17 +27,18 @@
                 })
                 .catch(error => console.error("Error al cargar config.json:", error));
         }
+
         let map, pathPolyline;
         let pathCoordinates = [];
         let startMarker; // Marcador de inicio
         let endMarker;
 
         function initMap() {
-            const barranquilla = {lat: 10.9878, lng: -74.7889};
-            map = new google.maps.Map(document.getElementById('map'),{
-            zoom: 12,
-            center: barranquilla
-            });  
+            const barranquilla = { lat: 10.9878, lng: -74.7889 };
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 12,
+                center: barranquilla
+            });
 
             pathPolyline = new google.maps.Polyline({
                 path: pathCoordinates,
@@ -44,6 +49,7 @@
                 map: map
             });
         }
+
         function updatePolyline() {
             pathPolyline.setPath(pathCoordinates.map(coord => new google.maps.LatLng(coord.latitud, coord.longitud)));
             if (pathCoordinates.length > 0) {
@@ -54,6 +60,7 @@
                 addEndMarker();
             }
         }
+
         function addStartMarker() {
             if (startMarker) {
                 startMarker.setMap(null); // Elimina el marcador anterior si existe
@@ -65,6 +72,7 @@
                 title: 'Inicio'
             });
         }
+
         function addEndMarker() {
             if (endMarker) {
                 endMarker.setMap(null);
@@ -76,24 +84,29 @@
                 title: 'Fin'
             });
         }
+
         function loadHistory() {
             const startDate = document.getElementById('start-date-history').value;
             const endDate = document.getElementById('end-date-history').value;
             const startTime = document.getElementById('start-time-history').value;
             const endTime = document.getElementById('end-time-history').value;
+
             if (startDate && endDate && startTime && endTime) {
                 const startDateTime = new Date(`${startDate}T${startTime}`);
                 const endDateTime = new Date(`${endDate}T${endTime}`);
+
                 if (endDateTime <= startDateTime) {
                     alert("La fecha y hora de finalización debe ser posterior a la fecha y hora de inicio.");
                     return;
                 }
+
                 const requestBody = {
                     start_date: startDate,
                     end_date: endDate,
                     start_time: startTime,
                     end_time: endTime
                 };
+
                 fetch(`http://${configData.AWS_IP}:60000/location-history`, {
                     method: 'POST',
                     headers: {
@@ -101,52 +114,55 @@
                     },
                     body: JSON.stringify(requestBody)
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`No existen ubicaciones para la ventana de tiempo especificada`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (Array.isArray(data)) {
-                        pathCoordinates = data.map(loc => ({
-                            latitud: loc.latitud,
-                            longitud: loc.longitud
-                        }));
-                        updatePolyline();
-                    } else {
-                        alert(data.message || "No se encontraron ubicaciones para el rango de fechas especificado.");
-                    }
-                })
-                .catch(error => {
-                    console.error("Error fetching location history:", error);
-                    alert("Error al consultar los históricos de ubicación: " + error.message);
-                });
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`No existen ubicaciones para la ventana de tiempo especificada`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (Array.isArray(data)) {
+                            pathCoordinates = data.map(loc => ({
+                                latitud: loc.latitud,
+                                longitud: loc.longitud
+                            }));
+                            updatePolyline();
+                        } else {
+                            alert(data.message || "No se encontraron ubicaciones para el rango de fechas especificado.");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error fetching location history:", error);
+                        alert("Error al consultar los históricos de ubicación: " + error.message);
+                    });
             } else {
                 alert("Por favor, seleccione fechas y horas válidas.");
             }
         }
+
         function setMaxDate() {
             const today = new Date();
             const localDate = today.toLocaleDateString('en-CA'); // Obtiene la fecha en formato YYYY-MM-DD
             document.getElementById('start-date-history').setAttribute('max', localDate);
             document.getElementById('end-date-history').setAttribute('max', localDate);
-            
+
             // Validaciones adicionales
-            document.getElementById('start-date-history').addEventListener('input', function() {
+            document.getElementById('start-date-history').addEventListener('input', function () {
                 if (this.value > localDate) {
                     this.value = localDate;
                     alert('No puedes seleccionar una fecha futura.');
                 }
             });
-            document.getElementById('end-date-history').addEventListener('input', function() {
+
+            document.getElementById('end-date-history').addEventListener('input', function () {
                 if (this.value > localDate) {
                     this.value = localDate;
                     alert('No puedes seleccionar una fecha futura.');
                 }
             });
         }
-        window.onload = function() {
+
+        window.onload = function () {
             setMaxDate();
             loadConfig(); // Carga la configuración al iniciar la página
         };
@@ -155,26 +171,46 @@
         #map {
             height: 80%;
         }
-        html, body {
+
+        html,
+        body {
             height: 100%;
             margin: 0;
             padding: 0;
         }
+
         #date-selection {
             margin: 10px;
             padding: 10px;
             background-color: #f9f9f9;
             border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
+
         label {
             margin-right: 10px;
         }
+
         input {
             margin: 0 10px 10px 0;
         }
+
+        .btn-load-history {
+            background-color: #000dff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn-load-history:hover {
+            background-color: #0000cc;
+        }
     </style>
 </head>
+
 <body>
     <div id="date-selection">
         <label for="start-date-history">Start Date:</label>
@@ -185,8 +221,7 @@
         <input type="time" id="start-time-history" required>
         <label for="end-time-history">End Time:</label>
         <input type="time" id="end-time-history" required>
-        <button onclick="loadHistory()">Load History</button>
+        <button class="btn-load-history" onclick="loadHistory()">Load History</button>
     </div>
     <div id="map"></div>
 </body>
-</html>
