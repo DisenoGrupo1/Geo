@@ -4,7 +4,7 @@ from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 
-radius = 50 
+radius = 50/1000 
 
 load_dotenv()
 
