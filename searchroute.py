@@ -34,17 +34,16 @@ def location_at_place():
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
-  # Consulta SQL utilizando Haversine
         sql = """
-        SELECT
-            fecha, hora, latitud, longitud
-        FROM
-            ubicaciones
-        WHERE
-            (6371000 * acos(cos(radians(%s)) * cos(radians(latitud)) *
-            cos(radians(longitud) - radians(%s)) +
-            sin(radians(%s)) * sin(radians(latitud)))) <= %s
-        ORDER BY fecha ASC, hora ASC
+            SELECT
+                fecha, hora, latitud, longitud
+            FROM
+                ubicaciones
+            WHERE
+                (6371000 * acos(cos(radians(%s)) * cos(radians(latitud)) *
+                cos(radians(longitud) - radians(%s)) +
+                sin(radians(%s)) * sin(radians(latitud)))) <= %s
+            ORDER BY fecha ASC, hora ASC
         """
 
         cursor.execute(sql, (lat, lng, lat, radius))
