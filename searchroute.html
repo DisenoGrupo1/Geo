@@ -13,14 +13,14 @@
             padding: 0;
         }
         #map {
-            height: 70%; /* Se reduce el tamaño del mapa para hacer espacio para la lista */
+            height: 70%;
         }
         #address-selection {
             margin: 10px;
             padding: 10px;
             background-color: #f9f9f9;
             border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
         label {
             margin-right: 10px;
@@ -33,14 +33,14 @@
         }
         button {
             padding: 6px 12px;
-            background-color: #000dff; /* Color azul */
+            background-color: #000dff;
             color: white;
             border: none;
             border-radius: 3px;
             cursor: pointer;
         }
         button:hover {
-            background-color: #0000cc; /* Color azul más oscuro al pasar el mouse */
+            background-color: #0000cc;
         }
         .help-text {
             color: #666;
@@ -71,6 +71,8 @@
     <!-- Script JavaScript -->
     <script>
         let configData;
+        let map;
+        let polyline;
 
         // Cargar config.json y obtener la clave API
         function loadConfig() {
@@ -78,7 +80,6 @@
                 .then(response => response.json())
                 .then(config => {
                     configData = config;
-                    // Cambia la clave API en el script de Google Maps
                     const script = document.createElement('script');
                     script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
                     script.defer = true;
@@ -86,9 +87,6 @@
                 })
                 .catch(error => console.error("Error al cargar config.json:", error));
         }
-
-        let map;
-        let polyline;  // Variable para la polilínea en el mapa
 
         // Inicializa el mapa
         function initMap() {
@@ -133,6 +131,7 @@
                 longitud: lng
             };
             console.log("Latitud:", lat, "Longitud:", lng);
+
             fetch(`http://${configData.AWS_IP}:50005/location-at-place`, {
                 method: 'POST',
                 headers: {
@@ -148,7 +147,6 @@
             })
             .then(data => {
                 if (Array.isArray(data)) {
-                    // Visualiza las fechas en una lista
                     displayDateList(data);
                 } else {
                     alert(data.message || "No se encontraron ubicaciones.");
@@ -163,14 +161,14 @@
         // Función para mostrar las fechas/hora en una lista
         function displayDateList(locations) {
             const dateListContainer = document.getElementById('date-list');
-            dateListContainer.innerHTML = '';  // Limpiar lista existente
+            dateListContainer.innerHTML = '';
 
             locations.forEach(location => {
                 const dateItem = document.createElement('div');
                 dateItem.className = 'date-item';
-                dateItem.textContent = `Fecha: ${location.timestamp}`;  // Mostrar la fecha/hora
+                dateItem.textContent = `Fecha: ${location.timestamp}`;
                 dateItem.onclick = function() {
-                    updatePolyline([location]);  // Al hacer clic, se dibuja la ruta
+                    updatePolyline([location]);
                 };
                 dateListContainer.appendChild(dateItem);
             });
@@ -179,13 +177,14 @@
         // Actualiza la polilínea en el mapa
         function updatePolyline(locations) {
             if (polyline) {
-                polyline.setMap(null);  // Eliminar la polilínea anterior si existe
+                polyline.setMap(null);
             }
 
             const pathCoordinates = locations.map(loc => ({
                 lat: parseFloat(loc.latitud),
                 lng: parseFloat(loc.longitud)
             }));
+
             polyline = new google.maps.Polyline({
                 path: pathCoordinates,
                 geodesic: true,
@@ -211,12 +210,11 @@
 <body>
     <!-- Sección para ingresar la dirección -->
     <div id="address-selection">
-        <label for="address">Dirección:</label>  
+        <label for="address">Dirección:</label>
         <input type="text" id="address" placeholder="Ingrese la dirección" required>
         <div class="help-text">Ejemplo: "Área metropolitana de, Kilómetro 5, Vía Puerto Colombia, Barranquilla, Atlántico"</div>
         <button onclick="geocodeAddress()">Buscar por Dirección</button>
         <div class="loading">Cargando...</div>
-        <!-- Contenedor para la lista de fechas -->
         <div id="date-list"></div>
     </div>
     <!-- Mapa -->
