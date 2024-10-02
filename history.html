@@ -14,12 +14,10 @@
                 .then(response => response.json())
                 .then(config => {
                     configData = config;
-                    //console.log("Configuración cargada:", configData);
-
                     // Cambia el título de la página
                     document.getElementById('page-title').innerText = configData.TITLE;
 
-                    // Cambia la clave API en el script de Google Maps
+                    // Carga el script de Google Maps con la apiKey
                     const script = document.createElement('script');
                     script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
                     script.defer = true;
@@ -225,3 +223,5 @@
     </div>
     <div id="map"></div>
 </body>
+
+</html>
