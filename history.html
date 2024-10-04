@@ -193,7 +193,8 @@
             margin: 0 10px 10px 0;
         }
 
-        .btn-load-history {
+        .btn-load-history,
+        .btn-link { /* Asegurando que ambos botones tengan el mismo estilo */
             background-color: #000dff;
             color: white;
             border: none;
@@ -203,38 +204,13 @@
             transition: background-color 0.3s;
         }
 
-        .btn-load-history:hover {
-            background-color: #0000cc;
-        }
-
-        .btn-link {
-            display: inline-block;
-            background-color: #000dff;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            text-decoration: none;
-            text-align: center;
-        }
-
+        .btn-load-history:hover,
         .btn-link:hover {
             background-color: #0000cc;
         }
 
         #link-container {
-            display: inline-block;
-            background-color: #000dff;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            text-decoration: none;
-            text-align: center;
+            margin-top: 10px; /* Espacio entre el mapa y el contenedor del enlace */
         }
 
         #link-container a {
@@ -265,7 +241,7 @@
     <div id="map"></div>
 
     <div id="link-container">
-        <a href="index.html" class="btn-link">Volver a Inicio</a>
+        <button class="btn-link" onclick="window.location.href='index.html'">Volver a Inicio</button>
     </div>
 </body>
 
