@@ -107,6 +107,29 @@
         .error {
             color: red;
         }
+
+        /* Estilo para el enlace de volver a inicio */
+        .back-link {
+            display: inline-block;
+            padding: 6px 12px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 3px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            margin: 20px; /* Margen para separación */
+        }
+
+        .back-link:hover {
+            background-color: #0056b3;
+        }
+
+        /* Estilo para posicionar el enlace en la parte inferior izquierda */
+        #back-container {
+            position: absolute;
+            bottom: 20px; /* Espacio desde la parte inferior */
+            left: 20px; /* Espacio desde la izquierda */
+        }
     </style>
 
     <!-- Script JavaScript -->
@@ -238,19 +261,6 @@
             }
         }
 
-        // Función para volver al inicio
-        function reset() {
-            // Aquí puedes agregar cualquier lógica que desees al volver al inicio
-            document.getElementById('address').value = ''; // Limpiar el campo de dirección
-            const resultsContainer = document.getElementById('results-body');
-            resultsContainer.innerHTML = ''; // Limpiar resultados
-            document.getElementById('no-results').style.display = 'none'; // Ocultar mensaje de no resultados
-            if (marker) {
-                marker.setMap(null); // Eliminar marcador si existe
-            }
-            initMap(); // Reiniciar el mapa
-        }
-
         // Cargar configuración al cargar la ventana
         window.onload = function () {
             loadConfig();
@@ -263,7 +273,6 @@
         <label for="address">Dirección:</label>
         <input type="text" id="address" placeholder="Ingrese la dirección" required>
         <button onclick="geocodeAddress()">Buscar por Dirección</button>
-        <button onclick="reset()">Volver a Inicio</button> <!-- Botón para volver a inicio -->
         <div class="loading">Cargando...</div>
     </div>
 
@@ -286,6 +295,10 @@
             </table>
         </div>
     </div>
+
+    <!-- Enlace para volver a inicio -->
+    <div id="back-container">
+        <a href="index.html" class="back-link">Volver a Inicio</a>
+    </div>
 </body>
 </html>
-
