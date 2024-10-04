@@ -238,6 +238,19 @@
             }
         }
 
+        // Función para volver al inicio
+        function reset() {
+            // Aquí puedes agregar cualquier lógica que desees al volver al inicio
+            document.getElementById('address').value = ''; // Limpiar el campo de dirección
+            const resultsContainer = document.getElementById('results-body');
+            resultsContainer.innerHTML = ''; // Limpiar resultados
+            document.getElementById('no-results').style.display = 'none'; // Ocultar mensaje de no resultados
+            if (marker) {
+                marker.setMap(null); // Eliminar marcador si existe
+            }
+            initMap(); // Reiniciar el mapa
+        }
+
         // Cargar configuración al cargar la ventana
         window.onload = function () {
             loadConfig();
@@ -250,6 +263,7 @@
         <label for="address">Dirección:</label>
         <input type="text" id="address" placeholder="Ingrese la dirección" required>
         <button onclick="geocodeAddress()">Buscar por Dirección</button>
+        <button onclick="reset()">Volver a Inicio</button> <!-- Botón para volver a inicio -->
         <div class="loading">Cargando...</div>
     </div>
 
@@ -274,3 +288,4 @@
     </div>
 </body>
 </html>
+
