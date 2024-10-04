@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Inserte su titulo</title>
+    <title id="page-title">Inserte su título</title>
     <script>
         let configData;
 
@@ -206,6 +206,26 @@
         .btn-load-history:hover {
             background-color: #0000cc;
         }
+
+        #link-container {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        #link-container a {
+            text-decoration: none;
+            color: #000dff;
+            font-weight: bold;
+        }
+
+        #link-container a:hover {
+            color: #0000cc;
+        }
     </style>
 </head>
 
@@ -221,7 +241,12 @@
         <input type="time" id="end-time-history" required>
         <button class="btn-load-history" onclick="loadHistory()">Load History</button>
     </div>
+
     <div id="map"></div>
+
+    <div id="link-container">
+        <a href="index.html">Volver a Inicio</a>
+    </div>
 </body>
 
 </html>
