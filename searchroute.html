@@ -13,12 +13,12 @@
             padding: 0;
             display: flex;
             flex-direction: column;
+            position: relative; /* Enable positioning for the back button */
         }
 
         #map-and-results {
             display: flex;
             height: 80%;
-            position: relative; /* Posicionar elementos relativos a este contenedor */
         }
 
         #map {
@@ -35,21 +35,16 @@
 
         #address-selection {
             padding: 10px;
-            background-color: #000dff; /* Color de fondo cambiado */
+            background-color: #f1f1f1;
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             display: flex;
             align-items: center; /* Alinea verticalmente al centro */
             margin: 20px;
-            z-index: 10; /* Asegura que esté encima de otros elementos */
-            position: absolute; /* Posicionar el contenedor de dirección de forma absoluta */
-            top: 20px; /* Espacio desde la parte superior */
-            left: 20px; /* Espacio desde la izquierda */
         }
 
         label {
             margin-right: 10px;
-            color: white; /* Cambiar color de texto a blanco para visibilidad */
         }
 
         input {
@@ -62,7 +57,7 @@
 
         button {
             padding: 6px 12px;
-            background-color: #007bff;
+            background-color: #000dff; /* Cambiado a azul especificado */
             color: white;
             border: none;
             border-radius: 3px;
@@ -71,7 +66,7 @@
         }
 
         button:hover {
-            background-color: #0056b3;
+            background-color: #000bb3; /* Color al pasar el ratón (más oscuro) */
         }
 
         .help-text {
@@ -118,15 +113,16 @@
         .back-link {
             display: inline-block;
             padding: 6px 12px;
-            background-color: #000dff; /* Color de fondo cambiado */
+            background-color: #000dff; /* Cambiado a azul especificado */
             color: white;
             border-radius: 3px;
             text-decoration: none;
             transition: background-color 0.3s;
+            margin: 20px; /* Margen para separación */
         }
 
         .back-link:hover {
-            background-color: #0056b3;
+            background-color: #000bb3; /* Color al pasar el ratón (más oscuro) */
         }
 
         /* Estilo para posicionar el enlace en la parte inferior izquierda */
@@ -134,7 +130,7 @@
             position: absolute;
             bottom: 20px; /* Espacio desde la parte inferior */
             left: 20px; /* Espacio desde la izquierda */
-            z-index: 10; /* Asegura que el enlace esté encima de otros elementos */
+            z-index: 10; /* Asegura que esté en la parte superior */
         }
     </style>
 
@@ -287,8 +283,9 @@
         <!-- Mapa -->
         <div id="map"></div>
 
-        <!-- Contenedor para resultados -->
+        <!-- Resultados -->
         <div id="results-container">
+            <div id="no-results" class="no-results" style="display:none;">No se encontraron resultados.</div>
             <table id="results">
                 <thead>
                     <tr>
@@ -296,16 +293,12 @@
                         <th>Hora</th>
                     </tr>
                 </thead>
-                <tbody id="results-body">
-                    <!-- Resultados irán aquí -->
-                </tbody>
+                <tbody id="results-body"></tbody>
             </table>
-            <div id="no-results" class="no-results" style="display: none;">No se encontraron resultados.</div>
-            <div id="error-message" class="error" style="display: none;"></div>
         </div>
     </div>
 
-    <!-- Contenedor para el enlace de volver a inicio -->
+    <!-- Botón para volver a inicio -->
     <div id="back-container">
         <a href="index.html" class="back-link">Volver a Inicio</a>
     </div>
