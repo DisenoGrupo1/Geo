@@ -15,7 +15,6 @@ db_config = {
     'database': os.getenv('DB_NAME')
 }
 
-# Ruta para obtener el historial de ubicaciones
 @app.route('/location-history', methods=['POST'])
 def get_location_history():
     request_data = request.get_json()
