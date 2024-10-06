@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request
 import mysql.connector
 from datetime import datetime, time
 from flask_cors import CORS
-import os  # Importa el módulo os
+import os  # Importa el módulo s
 
 app = Flask(__name__)
 CORS(app, resources={r"/location-history": {"origins": "*"}})
