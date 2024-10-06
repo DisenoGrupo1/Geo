@@ -6,7 +6,6 @@
     <title id="page-title">Inserte su título</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
             background-color: #f4f4f4;
@@ -19,7 +18,7 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 1200px; /* Aumenta el ancho máximo */
             margin: 0 auto;
             padding: 20px;
             background-color: #fff;
@@ -28,15 +27,20 @@
         }
 
         label {
-            display: block;
-            margin: 10px 0 5px;
             font-weight: bold;
+        }
+
+        .flex-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
         input[type="datetime-local"] {
             max-width: 250px; /* Ajusta el tamaño máximo según sea necesario */
             padding: 10px;
-            margin-bottom: 15px;
             border: 1px solid #ccc;
             border-radius: 4px;
             box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -44,7 +48,6 @@
         }
 
         button {
-            max-width: 200px; /* Ajusta el tamaño máximo según sea necesario */
             padding: 10px;
             background-color: #007BFF;
             color: white;
@@ -53,7 +56,6 @@
             font-size: 16px;
             cursor: pointer;
             transition: background-color 0.3s;
-            margin-top: 10px; /* Añade un margen superior para separar del input */
         }
 
         button:hover {
@@ -61,8 +63,8 @@
         }
 
         #map {
-            height: 500px;
-            width: 100%;
+            height: 700px; /* Aumenta el alto */
+            width: 100%; /* Aumenta el ancho al 100% del contenedor */
             border-radius: 4px;
             margin-top: 20px;
         }
@@ -229,15 +231,20 @@
 <body>
     <div class="container">
         <h1>Histórico de Ubicaciones</h1>
-        <div>
-            <label for="start-datetime">Fecha y hora de inicio:</label>
-            <input type="datetime-local" id="start-datetime">
+        
+        <!-- Contenedor flex para alinear horizontalmente -->
+        <div class="flex-row">
+            <div>
+                <label for="start-datetime">Fecha y hora de inicio:</label>
+                <input type="datetime-local" id="start-datetime" placeholder="dd/mm/aaaa --:-- -----">
+            </div>
+            <div>
+                <label for="end-datetime">Fecha y hora de finalización:</label>
+                <input type="datetime-local" id="end-datetime" placeholder="dd/mm/aaaa --:-- -----">
+            </div>
+            <button onclick="loadHistory()">Cargar Histórico</button>
         </div>
-        <div>
-            <label for="end-datetime">Fecha y hora de finalización:</label>
-            <input type="datetime-local" id="end-datetime">
-        </div>
-        <button onclick="loadHistory()">Cargar Histórico</button>
+
         <div id="map"></div>
         
         <!-- Botón "Volver a Inicio" -->
