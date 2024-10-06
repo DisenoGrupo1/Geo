@@ -1,23 +1,106 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="page-title">Inserte su título</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #007BFF;
+        }
+
+        .container {
+            max-width: 1200px; /* Aumenta el ancho máximo */
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        .flex-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="datetime-local"] {
+            max-width: 250px; /* Ajusta el tamaño máximo según sea necesario */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #map {
+            height: 700px; /* Aumenta el alto */
+            width: 100%; /* Aumenta el ancho al 100% del contenedor */
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        /* Estilos para el contenedor del enlace */
+        #link-container {
+            text-align: center; /* Centra el botón */
+            margin-top: 20px; /* Espacio superior para separar del contenido anterior */
+        }
+
+        .btn-link {
+            padding: 10px 20px;
+            background-color: #28a745; /* Color verde para el botón de volver */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn-link:hover {
+            background-color: #218838; /* Color más oscuro en hover */
+        }
+    </style>
     <script>
         let configData;
 
-        // Función para cargar la configuración desde el archivo config.json
         function loadConfig() {
             return fetch('config.json')
                 .then(response => response.json())
                 .then(config => {
                     configData = config;
-                    // Cambia el título de la página
                     document.getElementById('page-title').innerText = configData.TITLE;
 
-                    // Carga el script de Google Maps con la apiKey
                     const script = document.createElement('script');
                     script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
                     script.defer = true;
@@ -28,7 +111,7 @@
 
         let map, pathPolyline;
         let pathCoordinates = [];
-        let startMarker; // Marcador de inicio
+        let startMarker; 
         let endMarker;
 
         function initMap() {
@@ -54,16 +137,16 @@
                 const bounds = new google.maps.LatLngBounds();
                 pathCoordinates.forEach(coord => bounds.extend(new google.maps.LatLng(coord.latitud, coord.longitud)));
                 map.fitBounds(bounds);
-                addStartMarker(); // Agregar marcador de inicio
+                addStartMarker(); 
                 addEndMarker();
             }
         }
 
         function addStartMarker() {
             if (startMarker) {
-                startMarker.setMap(null); // Elimina el marcador anterior si existe
+                startMarker.setMap(null);
             }
-            const startLocation = pathCoordinates[0]; // Primera ubicación
+            const startLocation = pathCoordinates[0]; 
             startMarker = new google.maps.Marker({
                 position: new google.maps.LatLng(startLocation.latitud, startLocation.longitud),
                 map: map,
@@ -84,14 +167,12 @@
         }
 
         function loadHistory() {
-            const startDate = document.getElementById('start-date-history').value;
-            const endDate = document.getElementById('end-date-history').value;
-            const startTime = document.getElementById('start-time-history').value;
-            const endTime = document.getElementById('end-time-history').value;
+            const startDate = document.getElementById('start-datetime').value;
+            const endDate = document.getElementById('end-datetime').value;
 
-            if (startDate && endDate && startTime && endTime) {
-                const startDateTime = new Date(`${startDate}T${startTime}`);
-                const endDateTime = new Date(`${endDate}T${endTime}`);
+            if (startDate && endDate) {
+                const startDateTime = new Date(startDate);
+                const endDateTime = new Date(endDate);
 
                 if (endDateTime <= startDateTime) {
                     alert("La fecha y hora de finalización debe ser posterior a la fecha y hora de inicio.");
@@ -99,10 +180,8 @@
                 }
 
                 const requestBody = {
-                    start_date: startDate,
-                    end_date: endDate,
-                    start_time: startTime,
-                    end_time: endTime
+                    start: startDate,
+                    end: endDate
                 };
 
                 fetch(`http://${configData.AWS_IP}:60000/location-history`, {
@@ -114,7 +193,7 @@
                 })
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error(`No existen ubicaciones para la ventana de tiempo especificada`);
+                            throw new Error("No existen ubicaciones para la ventana de tiempo especificada");
                         }
                         return response.json();
                     })
@@ -140,109 +219,39 @@
 
         function setMaxDate() {
             const today = new Date();
-            const localDate = today.toLocaleDateString('en-CA'); // Obtiene la fecha en formato YYYY-MM-DD
-            document.getElementById('start-date-history').setAttribute('max', localDate);
-            document.getElementById('end-date-history').setAttribute('max', localDate);
-
-            // Validaciones adicionales
-            document.getElementById('start-date-history').addEventListener('input', function () {
-                if (this.value > localDate) {
-                    this.value = localDate;
-                    alert('No puedes seleccionar una fecha futura.');
-                }
-            });
-
-            document.getElementById('end-date-history').addEventListener('input', function () {
-                if (this.value > localDate) {
-                    this.value = localDate;
-                    alert('No puedes seleccionar una fecha futura.');
-                }
-            });
+            const localDate = today.toLocaleDateString('en-CA'); 
+            document.getElementById('start-datetime').setAttribute('max', `${localDate}T23:59`);
+            document.getElementById('end-datetime').setAttribute('max', `${localDate}T23:59`);
         }
 
         window.onload = function () {
-            setMaxDate();
-            loadConfig(); // Carga la configuración al iniciar la página
+            loadConfig().then(setMaxDate);
         };
     </script>
-    <style>
-        #map {
-            height: 80%;
-        }
-
-        html,
-        body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-
-        #date-selection {
-            margin: 10px;
-            padding: 10px;
-            background-color: #f9f9f9;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        label {
-            margin-right: 10px;
-        }
-
-        input {
-            margin: 0 10px 10px 0;
-        }
-
-        .btn-load-history,
-        .btn-link { /* Asegurando que ambos botones engan el mismo estilo */
-            background-color: #000dff;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .btn-load-history:hover,
-        .btn-link:hover {
-            background-color: #0000cc;
-        }
-
-        #link-container {
-            margin-top: 10px; /* Espacio entre el mapa y el contenedor del enlace */
-        }
-
-        #link-container a {
-            text-decoration: none;
-            color: #ffffff;
-            font-weight: bold;
-        }
-
-        #link-container a:hover {
-            color: #0000cc;
-        }
-    </style>
 </head>
-
 <body>
-    <div id="date-selection">
-        <label for="start-date-history">Start Date:</label>
-        <input type="date" id="start-date-history" required>
-        <label for="end-date-history">End Date:</label>
-        <input type="date" id="end-date-history" required>
-        <label for="start-time-history">Start Time:</label>
-        <input type="time" id="start-time-history" required>
-        <label for="end-time-history">End Time:</label>
-        <input type="time" id="end-time-history" required>
-        <button class="btn-load-history" onclick="loadHistory()">Load History</button>
-    </div>
+    <div class="container">
+        <h1>Histórico de Ubicaciones</h1>
+        
+        <!-- Contenedor flex para alinear horizontalmente -->
+        <div class="flex-row">
+            <div>
+                <label for="start-datetime">Fecha y hora de inicio:</label>
+                <input type="datetime-local" id="start-datetime" placeholder="dd/mm/aaaa --:-- -----">
+            </div>
+            <div>
+                <label for="end-datetime">Fecha y hora de finalización:</label>
+                <input type="datetime-local" id="end-datetime" placeholder="dd/mm/aaaa --:-- -----">
+            </div>
+            <button onclick="loadHistory()">Cargar Histórico</button>
+        </div>
 
-    <div id="map"></div>
-
-    <div id="link-container">
-        <button class="btn-link" onclick="window.location.href='index.html'">Volver a Inicio</button>
+        <div id="map"></div>
+        
+        <!-- Botón "Volver a Inicio" -->
+        <div id="link-container">
+            <button class="btn-link" onclick="window.location.href='index.html'">Volver a Inicio</button>
+        </div>
     </div>
 </body>
-
 </html>
