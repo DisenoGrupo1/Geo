@@ -1,8 +1,8 @@
 from flask import Flask, jsonify, request
 import mysql.connector
-from datetime import datetime, time
+from datetime import datetime, timedelta, time
 from flask_cors import CORS
-import os  # Importa el módulo s
+import os
 
 app = Flask(__name__)
 CORS(app, resources={r"/location-history": {"origins": "*"}})
@@ -18,32 +18,29 @@ db_config = {
 @app.route('/location-history', methods=['POST'])
 def get_location_history():
     request_data = request.get_json()
-    start_date = request_data['start_date']
-    end_date = request_data['end_date']
-    start_time = request_data['start_time']
-    end_time = request_data['end_time']
+    start_datetime_str = request_data['start']  # Formato: "YYYY-MM-DD HH:MM"
+    end_datetime_str = request_data['end']  # Formato: "YYYY-MM-DD HH:MM"
 
-    # Inicializa las variables para evitar errores en el bloque 'finally'
     connection = None
     cursor = None
 
     try:
-        # Combina fecha y hora en un solo datetime
-        start_datetime = datetime.strptime(f"{start_date} {start_time}", '%Y-%m-%d %H:%M')
-        end_datetime = datetime.strptime(f"{end_date} {end_time}", '%Y-%m-%d %H:%M')
+        # Convertir cadenas a datetime
+        start_datetime = datetime.strptime(start_datetime_str, '%Y-%m-%dT%H:%M')
+        end_datetime = datetime.strptime(end_datetime_str, '%Y-%m-%dT%H:%M')
 
-        # Validación: si la fecha de finalización es anterior a la fecha de inicio
+        # Validación de fechas
         if end_datetime < start_datetime:
             return jsonify({"error": "La fecha y hora de finalización no puede ser anterior a la fecha y hora de inicio."}), 400
 
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
 
-        # Modificación de la consulta SQL para manejar fecha y hora por separado
         query = '''SELECT latitud, longitud, fecha, hora
                    FROM ubicaciones
                    WHERE (fecha > %s OR (fecha = %s AND hora >= %s)) AND
                          (fecha < %s OR (fecha = %s AND hora <= %s))'''
+        
         cursor.execute(query, (
             start_datetime.date(), start_datetime.date(), start_datetime.time(),
             end_datetime.date(), end_datetime.date(), end_datetime.time()
@@ -52,28 +49,36 @@ def get_location_history():
         locations = cursor.fetchall()
 
         for loc in locations:
-            loc['fecha'] = loc['fecha'].strftime('%Y-%m-%d')  # Formato de fecha
-
-            # Verifica si 'hora' es un objeto datetime.time
+            # Formato de fecha
+            loc['fecha'] = loc['fecha'].strftime('%Y-%m-%d')  
+            
+            # Verifica si loc['hora'] es un objeto de tipo 'time', 'str' o 'timedelta'
+            if isinstance(loc['hora'], str):  # Si es una cadena, conviértelo a un objeto time
+                loc['hora'] = datetime.strptime(loc['hora'], '%H:%M:%S').time()
+            elif isinstance(loc['hora'], timedelta):  # Si es un timedelta, maneja el caso
+                # Convertir timedelta a segundos y luego a tiempo
+                total_seconds = int(loc['hora'].total_seconds())
+                loc['hora'] = (datetime(1, 1, 1) + timedelta(seconds=total_seconds)).time()
+            
+            # Asegúrate de que loc['hora'] sea de tipo time antes de formatear
             if isinstance(loc['hora'], time):
                 loc['hora'] = loc['hora'].strftime('%H:%M:%S')  # Formato de hora
-            else:
-                loc['hora'] = str(loc['hora'])  # Maneja el caso de timedelta, si es necesario
 
         if locations:
             return jsonify(locations), 200
         else:
             return jsonify({"message": "No se encontraron ubicaciones para el rango especificado"}), 404
     except mysql.connector.Error as e:
+        print(f"Error de la base de datos: {str(e)}")
         return jsonify({"error": str(e)}), 500
     except Exception as e:
+        print(f"Error inesperado: {str(e)}")
         return jsonify({"error": str(e)}), 500
     finally:
-        # Verifica que el cursor y la conexión existan antes de cerrarlos
         if cursor:
             cursor.close()
         if connection:
             connection.close()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=60000)
+    app.run(host='0.0.0.0', port=60000, debug=True)
