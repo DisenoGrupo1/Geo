@@ -174,7 +174,7 @@
                 const endDateTime = new Date(endDate);
 
                 if (endDateTime <= startDateTime) {
-                    alert("La fecha y hora de finalización debe ser posterior a la fecha y hora de inicio.");
+                    alert("La fecha y hora final debe ser posterior a la fecha y hora de inicial.");
                     return;
                 }
 
@@ -235,11 +235,11 @@
         <!-- Contenedor flex para alinear horizontalmente -->
         <div class="flex-row">
             <div>
-                <label for="start-datetime">Fecha y hora de inicio:</label>
+                <label for="start-datetime">Fecha y hora inicial:</label>
                 <input type="datetime-local" id="start-datetime" placeholder="dd/mm/aaaa --:-- -----">
             </div>
             <div>
-                <label for="end-datetime">Fecha y hora de finalización:</label>
+                <label for="end-datetime">Fecha y hora final:</label>
                 <input type="datetime-local" id="end-datetime" placeholder="dd/mm/aaaa --:-- -----">
             </div>
             <button onclick="loadHistory()">Cargar Histórico</button>
