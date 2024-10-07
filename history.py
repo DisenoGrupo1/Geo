@@ -3,9 +3,11 @@ import mysql.connector
 from datetime import datetime, timedelta, time
 from flask_cors import CORS
 import os
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 CORS(app, resources={r"/location-history": {"origins": "*"}})
+load_dotenv()
 
 # Configuración de la base de datos usando variables de entorno
 db_config = {
