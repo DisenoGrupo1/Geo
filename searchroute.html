@@ -127,12 +127,13 @@
 
         /* Estilo para posicionar el enlace en la parte inferior izquierda */
         #back-container {
-            position: fixed;
-            bottom: 10px; /* Espacio desde la parte inferior */
-            left: 50%; /* Espacio desde la izquierda */
-            right: 50%;
-            z-index: 10; /* Asegura que esté en la parte superior */
-            margin-top: 10px;
+        position: absolute;
+        bottom: 20px; /* Espacio desde la parte inferior */
+        left: 0; /* Alineado a la izquierda */
+        right: 0; /* Alineado a la derecha */
+        display: flex; /* Usar flexbox */
+        justify-content: center; /* Centrar horizontalmente */
+        z-index: 10; /* Asegura que esté en la parte superior */
         }
     </style>
 
