@@ -151,9 +151,7 @@
                 map: map,
                 title: 'Inicio'
             });
-
-            // Añadir animación de rebote al marcador de inicio
-            startMarker.setAnimation(google.maps.Animation.BOUNCE);
+            bounceMarker(startMarker); // Inicia la animación de rebote
         }
 
         function addEndMarker() {
@@ -166,9 +164,21 @@
                 map: map,
                 title: 'Fin'
             });
+            bounceMarker(endMarker); // Inicia la animación de rebote
+        }
 
-            // Añadir animación de rebote al marcador de fin
-            endMarker.setAnimation(google.maps.Animation.BOUNCE);
+        function bounceMarker(marker) {
+            let bounceCount = 0; // Contador de rebotes
+            const interval = setInterval(() => {
+                if (bounceCount < 10) {
+                    marker.setAnimation(google.maps.Animation.BOUNCE);
+                    bounceCount++;
+                    setTimeout(() => marker.setAnimation(null), 500); // Detener el rebote después de 500ms
+                } else {
+                    clearInterval(interval); // Detener el intervalo después de 10 rebotes
+                    marker.setAnimation(null); // Asegurarse de que la animación esté detenida
+                }
+            }, 1000); // Intervalo de 1 segundo entre rebotes
         }
 
         function loadHistory() {
