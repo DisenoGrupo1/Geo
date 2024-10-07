@@ -226,7 +226,7 @@
             })
             .catch(error => {
                 console.error("Error:", error);
-                alert("Error al buscar ubicaciones: " + error.message);
+                //alert("Error al buscar ubicaciones: " + error.message);
                 // Limpiar resultados previos y ocultar el mensaje de no resultados
                 document.getElementById('results-body').innerHTML = ''; 
                 document.getElementById('no-results').style.display = 'none';
@@ -286,7 +286,6 @@
         <input type="text" id="address" placeholder="Ingrese la dirección" required>
         <button onclick="geocodeAddress()">Buscar por Dirección</button>
         <div class="loading">Cargando...</div>
-        <div class="help-text">Ejemplo: "Calle 100 #11-32"</div>
     </div>
 
     <div id="map-and-results">
