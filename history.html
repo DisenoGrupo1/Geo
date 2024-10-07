@@ -151,6 +151,9 @@
                 map: map,
                 title: 'Inicio'
             });
+
+            // Añadir animación de rebote al marcador de inicio
+            startMarker.setAnimation(google.maps.Animation.BOUNCE);
         }
 
         function addEndMarker() {
@@ -163,6 +166,9 @@
                 map: map,
                 title: 'Fin'
             });
+
+            // Añadir animación de rebote al marcador de fin
+            endMarker.setAnimation(google.maps.Animation.BOUNCE);
         }
 
         function loadHistory() {
