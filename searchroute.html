@@ -214,7 +214,10 @@
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('No se encontraron ubicaciones cercanas a la dirección especificada.');
+                    // Limpiar resultados previos y ocultar el mensaje de no resultados
+                    document.getElementById('results-body').innerHTML = ''; 
+                    document.getElementById('no-results').style.display = 'none';
+                    return; // Salir de la función sin continuar
                 }
                 return response.json();
             })
