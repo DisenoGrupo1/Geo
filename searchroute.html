@@ -127,14 +127,14 @@
 
         /* Estilo para posicionar el enlace en la parte inferior izquierda */
         #back-container {
-        position: absolute;
-        bottom: 10px; /* Espacio desde la parte inferior */
-        margin-top: 10px;
-        left: 0; /* Alineado a la izquierda */
-        right: 0; /* Alineado a la derecha */
-        display: flex; /* Usar flexbox */
-        justify-content: center; /* Centrar horizontalmente */
-        z-index: 10; /* Asegura que esté en la parte superior */
+            position: absolute;
+            bottom: 10px; /* Espacio desde la parte inferior */
+            margin-top: 10px;
+            left: 0; /* Alineado a la izquierda */
+            right: 0; /* Alineado a la derecha */
+            display: flex; /* Usar flexbox */
+            justify-content: center; /* Centrar horizontalmente */
+            z-index: 10; /* Asegura que esté en la parte superior */
         }
     </style>
 
@@ -189,7 +189,7 @@
                         searchByCoordinates(location.lat(), location.lng());
                         centerMapOnLocation(location); // Centrar el mapa en la ubicación
                     } else {
-                        alert('La dirección ingresada no es valida ');
+                        alert('La dirección ingresada no es válida');
                     }
                 });
             } else {
@@ -227,6 +227,9 @@
             .catch(error => {
                 console.error("Error:", error);
                 alert("Error al buscar ubicaciones: " + error.message);
+                // Limpiar resultados previos y ocultar el mensaje de no resultados
+                document.getElementById('results-body').innerHTML = ''; 
+                document.getElementById('no-results').style.display = 'none';
             });
         }
 
@@ -283,16 +286,12 @@
         <input type="text" id="address" placeholder="Ingrese la dirección" required>
         <button onclick="geocodeAddress()">Buscar por Dirección</button>
         <div class="loading">Cargando...</div>
+        <div class="help-text">Ejemplo: "Calle 100 #11-32"</div>
     </div>
 
-    <!-- Contenedor para mapa y resultados -->
     <div id="map-and-results">
-        <!-- Mapa -->
         <div id="map"></div>
-
-        <!-- Resultados -->
         <div id="results-container">
-            <div id="no-results" class="no-results" style="display:none;">No se encontraron resultados.</div>
             <table id="results">
                 <thead>
                     <tr>
@@ -302,10 +301,12 @@
                 </thead>
                 <tbody id="results-body"></tbody>
             </table>
+            <div class="no-results" id="no-results" style="display: none;">
+                No se encontraron ubicaciones cercanas a la dirección especificada.
+            </div>
         </div>
     </div>
 
-    <!-- Botón para volver a inicio -->
     <div id="back-container">
         <a href="index.html" class="back-link">Volver a Inicio</a>
     </div>
