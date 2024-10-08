@@ -155,7 +155,7 @@
         let configData;
         let map;
         let marker;
-
+        let circle;
         // Cargar config.json y obtener la clave API
         function loadConfig() {
             return fetch('config.json')
@@ -253,7 +253,18 @@
                 title: 'Ubicación seleccionada'
             });
         }
-
+        const radius = parseInt(document.getElementById('radius').value); // Obtener el radio actual
+        circle = new google.maps.Circle({
+            strokeColor: '#FF0000',
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: '#FF0000',
+            fillOpacity: 0.35,
+            map: map,
+            center: latLng,
+            radius: radius // Establecer el radio en metros
+        });
+        
         // Función para mostrar los resultados en una tabla
         function displayResults(locations) {
             const resultsContainer = document.getElementById('results-body');
@@ -323,7 +334,7 @@
 
     <!-- Enlace para volver a la página anterior -->
     <div id="back-container">
-        <a class="back-link" href="/inicio">Volver al inicio</a>
+        <a class="back-link" href="index.html">Volver al inicio</a>
     </div>
 </body>
 
