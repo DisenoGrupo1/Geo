@@ -26,6 +26,7 @@
             background-color: #fff;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: relative; /* Permite la posición absoluta del botón */
         }
 
         label {
@@ -71,10 +72,11 @@
             margin-top: 20px;
         }
 
-        /* Estilos para el contenedor del enlace */
+        /* Estilos para el botón "Volver a Inicio" */
         #link-container {
-            text-align: center; /* Centra el botón */
-            margin-top: 20px; /* Espacio superior para separar del contenido anterior */
+            position: absolute; /* Posición absoluta */
+            top: 20px; /* Espacio desde la parte superior */
+            right: 20px; /* Espacio desde la derecha */
         }
 
         .btn-link {
@@ -250,24 +252,24 @@
     <div class="container">
         <h1>Histórico de Ubicaciones</h1>
         
+        <!-- Botón "Volver a Inicio" -->
+        <div id="link-container">
+            <button class="btn-link" onclick="window.location.href='index.html'">Volver a Inicio</button>
+        </div>
+
         <div class="flex-row">
             <div>
                 <label for="start-datetime">Fecha y hora inicial:</label>
-                <input type="datetime-local" id="start-datetime" placeholder="dd/mm/aaaa --:-- -----">
+                <input type="datetime-local" id="start-datetime" placeholder="dd/mm/aaaa --:--" required>
             </div>
             <div>
                 <label for="end-datetime">Fecha y hora final:</label>
-                <input type="datetime-local" id="end-datetime" placeholder="dd/mm/aaaa --:-- -----">
+                <input type="datetime-local" id="end-datetime" placeholder="dd/mm/aaaa --:--" required>
             </div>
             <button onclick="loadHistory()">Cargar Histórico</button>
         </div>
 
         <div id="map"></div>
-        
-        <!-- Botón "Volver a Inicio" -->
-        <div id="link-container">
-            <button class="btn-link" onclick="window.location.href='index.html'">Volver a Inicio</button>
-        </div>
     </div>
 </body>
 </html>
