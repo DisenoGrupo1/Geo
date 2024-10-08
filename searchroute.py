@@ -30,14 +30,18 @@ def location_at_place():
     data = request.get_json()
     lat = data.get('latitud')
     lng = data.get('longitud')
+    radius = data.get('radio')  # Recibe el radio desde el frontend
 
-    logger.debug(f"Recibidos: latitud={lat}, longitud={lng}")
+    logger.debug(f"Recibidos: latitud={lat}, longitud={lng}, radio={radius}")
 
     if lat is None or lng is None:
         logger.error("Latitud y longitud son requeridas")
         return jsonify({'error': 'Latitud y longitud son requeridas'}), 400
 
-    radius = 150  # Radio en metros
+    if radius is None:
+        radius = 150  # Valor por defecto si no se proporciona el radio
+    else:
+        radius = float(radius)  # Asegurarse de que sea un valor numérico
 
     # Conectar a la base de datos
     try:
@@ -45,6 +49,7 @@ def location_at_place():
         cursor = conn.cursor()
         logger.debug("Conexión a la base de datos exitosa")
 
+        # Consulta SQL ajustada con el valor de radio
         sql = """
             SELECT
                 fecha, hora, latitud, longitud
@@ -59,7 +64,7 @@ def location_at_place():
 
         cursor.execute(sql, (lat, lng, lat, radius))
         locations = cursor.fetchall()
-        logger.debug(f"Resultados de la consulta: {locations}")
+        #logger.debug(f"Resultados de la consulta: {locations}")
 
         if not locations:
             logger.warning("No se encontraron ubicaciones cercanas.")
@@ -77,7 +82,7 @@ def location_at_place():
                 'longitud': row[3]
             })
 
-        logger.debug(f"Ubicaciones encontradas: {location_list}")
+        #logger.debug(f"Ubicaciones encontradas: {location_list}")
         return jsonify(location_list)
 
     except mysql.connector.Error as e:
@@ -92,3 +97,4 @@ def location_at_place():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=50005)
+

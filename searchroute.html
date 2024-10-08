@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,13 +9,14 @@
 
     <!-- Estilos CSS -->
     <style>
-        html, body {
+        html,
+        body {
             height: 100%;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
-            position: relative; 
+            position: relative;
         }
 
         #map-and-results {
@@ -40,7 +42,7 @@
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             display: flex;
-            align-items: center; /* Alinea verticalmente al centro */
+            align-items: center;
             margin: 20px;
         }
 
@@ -58,7 +60,7 @@
 
         button {
             padding: 6px 12px;
-            background-color: #000dff; /* Cambiado a azul especificado */
+            background-color: #000dff;
             color: white;
             border: none;
             border-radius: 3px;
@@ -67,7 +69,7 @@
         }
 
         button:hover {
-            background-color: #000bb3; /* Color al pasar el ratón (más oscuro) */
+            background-color: #000bb3;
         }
 
         .help-text {
@@ -89,7 +91,8 @@
             margin-top: 20px;
         }
 
-        #results th, #results td {
+        #results th,
+        #results td {
             border: 1px solid #ccc;
             padding: 8px;
             text-align: left;
@@ -111,31 +114,39 @@
         }
 
         /* Estilo para el enlace de volver a inicio */
+        #back-container {
+            position: fixed;
+            top: 25px;
+            /* Distancia desde la parte superior */
+            right: 20px;
+            /* Distancia desde la derecha */
+            z-index: 100;
+            /* Asegura que el botón esté encima de otros elementos */
+        }
+
         .back-link {
             display: inline-block;
             padding: 6px 10px;
-            background-color: #28a745; /* Cambiado a azul especificado */
+            background-color: #28a745;
             color: white;
             border-radius: 3px;
             text-decoration: none;
             transition: background-color 0.3s;
-            margin: 6px; /* Margen para separación */
+            margin: 6px;
         }
 
         .back-link:hover {
-            background-color: #28a745; /* Color al pasar el ratón (más oscuro) */
+            background-color: #218838;
         }
 
-        /* Estilo para posicionar el enlace en la parte inferior izquierda */
-        #back-container {
-            position: absolute;
-            bottom: 10px; /* Espacio desde la parte inferior */
-            margin-top: 10px;
-            left: 0; /* Alineado a la izquierda */
-            right: 0; /* Alineado a la derecha */
-            display: flex; /* Usar flexbox */
-            justify-content: center; /* Centrar horizontalmente */
-            z-index: 10; /* Asegura que esté en la parte superior */
+        /* Estilos adicionales para el control de radio */
+        #radius-selection {
+            margin: 20px;
+        }
+
+        #radius-value {
+            margin-left: 10px;
+            font-weight: bold;
         }
     </style>
 
@@ -143,8 +154,7 @@
     <script>
         let configData;
         let map;
-        let polyline;
-        let marker; // Variable para el marcador
+        let marker;
 
         // Cargar config.json y obtener la clave API
         function loadConfig() {
@@ -175,6 +185,7 @@
             const address = document.getElementById('address').value;
             const button = document.querySelector('button');
             const loadingText = document.querySelector('.loading');
+            const radius = document.getElementById('radius').value;  // Obtener el valor del radio
 
             if (address) {
                 button.disabled = true;
@@ -187,8 +198,8 @@
 
                     if (status === 'OK') {
                         const location = results[0].geometry.location;
-                        searchByCoordinates(location.lat(), location.lng());
-                        centerMapOnLocation(location); // Centrar el mapa en la ubicación
+                        searchByCoordinates(location.lat(), location.lng(), radius);  // Pasar el valor del radio
+                        centerMapOnLocation(location);
                     } else {
                         alert('La dirección ingresada no es válida');
                     }
@@ -199,12 +210,13 @@
         }
 
         // Función para buscar por coordenadas en la base de datos
-        function searchByCoordinates(lat, lng) {
+        function searchByCoordinates(lat, lng, radius) {  // Recibe el valor del radio
             const requestBody = {
                 latitud: lat,
-                longitud: lng
+                longitud: lng,
+                radio: radius  // Incluir el radio en el cuerpo de la solicitud
             };
-            console.log("Latitud:", lat, "Longitud:", lng);
+            console.log("Latitud:", lat, "Longitud:", lng, "Radio:", radius);
 
             fetch(`http://${configData.AWS_IP}:50005/location-at-place`, {
                 method: 'POST',
@@ -213,39 +225,28 @@
                 },
                 body: JSON.stringify(requestBody)
             })
-            .then(response => {
-                if (!response.ok) {
+                .then(response => response.json())
+                .then(data => {
+                    displayResults(data);
+                })
+                .catch(error => {
+                    console.error("Error:", error);
                     // Limpiar resultados previos y ocultar el mensaje de no resultados
-                    document.getElementById('results-body').innerHTML = ''; 
+                    document.getElementById('results-body').innerHTML = '';
                     document.getElementById('no-results').style.display = 'none';
-                    return; // Salir de la función sin continuar
-                }
-                return response.json();
-            })
-            .then(data => {
-                displayResults(data);
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                //alert("Error al buscar ubicaciones: " + error.message);
-                // Limpiar resultados previos y ocultar el mensaje de no resultados
-                document.getElementById('results-body').innerHTML = ''; 
-                document.getElementById('no-results').style.display = 'none';
-            });
+                });
         }
 
         // Función para centrar el mapa y agregar un marcador
         function centerMapOnLocation(location) {
             const latLng = { lat: location.lat(), lng: location.lng() };
             map.setCenter(latLng);
-            map.setZoom(15); // Establecer el nivel de zoom aquí
+            map.setZoom(15);
 
-            // Si ya existe un marcador, lo elimina
             if (marker) {
                 marker.setMap(null);
             }
 
-            // Crea un nuevo marcador
             marker = new google.maps.Marker({
                 position: latLng,
                 map: map,
@@ -257,7 +258,7 @@
         function displayResults(locations) {
             const resultsContainer = document.getElementById('results-body');
             const noResultsMessage = document.getElementById('no-results');
-            resultsContainer.innerHTML = ''; // Limpiar resultados previos
+            resultsContainer.innerHTML = '';
 
             if (locations.length === 0) {
                 noResultsMessage.style.display = 'block';
@@ -265,7 +266,7 @@
                 noResultsMessage.style.display = 'none';
 
                 locations.forEach(location => {
-                    const row = `<tr onclick="updatePolyline([${JSON.stringify(location)}])">
+                    const row = `<tr>
                                     <td>${location.fecha}</td>
                                     <td>${location.hora}</td>
                                 </tr>`;
@@ -274,21 +275,36 @@
             }
         }
 
+        // Actualizar el valor del radio mostrado
+        function updateRadiusValue(value) {
+            document.getElementById('radius-value').innerText = value + " m";
+        }
+
         // Cargar configuración al cargar la ventana
         window.onload = function () {
             loadConfig();
         };
     </script>
 </head>
+
 <body>
     <!-- Sección para ingresar la dirección -->
     <div id="address-selection">
         <label for="address">Dirección:</label>
-        <input type="text" id="address" placeholder="Ingrese la dirección" required>
-        <button onclick="geocodeAddress()">Buscar por Dirección</button>
+        <input type="text" id="address" placeholder="Ingrese una dirección">
+        <button onclick="geocodeAddress()">Buscar</button>
         <div class="loading">Cargando...</div>
     </div>
 
+    <!-- Control para seleccionar el radio de búsqueda -->
+    <div id="radius-selection">
+        <label for="radius">Radio de búsqueda (en metros):</label>
+        <input type="range" id="radius" min="100" max="5000" step="100" value="1000"
+            oninput="updateRadiusValue(this.value)">
+        <span id="radius-value">1000 m</span>
+    </div>
+
+    <!-- Contenedor para el mapa y los resultados -->
     <div id="map-and-results">
         <div id="map"></div>
         <div id="results-container">
@@ -301,14 +317,14 @@
                 </thead>
                 <tbody id="results-body"></tbody>
             </table>
-            <div class="no-results" id="no-results" style="display: none;">
-                No se encontraron ubicaciones cercanas a la dirección especificada.
-            </div>
+            <div id="no-results" class="no-results" style="display: none;">No se encontraron resultados</div>
         </div>
     </div>
 
+    <!-- Enlace para volver a la página anterior -->
     <div id="back-container">
-        <a href="index.html" class="back-link">Volver a Inicio</a>
+        <a class="back-link" href="/inicio">Volver al inicio</a>
     </div>
 </body>
+
 </html>
