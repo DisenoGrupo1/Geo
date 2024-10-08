@@ -152,6 +152,7 @@
         let configData;
         let map;
         let marker;
+        let circle; // Variable global para el círculo
 
         // Cargar config.json y obtener la clave API
         function loadConfig() {
@@ -251,7 +252,14 @@
 
             // Crear círculo de búsqueda
             const radius = parseInt(document.getElementById('radius').value);
-            const circle = new google.maps.Circle({
+
+            // Si ya existe un círculo, elimínalo
+            if (circle) {
+                circle.setMap(null); // Eliminar el círculo anterior
+            }
+
+            // Crear un nuevo círculo
+            circle = new google.maps.Circle({
                 strokeColor: '#FF0000',
                 strokeOpacity: 0.8,
                 strokeWeight: 2,
@@ -259,7 +267,7 @@
                 fillOpacity: 0.35,
                 map: map,
                 center: latLng,
-                radius: radius // Establecer el radio en metros
+                radius: radius // Establecer el nuevo radio en metros
             });
         }
 
@@ -304,18 +312,20 @@
         <div class="loading">Cargando...</div>
     </div>
 
-    <!-- Control para seleccionar el radio de búsqueda -->
-    <div id="radius-selection">
-        <label for="radius">Radio de búsqueda (en metros):</label>
-        <input type="range" id="radius" min="100" max="5000" step="100" value="100" onchange="updateRadiusValue(this.value)">
-        <span id="radius-value">100 m</span>
+    <div id="back-container">
+        <a href="/" class="back-link">Volver a inicio</a>
     </div>
 
-    <!-- Contenedor para el mapa y los resultados -->
+    <div id="radius-selection">
+        <label for="radius">Radio de búsqueda:</label>
+        <input type="range" id="radius" min="100" max="5000" value="1000" step="100" onchange="updateRadiusValue(this.value)">
+        <span id="radius-value">1000 m</span>
+    </div>
+
     <div id="map-and-results">
         <div id="map"></div>
         <div id="results-container">
-            <h3>Resultados de Búsqueda</h3>
+            <h3>Resultados</h3>
             <table id="results">
                 <thead>
                     <tr>
@@ -325,13 +335,8 @@
                 </thead>
                 <tbody id="results-body"></tbody>
             </table>
-            <div class="no-results" id="no-results">No se encontraron resultados.</div>
+            <div class="no-results" id="no-results" style="display: none;">No se encontraron resultados.</div>
         </div>
-    </div>
-
-    <!-- Enlace para volver a la página de inicio -->
-    <div id="back-container">
-        <a href="/index.html" class="back-link">Volver a Inicio</a>
     </div>
 </body>
 
