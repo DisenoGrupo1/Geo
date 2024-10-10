@@ -161,18 +161,16 @@ button:hover {
 }
 
 /* Media queries para dispositivos pequeños */
-/* Media queries para dispositivos pequeños */
 @media (max-width: 600px) {
     #map-and-results {
-        flex-direction: row; /* Cambiar a fila en pantallas pequeñas */
+        flex-direction: column; /* Cambia a columna en pantallas pequeñas */
         height: auto; /* Permite que el contenedor ajuste su altura automáticamente */
     }
 
     #map,
     #results-container {
-        width: 100%; /* Ambos ocupan el 50% del ancho */
+        width: 100%; /* Cada uno ocupa el 100% del ancho */
         height: 300px; /* Altura fija en dispositivos pequeños */
-        right: 0;
     }
 
     input {
@@ -186,4 +184,3 @@ button:hover {
         margin-top: 10px; /* Espacio entre el contenedor y el botón */
     }
 }
-
