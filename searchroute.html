@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Inserte su título</title>
+    <title id="page-title">Inserte su titulo</title>
     <link rel="icon" href="/icon/titleicon3.png" type="image/png">
 
     <!-- Estilos CSS -->
@@ -67,12 +67,10 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
-
         h3 {
             text-align: center;
             color: #000000;
         }
-
         button:hover {
             background-color: #000bb3;
         }
@@ -121,9 +119,9 @@
         /* Estilo para el enlace de volver a inicio */
         #back-container {
             position: absolute;
-            top: 25px;
-            right: 20px;
-            z-index: 100;
+            top: 25px; /* Distancia desde la parte superior */
+            right: 20px; /* Distancia desde la derecha */
+            z-index: 100; /* Asegura que el botón esté encima de otros elementos */
         }
 
         .back-link {
@@ -141,6 +139,7 @@
             background-color: #218838;
         }
 
+        /* Estilos adicionales para el control de radio */
         #radius-selection {
             margin: 10px;
         }
@@ -149,28 +148,161 @@
             margin-left: 10px;
             font-weight: bold;
         }
-
-        /* Media queries para pantallas pequeñas */
-        @media (max-width: 768px) {
-            #map-and-results {
-                flex-direction: column;
-                height: auto;
-            }
-
-            #map, #results-container {
-                width: 100%;
-                height: 50vh; /* Ajustar la altura para que ambos se vean bien */
-            }
-
-            input {
-                width: 100%;
-            }
-        }
     </style>
 
     <!-- Script JavaScript -->
     <script>
-        // Tu código JavaScript permanece igual
+        let configData;
+        let map;
+        let marker;
+        let circle; // Variable global para el círculo
+
+        // Cargar config.json y obtener la clave API
+        function loadConfig() {
+            return fetch('config.json')
+                .then(response => response.json())
+                .then(config => {
+                    configData = config;
+                    document.getElementById('page-title').innerText = configData.TITLE;
+                    const script = document.createElement('script');
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
+                    script.defer = true;
+                    document.head.appendChild(script);
+                })
+                .catch(error => console.error("Error al cargar config.json:", error));
+        }
+
+        // Inicializa el mapa
+        function initMap() {
+            const barranquilla = { lat: 10.9878, lng: -74.7889 };
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 12,
+                center: barranquilla
+            });
+        }
+
+        // Función para convertir dirección en coordenadas
+        function geocodeAddress() {
+            const address = document.getElementById('address').value;
+            const button = document.querySelector('button');
+            const loadingText = document.querySelector('.loading');
+            const radius = document.getElementById('radius').value;  // Obtener el valor del radio
+
+            if (address) {
+                button.disabled = true;
+                loadingText.style.display = 'block';
+
+                const geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ address: address }, function (results, status) {
+                    button.disabled = false;
+                    loadingText.style.display = 'none';
+
+                    if (status === 'OK') {
+                        const location = results[0].geometry.location;
+                        searchByCoordinates(location.lat(), location.lng(), radius);  // Pasar el valor del radio
+                        centerMapOnLocation(location);
+                    } else {
+                        alert('La dirección ingresada no es válida');
+                    }
+                });
+            } else {
+                alert("Por favor, ingrese una dirección válida.");
+            }
+        }
+
+
+        function searchByCoordinates(lat, lng, radius) {
+            const requestBody = {
+                latitud: lat,
+                longitud: lng,
+                radio: radius  // Incluir el radio en el cuerpo de la solicitud
+            };
+            console.log("Latitud:", lat, "Longitud:", lng, "Radio:", radius);
+
+            fetch(`http://${configData.AWS_IP}:50005/location-at-place`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    displayResults(data);
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    document.getElementById('results-body').innerHTML = '';
+                    document.getElementById('no-results').style.display = 'none';
+                });
+        }
+
+        // Función para centrar el mapa y agregar un marcador
+        function centerMapOnLocation(location) {
+            const latLng = { lat: location.lat(), lng: location.lng() };
+            map.setCenter(latLng);
+            map.setZoom(15);
+
+            if (marker) {
+                marker.setMap(null);
+            }
+
+            marker = new google.maps.Marker({
+                position: latLng,
+                map: map,
+                title: 'Ubicación seleccionada'
+            });
+
+            // Crear círculo de búsqueda
+            const radius = parseInt(document.getElementById('radius').value);
+
+            // Si ya existe un círculo, elimínalo
+            if (circle) {
+                circle.setMap(null); // Eliminar el círculo anterior
+            }
+
+            // Crear un nuevo círculo
+            circle = new google.maps.Circle({
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: '#FF0000',
+                fillOpacity: 0.35,
+                map: map,
+                center: latLng,
+                radius: radius // Establecer el nuevo radio en metros
+            });
+        }
+
+        // Función para mostrar los resultados en una tabla
+        function displayResults(locations) {
+            const resultsContainer = document.getElementById('results-body');
+            const noResultsMessage = document.getElementById('no-results');
+            resultsContainer.innerHTML = '';
+
+            if (locations.length === 0) {
+                noResultsMessage.style.display = 'block';
+            } else {
+                noResultsMessage.style.display = 'none';
+                locations.forEach(location => {
+                    const row = `<tr>
+                                    <td>${location.fecha}</td>
+                                    <td>${location.hora}</td>
+                                </tr>`;
+                    resultsContainer.innerHTML += row;
+                });
+            }
+        }
+
+        // Actualizar el valor del radio mostrado
+        function updateRadiusValue(value) {
+            document.getElementById('radius-value').innerText = value + " m";
+        }
+
+        // Cargar configuración al cargar la ventana
+        window.onload = function () {
+            loadConfig();
+        };
     </script>
 </head>
 
