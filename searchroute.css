@@ -146,16 +146,17 @@ button:hover {
     #map-and-results {
         flex-direction: column; /* Cambia a columna en pantallas pequeñas */
         height: 100%;
-        right: 0;
     }
 
     #map {
         height: 90%; /* Ajustado para dejar espacio para el hipervínculo */
+        right: 0;
         width: 100%; /* Ajustado para ocupar todo el ancho */
     }
 
     #results-container {
         width: 100%; /* Ajustado para ocupar todo el ancho */
+        right: 0;
         height: auto; /* Permite que el contenedor se ajuste */
     }
 
