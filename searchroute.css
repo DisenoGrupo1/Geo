@@ -98,34 +98,44 @@ button:hover {
 
 .no-results {
     text-align: center;
-    font-size: 1.1em;
+    font-size: 1.2em;
+    margin-top: 20px;
+    color: #999;
+}
+
+.error {
     color: red;
 }
 
+/* Estilo para el enlace de volver a inicio */
 #back-container {
     position: absolute;
-    top: 10px;
-    left: 10px;
+    top: 25px; /* Distancia desde la parte superior */
+    right: 20px; /* Distancia desde la derecha */
+    z-index: 100; /* Asegura que el botón esté encima de otros elementos */
 }
 
 .back-link {
+    display: inline-block;
+    padding: 6px 10px;
+    background-color: #28a745;
+    color: white;
+    border-radius: 3px;
     text-decoration: none;
-    color: #007bff;
-    font-weight: bold;
+    transition: background-color 0.3s;
+    margin: 6px;
 }
 
 .back-link:hover {
-    text-decoration: underline;
+    background-color: #218838;
 }
 
+/* Estilos adicionales para el control de radio */
 #radius-selection {
-    margin: 20px;
-    display: flex;
-    align-items: center;
+    margin: 10px;
 }
 
-#radius {
-    margin: 0 10px;
-    width: 200px;
+#radius-value {
+    margin-left: 10px;
+    font-weight: bold;
 }
-
