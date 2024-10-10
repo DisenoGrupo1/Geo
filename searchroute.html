@@ -9,6 +9,7 @@
 
     <!-- Estilos CSS -->
     <style>
+        /* Estilos generales para pantallas grandes */
         html,
         body {
             height: 100%;
@@ -21,17 +22,15 @@
 
         #map-and-results {
             display: flex;
-            flex-direction: column;
             height: 80%;
         }
 
         #map {
-            width: 100%;
-            height: 300px; /* Ajusta la altura del mapa para pantallas móviles */
+            width: 50%;
         }
 
         #results-container {
-            width: 100%;
+            width: 50%;
             overflow-y: auto;
             padding: 20px;
             background-color: #f9f9f9;
@@ -44,8 +43,7 @@
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
+            align-items: center;
             margin: 20px;
         }
 
@@ -54,33 +52,30 @@
         }
 
         input {
-            margin: 10px 0;
+            margin: 0 10px 0 0;
             padding: 5px;
             border: 1px solid #ccc;
             border-radius: 3px;
-            width: 100%;
-            box-sizing: border-box;
+            width: 300px;
         }
 
         button {
-            padding: 10px;
+            padding: 6px 12px;
             background-color: #000dff;
             color: white;
             border: none;
             border-radius: 3px;
             cursor: pointer;
-            width: 100%;
-            box-sizing: border-box;
             transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #000bb3;
         }
 
         h3 {
             text-align: center;
             color: #000000;
-        }
-
-        button:hover {
-            background-color: #000bb3;
         }
 
         .help-text {
@@ -127,9 +122,9 @@
         /* Estilo para el enlace de volver a inicio */
         #back-container {
             position: absolute;
-            top: 80px; /* Cambiar distancia desde la parte superior */
-            right: 20px; /* Distancia desde la derecha */
-            z-index: 100; /* Asegura que el botón esté encima de otros elementos */
+            top: 25px;
+            right: 20px;
+            z-index: 100;
         }
 
         .back-link {
@@ -157,38 +152,41 @@
             font-weight: bold;
         }
 
-        /* Media query para pantallas móviles */
-        @media (min-width: 600px) {
+        /* Estilos específicos para pantallas pequeñas */
+        @media only screen and (max-width: 600px) {
             #map-and-results {
-                flex-direction: row;
+                flex-direction: column;
+                height: auto;
             }
 
             #map {
-                height: auto;
-                width: 50%;
+                width: 100%;
+                height: 300px;
             }
 
             #results-container {
-                width: 50%;
+                width: 100%;
+                height: auto;
+                margin-top: 20px;
+            }
+
+            #back-container {
+                top: 80px;
+                right: 10px;
             }
 
             #address-selection {
-                flex-direction: row;
-                align-items: center;
-                justify-content: space-between;
+                flex-direction: column;
+                margin: 10px;
             }
 
             input {
-                width: 300px;
+                width: 100%;
+                margin-bottom: 10px;
             }
 
             button {
-                width: auto;
-            }
-
-            /* Reajustar la posición del botón de "Volver a inicio" para pantallas grandes */
-            #back-container {
-                top: 25px;
+                width: 100%;
             }
         }
     </style>
@@ -252,7 +250,6 @@
                 alert("Por favor, ingrese una dirección válida.");
             }
         }
-
 
         function searchByCoordinates(lat, lng, radius) {
             const requestBody = {
@@ -321,61 +318,49 @@
         function displayResults(locations) {
             const resultsContainer = document.getElementById('results-body');
             const noResultsMessage = document.getElementById('no-results');
-            resultsContainer.innerHTML = ''; // Limpiar resultados anteriores
+            resultsContainer.innerHTML = '';
 
-            if (locations.length > 0) {
-                locations.forEach(location => {
-                    const row = document.createElement('tr');
-                    const dateCell = document.createElement('td');
-                    const timeCell = document.createElement('td');
-
-                    dateCell.textContent = location.fecha;
-                    timeCell.textContent = location.hora;
-
-                    row.appendChild(dateCell);
-                    row.appendChild(timeCell);
-                    resultsContainer.appendChild(row);
-                });
-
-                noResultsMessage.style.display = 'none';
-            } else {
+            if (locations.length === 0) {
                 noResultsMessage.style.display = 'block';
+            } else {
+                noResultsMessage.style.display = 'none';
+                locations.forEach(location => {
+                    const row = `<tr>
+                                    <td>${location.fecha}</td>
+                                    <td>${location.hora}</td>
+                                </tr>`;
+                    resultsContainer.innerHTML += row;
+                });
             }
         }
 
-        // Actualizar el valor del radio cuando el usuario lo cambie
-        function updateRadiusValue(value) {
-            document.getElementById('radius-value').textContent = `${value} m`;
-        }
-
-        // Cargar la configuración al cargar la página
+        // Cargar la configuración y el mapa
         window.onload = loadConfig;
     </script>
 </head>
 
 <body>
-    <!-- Sección para ingresar la dirección -->
-    <div id="address-selection">
-        <label for="address">Dirección:</label>
-        <input type="text" id="address" placeholder="Ingrese una dirección">
-        <button onclick="geocodeAddress()">Buscar</button>
-        <div class="loading">Cargando...</div>
-    </div>
-
+    <!-- Botón de volver a inicio -->
     <div id="back-container">
         <a href="/" class="back-link">Volver a inicio</a>
     </div>
 
-    <div id="radius-selection">
-        <label for="radius">Radio de búsqueda:</label>
-        <input type="range" id="radius" min="100" max="2000" value="150" step="50" onchange="updateRadiusValue(this.value)">
-        <span id="radius-value">150 m</span>
+    <!-- Selección de dirección -->
+    <div id="address-selection">
+        <label for="address">Ingrese la dirección:</label>
+        <input type="text" id="address" placeholder="Ingrese la dirección">
+        <button onclick="geocodeAddress()">Buscar</button>
+        <p class="loading">Cargando...</p>
     </div>
 
+    <!-- Contenedor para mapa y resultados -->
     <div id="map-and-results">
+        <!-- Mapa -->
         <div id="map"></div>
+
+        <!-- Resultados -->
         <div id="results-container">
-            <h3>Resultados de fechas y horas para la consulta por dirección</h3>
+            <h3>Resultados</h3>
             <table id="results">
                 <thead>
                     <tr>
@@ -385,7 +370,7 @@
                 </thead>
                 <tbody id="results-body"></tbody>
             </table>
-            <div class="no-results" id="no-results" style="display: none;">No se encontraron resultados.</div>
+            <p id="no-results" class="no-results" style="display: none;">No hay resultados.</p>
         </div>
     </div>
 </body>
