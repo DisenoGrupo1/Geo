@@ -8,28 +8,23 @@ body {
     position: relative;
 }
 
-/* Contenedor principal para el mapa y resultados */
 #map-and-results {
     display: flex;
     height: 80%;
-    flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
 }
 
-/* Mapa */
 #map {
-    width: 50%; /* Ancho en pantallas grandes */
+    width: 50%;
 }
 
-/* Contenedor de resultados */
 #results-container {
-    width: 50%; /* Ancho en pantallas grandes */
+    width: 50%;
     overflow-y: auto;
     padding: 20px;
     background-color: #f9f9f9;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* Selección de dirección */
 #address-selection {
     padding: 10px;
     background-color: #f1f1f1;
@@ -40,21 +35,18 @@ body {
     margin: 20px;
 }
 
-/* Etiquetas */
 label {
     margin-right: 10px;
 }
 
-/* Estilo de los inputs */
 input {
     margin: 0 10px 0 0;
     padding: 5px;
     border: 1px solid #ccc;
     border-radius: 3px;
-    width: 300px; /* Ancho fijo para inputs */
+    width: 300px;
 }
 
-/* Estilo del botón */
 button {
     padding: 6px 12px;
     background-color: #000dff;
@@ -65,18 +57,15 @@ button {
     transition: background-color 0.3s;
 }
 
-/* Estilo del encabezado */
 h3 {
     text-align: center;
     color: #000000;
 }
 
-/* Efecto hover para botones */
 button:hover {
     background-color: #000bb3;
 }
 
-/* Texto de ayuda */
 .help-text {
     color: #666;
     font-size: 0.9em;
@@ -84,21 +73,18 @@ button:hover {
     margin-bottom: 10px;
 }
 
-/* Indicador de carga */
 .loading {
     display: none;
     font-weight: bold;
     margin-top: 10px;
 }
 
-/* Estilo de la tabla de resultados */
 #results {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
 }
 
-/* Estilo para celdas de la tabla */
 #results th,
 #results td {
     border: 1px solid #ccc;
@@ -106,12 +92,10 @@ button:hover {
     text-align: left;
 }
 
-/* Encabezados de la tabla */
 #results th {
     background-color: #f2f2f2;
 }
 
-/* Mensaje si no hay resultados */
 .no-results {
     text-align: center;
     font-size: 1.2em;
@@ -119,7 +103,6 @@ button:hover {
     color: #999;
 }
 
-/* Mensaje de error */
 .error {
     color: red;
 }
@@ -132,7 +115,6 @@ button:hover {
     z-index: 100; /* Asegura que el botón esté encima de otros elementos */
 }
 
-/* Estilo del enlace de volver */
 .back-link {
     display: inline-block;
     padding: 6px 10px;
@@ -144,43 +126,16 @@ button:hover {
     margin: 6px;
 }
 
-/* Efecto hover para el enlace de volver */
 .back-link:hover {
     background-color: #218838;
 }
 
-/* Estilos adicionales para la selección de radio y valor de radio */
+/* Estilos adicionales para el control de radio */
 #radius-selection {
     margin: 10px;
 }
 
-/* Estilo para el valor del radio */
 #radius-value {
     margin-left: 10px;
     font-weight: bold;
-}
-
-/* Media queries para dispositivos pequeños */
-@media (max-width: 600px) {
-    #map-and-results {
-        flex-direction: column; /* Cambia a columna en pantallas pequeñas */
-        height: auto; /* Permite que el contenedor ajuste su altura automáticamente */
-    }
-
-    #map,
-    #results-container {
-        width: 100%; /* Cada uno ocupa el 100% del ancho */
-        height: 300px; /* Altura fija en dispositivos pequeños */
-    }
-
-    input {
-        width: 100%; /* Ancho completo para inputs */
-    }
-
-    #back-container {
-        position: relative; /* Cambiar a relativa en dispositivos pequeños */
-        top: 0; /* Sin espacio adicional desde la parte superior */
-        right: 0; /* Sin espacio adicional desde la derecha */
-        margin-top: 10px; /* Espacio entre el contenedor y el botón */
-    }
 }
