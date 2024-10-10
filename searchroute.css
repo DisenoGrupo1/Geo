@@ -145,46 +145,24 @@ button:hover {
 @media (max-width: 768px) {
     #map-and-results {
         flex-direction: column; /* Cambia a columna en pantallas pequeñas */
-        right: 0;
-        height: 100%;
+        height: auto; /* Permite que el contenedor ajuste su altura automáticamente */
     }
 
-    #map {
-        height: 90%; /* Ajustado para dejar espacio para el hipervínculo */
-        right: 0;
-        width: 100%; /* Ajustado para ocupar todo el ancho */
-    }
-
+    #map,
     #results-container {
-        width: 100%; /* Ajustado para ocupar todo el ancho */
+        width: 100%; /* Cada uno ocupa el 100% del ancho */
         right: 0;
-        height: auto; /* Permite que el contenedor se ajuste */
+        height: 300px; /* Altura fija en dispositivos pequeños */
     }
 
-    /* Contenedor del hipervínculo */
-    #link-container {
-        height: 10%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #f8f9fa;
-        flex-direction: row;
+    input {
+        width: 100%; /* Ancho completo para inputs */
     }
 
-    /* Estilo del enlace como botón */
-    #link-container a {
-        display: inline-block; /* Permite aplicar padding y margen */
-        background-color: #000dff; /* Color de fondo */
-        color: white; /* Color del texto */
-        padding: 10px 20px; /* Espaciado interno */
-        text-decoration: none; /* Sin subrayado */
-        margin: 0 10px;
-        border-radius: 5px; /* Bordes redondeados */
-        transition: background-color 0.3s, transform 0.2s; /* Transiciones suaves */
-    }
-
-    /* Cambio de color al pasar el mouse */
-    #link-container a:hover {
-        background-color: #0000cc; /* Color azul más oscuro al pasar el mouse */
+    #back-container {
+        position: relative; /* Cambiar a relativa en dispositivos pequeños */
+        top: 0; /* Sin espacio adicional desde la parte superior */
+        right: 0; /* Sin espacio adicional desde la derecha */
+        margin-top: 10px; /* Espacio entre el contenedor y el botón */
     }
 }
