@@ -98,36 +98,34 @@ button:hover {
 
 .no-results {
     text-align: center;
-    font-size: 1.2em;
-    margin-top: 20px;
-    color: #999;
-}
-
-#radius-selection {
-    padding: 10px;
-    background-color: #f1f1f1;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    display: flex;
-    align-items: center;
-    margin: 20px;
-}
-
-#radius-value {
-    margin-left: 10px;
-    font-weight: bold;
+    font-size: 1.1em;
+    color: red;
 }
 
 #back-container {
-    padding: 10px;
-    margin: 10px;
+    position: absolute;
+    top: 10px;
+    left: 10px;
 }
 
-a.back-link {
-    color: #000dff;
+.back-link {
     text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
 }
 
-a.back-link:hover {
+.back-link:hover {
     text-decoration: underline;
 }
+
+#radius-selection {
+    margin: 20px;
+    display: flex;
+    align-items: center;
+}
+
+#radius {
+    margin: 0 10px;
+    width: 200px;
+}
+
