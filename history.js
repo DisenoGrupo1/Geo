@@ -85,7 +85,7 @@ function bounceMarker(marker) {
             clearInterval(interval); // Detener el intervalo después de 10 rebotes
             marker.setAnimation(null); // Asegurarse de que la animación esté detenida
         }
-    }, 1000); // Intervalo de 1 segundo entre rebotes
+    }, 1000); 
 }
 
 function loadHistory() {
