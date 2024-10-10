@@ -145,7 +145,6 @@ button:hover {
 @media (max-width: 768px) {
     #map-and-results {
         flex-direction: column; /* Cambia a columna en pantallas pequeñas */
-        right: 0;
 
         height: auto; /* Permite que el contenedor ajuste su altura automáticamente */
     }
@@ -153,7 +152,6 @@ button:hover {
     #map,
     #results-container {
         width: 100%; /* Cada uno ocupa el 100% del ancho */
-        right: 0;
         height: 300px; /* Altura fija en dispositivos pequeños */
     }
 
@@ -164,7 +162,6 @@ button:hover {
     #back-container {
         position: relative; /* Cambiar a relativa en dispositivos pequeños */
         top: 0; /* Sin espacio adicional desde la parte superior */
-        right: 0; /* Sin espacio adicional desde la derecha */
         margin-top: 10px; /* Espacio entre el contenedor y el botón */
     }
 }
