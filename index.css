@@ -1,0 +1,38 @@
+/* Tamaño del mapa */
+#map {
+    height: 90%; /* Ajustado para dejar espacio para el hipervínculo */
+}
+
+/* Asegurarse de que el cuerpo y el HTML ocupen el 100% del tamaño */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* Contenedor del hipervínculo */
+#link-container {
+    height: 10%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+    flex-direction: row;
+}
+
+/* Estilo del enlace como botón */
+#link-container a {
+    display: inline-block; /* Permite aplicar padding y margen */
+    background-color: #000dff; /* Color de fondo */
+    color: white; /* Color del texto */
+    padding: 10px 20px; /* Espaciado interno */
+    text-decoration: none; /* Sin subrayado */
+    margin: 0 10px;
+    border-radius: 5px; /* Bordes redondeados */
+    transition: background-color 0.3s, transform 0.2s; /* Transiciones suaves */
+}
+
+/* Cambio de color al pasar el mouse */
+#link-container a:hover {
+    background-color: #0000cc; /* Color azul más oscuro al pasar el mouse */
+}
