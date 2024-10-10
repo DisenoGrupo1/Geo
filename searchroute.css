@@ -110,9 +110,12 @@ button:hover {
 /* Estilo para el enlace de volver a inicio */
 #back-container {
     position: absolute;
-    top: 25px; /* Distancia desde la parte superior */
-    right: 20px; /* Distancia desde la derecha */
-    z-index: 100; /* Asegura que el botón esté encima de otros elementos */
+    top: 25px;
+    /* Distancia desde la parte superior */
+    right: 20px;
+    /* Distancia desde la derecha */
+    z-index: 100;
+    /* Asegura que el botón esté encima de otros elementos */
 }
 
 .back-link {
@@ -138,4 +141,37 @@ button:hover {
 #radius-value {
     margin-left: 10px;
     font-weight: bold;
+}
+
+@media (max-width: 600px) {
+    #map-and-results {
+        flex-direction: row;
+        /* Cambiar a fila en pantallas pequeñas */
+        height: auto;
+        /* Permite que el contenedor ajuste su altura automáticamente */
+    }
+
+    #map,
+    #results-container {
+        width: 50%;
+        /* Ambos ocupan el 50% del ancho */
+        height: 300px;
+        /* Altura fija en dispositivos pequeños */
+    }
+
+    input {
+        width: 100%;
+        /* Ancho completo para inputs */
+    }
+
+    #back-container {
+        position: relative;
+        /* Cambiar a relativa en dispositivos pequeños */
+        top: 0;
+        /* Sin espacio adicional desde la parte superior */
+        right: 0;
+        /* Sin espacio adicional desde la derecha */
+        margin-top: 10px;
+        /* Espacio entre el contenedor y el botón */
+    }
 }
