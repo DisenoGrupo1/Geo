@@ -146,6 +146,7 @@ button:hover {
     #map-and-results {
         flex-direction: column; /* Cambia a columna en pantallas pequeñas */
         height: 100%;
+        right: 0;
     }
 
     #map {
