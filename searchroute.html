@@ -17,12 +17,10 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            font-family: Arial, sans-serif;
         }
 
         #map-and-results {
             display: flex;
-            flex-direction: row;
             height: 80%;
         }
 
@@ -46,7 +44,6 @@
             display: flex;
             align-items: center;
             margin: 20px;
-            flex-wrap: wrap; /* Permitir que los elementos se envuelvan en pantallas más pequeñas */
         }
 
         label {
@@ -58,9 +55,7 @@
             padding: 5px;
             border: 1px solid #ccc;
             border-radius: 3px;
-            width: 100%;
-            max-width: 300px;
-            box-sizing: border-box;
+            width: 300px;
         }
 
         button {
@@ -72,12 +67,10 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
-
         h3 {
             text-align: center;
             color: #000000;
         }
-
         button:hover {
             background-color: #000bb3;
         }
@@ -123,11 +116,12 @@
             color: red;
         }
 
+        /* Estilo para el enlace de volver a inicio */
         #back-container {
             position: absolute;
-            top: 25px;
-            right: 20px;
-            z-index: 100;
+            top: 25px; /* Distancia desde la parte superior */
+            right: 20px; /* Distancia desde la derecha */
+            z-index: 100; /* Asegura que el botón esté encima de otros elementos */
         }
 
         .back-link {
@@ -145,6 +139,7 @@
             background-color: #218838;
         }
 
+        /* Estilos adicionales para el control de radio */
         #radius-selection {
             margin: 10px;
         }
@@ -152,60 +147,6 @@
         #radius-value {
             margin-left: 10px;
             font-weight: bold;
-        }
-
-        /* Responsive Styles */
-        @media (max-width: 768px) {
-            #map-and-results {
-                flex-direction: column;
-            }
-
-            #map,
-            #results-container {
-                width: 100%;
-                height: 50%;
-            }
-
-            #address-selection {
-                justify-content: space-between;
-            }
-        }
-
-        @media (max-width: 480px) {
-            #address-selection {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            label {
-                margin-bottom: 5px;
-            }
-
-            input {
-                width: 100%;
-                margin-bottom: 10px;
-            }
-
-            button {
-                width: 100%;
-            }
-
-            #radius-selection {
-                margin: 20px 0;
-            }
-        }
-
-        @media (max-width: 320px) {
-            #results th,
-            #results td {
-                font-size: 0.8em;
-                padding: 5px;
-            }
-
-            #address-selection input,
-            button {
-                font-size: 0.9em;
-            }
         }
     </style>
 
@@ -245,7 +186,7 @@
             const address = document.getElementById('address').value;
             const button = document.querySelector('button');
             const loadingText = document.querySelector('.loading');
-            const radius = document.getElementById('radius').value;
+            const radius = document.getElementById('radius').value;  // Obtener el valor del radio
 
             if (address) {
                 button.disabled = true;
@@ -258,7 +199,7 @@
 
                     if (status === 'OK') {
                         const location = results[0].geometry.location;
-                        searchByCoordinates(location.lat(), location.lng(), radius);
+                        searchByCoordinates(location.lat(), location.lng(), radius);  // Pasar el valor del radio
                         centerMapOnLocation(location);
                     } else {
                         alert('La dirección ingresada no es válida');
@@ -269,11 +210,12 @@
             }
         }
 
+
         function searchByCoordinates(lat, lng, radius) {
             const requestBody = {
                 latitud: lat,
                 longitud: lng,
-                radio: radius
+                radio: radius  // Incluir el radio en el cuerpo de la solicitud
             };
             console.log("Latitud:", lat, "Longitud:", lng, "Radio:", radius);
 
@@ -295,6 +237,7 @@
                 });
         }
 
+        // Función para centrar el mapa y agregar un marcador
         function centerMapOnLocation(location) {
             const latLng = { lat: location.lat(), lng: location.lng() };
             map.setCenter(latLng);
@@ -310,12 +253,15 @@
                 title: 'Ubicación seleccionada'
             });
 
+            // Crear círculo de búsqueda
             const radius = parseInt(document.getElementById('radius').value);
 
+            // Si ya existe un círculo, elimínalo
             if (circle) {
-                circle.setMap(null);
+                circle.setMap(null); // Eliminar el círculo anterior
             }
 
+            // Crear un nuevo círculo
             circle = new google.maps.Circle({
                 strokeColor: '#FF0000',
                 strokeOpacity: 0.8,
@@ -324,10 +270,11 @@
                 fillOpacity: 0.35,
                 map: map,
                 center: latLng,
-                radius: radius
+                radius: radius // Establecer el nuevo radio en metros
             });
         }
 
+        // Función para mostrar los resultados en una tabla
         function displayResults(locations) {
             const resultsContainer = document.getElementById('results-body');
             const noResultsMessage = document.getElementById('no-results');
@@ -338,13 +285,21 @@
             } else {
                 noResultsMessage.style.display = 'none';
                 locations.forEach(location => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `<td>${location.location_id}</td><td>${location.location_name}</td><td>${location.type}</td>`;
-                    resultsContainer.appendChild(row);
+                    const row = `<tr>
+                                    <td>${location.fecha}</td>
+                                    <td>${location.hora}</td>
+                                </tr>`;
+                    resultsContainer.innerHTML += row;
                 });
             }
         }
 
+        // Actualizar el valor del radio mostrado
+        function updateRadiusValue(value) {
+            document.getElementById('radius-value').innerText = value + " m";
+        }
+
+        // Cargar configuración al cargar la ventana
         window.onload = function () {
             loadConfig();
         };
@@ -352,37 +307,38 @@
 </head>
 
 <body>
-    <div id="back-container">
-        <a href="inicio.html" class="back-link">Volver al Inicio</a>
+    <!-- Sección para ingresar la dirección -->
+    <div id="address-selection">
+        <label for="address">Dirección:</label>
+        <input type="text" id="address" placeholder="Ingrese una dirección">
+        <button onclick="geocodeAddress()">Buscar</button>
+        <div class="loading">Cargando...</div>
     </div>
 
-    <div id="address-selection">
-        <label for="address">Ingrese una dirección:</label>
-        <input type="text" id="address" placeholder="Ej: Avenida Calle 116 #19-02, Bogotá">
-        <button onclick="geocodeAddress()">Buscar</button>
-        <span class="loading">Cargando...</span>
+    <div id="back-container">
+        <a href="/" class="back-link">Volver a inicio</a>
     </div>
 
     <div id="radius-selection">
-        <label for="radius">Radio (en metros):</label>
-        <input type="range" id="radius" min="100" max="2000" step="50" value="500" onchange="document.getElementById('radius-value').innerText = this.value">
-        <span id="radius-value">500</span> metros
+        <label for="radius">Radio de búsqueda:</label>
+        <input type="range" id="radius" min="100" max="2000" value="150" step="50" onchange="updateRadiusValue(this.value)">
+        <span id="radius-value">150 m</span>
     </div>
 
     <div id="map-and-results">
         <div id="map"></div>
         <div id="results-container">
+            <h3>Resultados de fechas y horas para la consulta por dirección</h3>
             <table id="results">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Tipo</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
                     </tr>
                 </thead>
                 <tbody id="results-body"></tbody>
             </table>
-            <div class="no-results" id="no-results">No se encontraron resultados.</div>
+            <div class="no-results" id="no-results" style="display: none;">No se encontraron resultados.</div>
         </div>
     </div>
 </body>
