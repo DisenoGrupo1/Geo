@@ -146,13 +146,13 @@ button:hover {
     #map-and-results {
         flex-direction: column; /* Cambia a columna en pantallas pequeñas */
         height: auto; /* Permite que el contenedor ajuste su altura automáticamente */
-        width: auto;
     }
 
     #map,
     #results-container {
-        width: 100%; /* Cada uno ocupa el 100% del ancho */
+         /* Cada uno ocupa el 100% del ancho */
         height: 300px; /* Altura fija en dispositivos pequeños */
+        width: auto;
     }
 
     input {
