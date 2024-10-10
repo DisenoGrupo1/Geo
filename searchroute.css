@@ -170,8 +170,9 @@ button:hover {
 
     #map,
     #results-container {
-        width: 50%; /* Ambos ocupan el 50% del ancho */
+        width: 100%; /* Ambos ocupan el 50% del ancho */
         height: 300px; /* Altura fija en dispositivos pequeños */
+        right: 0;
     }
 
     input {
