@@ -162,6 +162,7 @@ button:hover {
     #back-container {
         position: relative; /* Cambiar a relativa en dispositivos pequeños */
         top: 0; /* Sin espacio adicional desde la parte superior */
+        margin-left: 10px;
         margin-top: 10px; /* Espacio entre el contenedor y el botón */
     }
 }
