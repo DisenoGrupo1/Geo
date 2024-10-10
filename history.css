@@ -67,7 +67,7 @@ button:hover {
 #link-container {
     position: absolute; /* Posición absoluta */
     top: 20px; /* Espacio desde la parte superior */
-    right: 20px; /* Espacio desde la derecha */
+    right: 20px;
 }
 
 .btn-link {
