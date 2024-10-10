@@ -176,7 +176,6 @@ button:hover {
     #results-container {
         width: 100%; /* Cada uno ocupa el 100% del ancho */
         height: 300px; /* Altura fija en dispositivos pequeños */
-        margin-top: 20px; /* Añadir un margen superior para separar del mapa */
     }
 
     input {
