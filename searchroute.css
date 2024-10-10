@@ -145,6 +145,7 @@ button:hover {
 @media (max-width: 768px) {
     #map-and-results {
         flex-direction: column; /* Cambia a columna en pantallas pequeñas */
+        right: 0;
         height: 100%;
     }
 
