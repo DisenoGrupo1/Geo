@@ -21,15 +21,17 @@
 
         #map-and-results {
             display: flex;
+            flex-direction: column;
             height: 80%;
         }
 
         #map {
-            width: 50%;
+            width: 100%;
+            height: 300px; /* Ajusta la altura del mapa para pantallas móviles */
         }
 
         #results-container {
-            width: 50%;
+            width: 100%;
             overflow-y: auto;
             padding: 20px;
             background-color: #f9f9f9;
@@ -42,7 +44,8 @@
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            align-items: flex-start;
             margin: 20px;
         }
 
@@ -51,26 +54,31 @@
         }
 
         input {
-            margin: 0 10px 0 0;
+            margin: 10px 0;
             padding: 5px;
             border: 1px solid #ccc;
             border-radius: 3px;
-            width: 300px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         button {
-            padding: 6px 12px;
+            padding: 10px;
             background-color: #000dff;
             color: white;
             border: none;
             border-radius: 3px;
             cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
             transition: background-color 0.3s;
         }
+
         h3 {
             text-align: center;
             color: #000000;
         }
+
         button:hover {
             background-color: #000bb3;
         }
@@ -119,7 +127,7 @@
         /* Estilo para el enlace de volver a inicio */
         #back-container {
             position: absolute;
-            top: 25px; /* Distancia desde la parte superior */
+            top: 80px; /* Cambiar distancia desde la parte superior */
             right: 20px; /* Distancia desde la derecha */
             z-index: 100; /* Asegura que el botón esté encima de otros elementos */
         }
@@ -147,6 +155,41 @@
         #radius-value {
             margin-left: 10px;
             font-weight: bold;
+        }
+
+        /* Media query para pantallas móviles */
+        @media (min-width: 600px) {
+            #map-and-results {
+                flex-direction: row;
+            }
+
+            #map {
+                height: auto;
+                width: 50%;
+            }
+
+            #results-container {
+                width: 50%;
+            }
+
+            #address-selection {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            input {
+                width: 300px;
+            }
+
+            button {
+                width: auto;
+            }
+
+            /* Reajustar la posición del botón de "Volver a inicio" para pantallas grandes */
+            #back-container {
+                top: 25px;
+            }
         }
     </style>
 
@@ -278,31 +321,35 @@
         function displayResults(locations) {
             const resultsContainer = document.getElementById('results-body');
             const noResultsMessage = document.getElementById('no-results');
-            resultsContainer.innerHTML = '';
+            resultsContainer.innerHTML = ''; // Limpiar resultados anteriores
 
-            if (locations.length === 0) {
-                noResultsMessage.style.display = 'block';
-            } else {
-                noResultsMessage.style.display = 'none';
+            if (locations.length > 0) {
                 locations.forEach(location => {
-                    const row = `<tr>
-                                    <td>${location.fecha}</td>
-                                    <td>${location.hora}</td>
-                                </tr>`;
-                    resultsContainer.innerHTML += row;
+                    const row = document.createElement('tr');
+                    const dateCell = document.createElement('td');
+                    const timeCell = document.createElement('td');
+
+                    dateCell.textContent = location.fecha;
+                    timeCell.textContent = location.hora;
+
+                    row.appendChild(dateCell);
+                    row.appendChild(timeCell);
+                    resultsContainer.appendChild(row);
                 });
+
+                noResultsMessage.style.display = 'none';
+            } else {
+                noResultsMessage.style.display = 'block';
             }
         }
 
-        // Actualizar el valor del radio mostrado
+        // Actualizar el valor del radio cuando el usuario lo cambie
         function updateRadiusValue(value) {
-            document.getElementById('radius-value').innerText = value + " m";
+            document.getElementById('radius-value').textContent = `${value} m`;
         }
 
-        // Cargar configuración al cargar la ventana
-        window.onload = function () {
-            loadConfig();
-        };
+        // Cargar la configuración al cargar la página
+        window.onload = loadConfig;
     </script>
 </head>
 
