@@ -31,7 +31,7 @@ function loadConfig() {
 }
 
 function initMap() {
-    map = new google.maps.Map(document.getElementById('map'), { 
+    map = new google.maps.Map(document.getElementById('map'), {
         zoom: 15,
         center: { lat: 0, lng: 0 } // Centro inicial (se ajustará más tarde)
     });
@@ -56,7 +56,7 @@ function initializeWebSocket() {
 
     socket = new WebSocket(`ws://${configData.AWS_IP}:20000`);
 
-    socket.onopen = function(event) {
+    socket.onopen = function (event) {
         console.log("Conectado al WebSocket");
         reconnectInterval = 1000; // Reinicia el intervalo de reconexión después de una conexión exitosa
         reconnectAttempts = 0; // Reinicia el contador de intentos al conectarse
@@ -70,7 +70,13 @@ function initializeWebSocket() {
                     // Muestra la última ubicación en el mapa
                     marker = new google.maps.Marker({
                         position: lastLatLng,
-                        map: map
+                        map: map,
+                        icon: {
+                            url: "/var/www/html/icon/taxi.png", // Ruta a tu imagen de taxi
+                            scaledSize: new google.maps.Size(50, 50), // Tamaño del icono
+                            origin: new google.maps.Point(0, 0), // Origen de la imagen
+                            anchor: new google.maps.Point(25, 25) // Punto de anclaje del icono
+                        }
                     });
                     map.setCenter(lastLatLng);
                 }
@@ -78,7 +84,7 @@ function initializeWebSocket() {
             .catch(error => console.error("Error al obtener la última ubicación:", error));
     };
 
-    socket.onmessage = function(event) {
+    socket.onmessage = function (event) {
         console.log("Mensaje recibido del WebSocket:", event.data);
         let data = JSON.parse(event.data);
         let latLng = new google.maps.LatLng(parseFloat(data.latitud), parseFloat(data.longitud));
@@ -101,12 +107,12 @@ function initializeWebSocket() {
         }
     };
 
-    socket.onerror = function(event) {
+    socket.onerror = function (event) {
         console.error("Error de WebSocket:", event);
         alert("Error de conexión. Intentando reconectar...");
     };
 
-    socket.onclose = function(event) {
+    socket.onclose = function (event) {
         console.log("WebSocket cerrado:", event);
         reconnectAttempts++;
         console.log(`Intento de reconexión: ${reconnectAttempts}`);
