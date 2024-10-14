@@ -8,7 +8,7 @@ let socket; // Define el socket fuera de las funciones para poder reutilizarlo
 let reconnectAttempts = 0; // Contador de intentos de reconexión
 const MAX_ATTEMPTS = 5; // Máximo número de intentos de reconexión
 let lastUpdateTime = null; // Almacena el último timestamp recibido
-let lastLatLng; // Almacena la última posición
+let lastLatLng = null; // Almacena la última posición
 let mapInitialized = false; // Bandera para indicar si el mapa ha sido centrado
 
 // Función para cargar la configuración desde el archivo config.json
@@ -46,8 +46,63 @@ function initMap() {
 
     // Inicializa el WebSocket después de que el mapa se haya cargado
     initializeWebSocket();
+
+    // Asocia el evento de cambio de zoom para ajustar el tamaño del ícono
+    map.addListener('zoom_changed', function () {
+        updateIconSize();
+    });
 }
 
+// Función para actualizar el tamaño del ícono según el nivel de zoom
+function updateIconSize() {
+    if (!marker) return;
+
+    const zoomLevel = map.getZoom();
+    const scaleFactor = zoomLevel / 15; // Ajusta 15 según el nivel de zoom base
+    const iconSize = new google.maps.Size(30 * scaleFactor, 30 * scaleFactor); // Ajusta 30 al tamaño base
+
+    marker.setIcon({
+        url: "http://geotaxi.ddns.net/icon/taxi.png", // Ruta a tu imagen de taxi
+        scaledSize: iconSize,
+        origin: new google.maps.Point(0, 0),
+        anchor: new google.maps.Point(iconSize.width / 2, iconSize.height / 2)
+    });
+}
+
+// Función para calcular el ángulo de rotación basado en la dirección del movimiento
+function getRotationAngle(latLng1, latLng2) {
+    const lat1 = latLng1.lat();
+    const lng1 = latLng1.lng();
+    const lat2 = latLng2.lat();
+    const lng2 = latLng2.lng();
+    const dLon = (lng2 - lng1);
+
+    const y = Math.sin(dLon) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+    let angle = Math.atan2(y, x);
+    angle = angle * (180 / Math.PI); // Convertir a grados
+    return (angle + 360) % 360; // Asegurar un valor positivo
+}
+
+// Función para actualizar la posición y rotación del marcador
+function updateMarker(latLng) {
+    if (lastLatLng) {
+        const angle = getRotationAngle(lastLatLng, latLng);
+
+        marker.setIcon({
+            url: "http://geotaxi.ddns.net/icon/taxi.png", // Ruta a tu imagen de taxi
+            scaledSize: new google.maps.Size(50, 50), // Ajusta el tamaño del icono
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(25, 25),
+            rotation: angle // Aplica la rotación calculada
+        });
+    }
+
+    // Actualiza la última posición conocida
+    lastLatLng = latLng;
+}
+
+// Función para inicializar el WebSocket y gestionar la reconexión
 function initializeWebSocket() {
     if (reconnectAttempts >= MAX_ATTEMPTS) {
         console.log("Número máximo de intentos de reconexión alcanzado");
@@ -100,6 +155,7 @@ function initializeWebSocket() {
             // Mueve el marcador a la nueva posición
             if (marker) {
                 marker.setPosition(latLng);
+                updateMarker(latLng); // Actualiza la rotación del marcador
             }
 
             // Centra el mapa en la nueva posición
