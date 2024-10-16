@@ -68,20 +68,6 @@ function updateIconSize() {
     });
 }
 
-// Función para calcular el ángulo de rotación basado en la dirección del movimiento
-function getRotationAngle(latLng1, latLng2) {
-    const lat1 = latLng1.lat();
-    const lng1 = latLng1.lng();
-    const lat2 = latLng2.lat();
-    const lng2 = latLng2.lng();
-    const dLon = (lng2 - lng1);
-
-    const y = Math.sin(dLon) * Math.cos(lat2);
-    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-    let angle = Math.atan2(y, x);
-    angle = angle * (180 / Math.PI); // Convertir a grados
-    return (angle + 360) % 360; // Asegurar un valor positivo
-}
 
 // Función para actualizar la posición y rotación del marcador
 function updateMarker(latLng) {
