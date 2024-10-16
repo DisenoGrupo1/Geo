@@ -53,7 +53,6 @@ function initMap() {
     });
 }
 
-// Función para actualizar el tamaño del ícono según el nivel de zoom
 function updateIconSize() {
     if (!marker) return;
 
