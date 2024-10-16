@@ -73,9 +73,9 @@ function initializeWebSocket() {
                         map: map,
                         icon: {
                             url: "http://geotaxi.ddns.net/icon/taxi.png", // URL pública del icono
-                            scaledSize: new google.maps.Size(50, 50), // Tamaño del icono (ajústalo según el tamaño de la imagen)
+                            scaledSize: new google.maps.Size(25, 25), // Tamaño del icono (ajústalo según el tamaño de la imagen)
                             origin: new google.maps.Point(0, 0), // Origen de la imagen (parte superior izquierda)
-                            anchor: new google.maps.Point(25, 25) // Punto de anclaje (centro de la imagen)
+                            anchor: new google.maps.Point(15, 15) // Punto de anclaje (centro de la imagen)
                         }
                     });
                     map.setCenter(lastLatLng);
