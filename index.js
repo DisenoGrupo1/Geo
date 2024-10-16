@@ -8,7 +8,7 @@ let socket; // Define el socket fuera de las funciones para poder reutilizarlo
 let reconnectAttempts = 0; // Contador de intentos de reconexión
 const MAX_ATTEMPTS = 5; // Máximo número de intentos de reconexión
 let lastUpdateTime = null; // Almacena el último timestamp recibido
-let lastLatLng; // Almacena la última posición
+let lastLatLng = null; // Almacena la última posición
 let mapInitialized = false; // Bandera para indicar si el mapa ha sido centrado
 
 // Función para cargar la configuración desde el archivo config.json
@@ -31,7 +31,7 @@ function loadConfig() {
 }
 
 function initMap() {
-    map = new google.maps.Map(document.getElementById('map'), { 
+    map = new google.maps.Map(document.getElementById('map'), {
         zoom: 15,
         center: { lat: 0, lng: 0 } // Centro inicial (se ajustará más tarde)
     });
@@ -46,8 +46,48 @@ function initMap() {
 
     // Inicializa el WebSocket después de que el mapa se haya cargado
     initializeWebSocket();
+
+    // Asocia el evento de cambio de zoom para ajustar el tamaño del ícono
+    map.addListener('zoom_changed', function () {
+        updateIconSize();
+    });
 }
 
+function updateIconSize() {
+    if (!marker) return;
+
+    const zoomLevel = map.getZoom();
+    const scaleFactor = zoomLevel / 15; // Ajusta 15 según el nivel de zoom base
+    const iconSize = new google.maps.Size(30 * scaleFactor, 30 * scaleFactor); // Ajusta 30 al tamaño base
+
+    marker.setIcon({
+        url: "http://geotaxi.ddns.net/icon/taxi.png", // Ruta a tu imagen de taxi
+        scaledSize: iconSize,
+        origin: new google.maps.Point(0, 0),
+        anchor: new google.maps.Point(iconSize.width / 2, iconSize.height / 2)
+    });
+}
+
+
+// Función para actualizar la posición y rotación del marcador
+function updateMarker(latLng) {
+    if (lastLatLng) {
+        const angle = getRotationAngle(lastLatLng, latLng);
+
+        marker.setIcon({
+            url: "http://geotaxi.ddns.net/icon/taxi.png", // Ruta a tu imagen de taxi
+            scaledSize: new google.maps.Size(50, 50), // Ajusta el tamaño del icono
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(25, 25),
+            rotation: angle // Aplica la rotación calculada
+        });
+    }
+
+    // Actualiza la última posición conocida
+    lastLatLng = latLng;
+}
+
+// Función para inicializar el WebSocket y gestionar la reconexión
 function initializeWebSocket() {
     if (reconnectAttempts >= MAX_ATTEMPTS) {
         console.log("Número máximo de intentos de reconexión alcanzado");
@@ -56,7 +96,7 @@ function initializeWebSocket() {
 
     socket = new WebSocket(`ws://${configData.AWS_IP}:20000`);
 
-    socket.onopen = function(event) {
+    socket.onopen = function (event) {
         console.log("Conectado al WebSocket");
         reconnectInterval = 1000; // Reinicia el intervalo de reconexión después de una conexión exitosa
         reconnectAttempts = 0; // Reinicia el contador de intentos al conectarse
@@ -71,6 +111,12 @@ function initializeWebSocket() {
                     marker = new google.maps.Marker({
                         position: lastLatLng,
                         map: map,
+                        icon: {
+                            url: "http://geotaxi.ddns.net/icon/taxi.png", // Ruta a tu imagen de taxi
+                            scaledSize: new google.maps.Size(50, 50), // Tamaño del icono
+                            origin: new google.maps.Point(0, 0), // Origen de la imagen
+                            anchor: new google.maps.Point(25, 25) // Punto de anclaje del icono
+                        }   
                     });
                     map.setCenter(lastLatLng);
                 }
@@ -78,7 +124,7 @@ function initializeWebSocket() {
             .catch(error => console.error("Error al obtener la última ubicación:", error));
     };
 
-    socket.onmessage = function(event) {
+    socket.onmessage = function (event) {
         console.log("Mensaje recibido del WebSocket:", event.data);
         let data = JSON.parse(event.data);
         let latLng = new google.maps.LatLng(parseFloat(data.latitud), parseFloat(data.longitud));
@@ -94,6 +140,7 @@ function initializeWebSocket() {
             // Mueve el marcador a la nueva posición
             if (marker) {
                 marker.setPosition(latLng);
+                updateMarker(latLng); // Actualiza la rotación del marcador
             }
 
             // Centra el mapa en la nueva posición
@@ -101,12 +148,12 @@ function initializeWebSocket() {
         }
     };
 
-    socket.onerror = function(event) {
+    socket.onerror = function (event) {
         console.error("Error de WebSocket:", event);
         alert("Error de conexión. Intentando reconectar...");
     };
 
-    socket.onclose = function(event) {
+    socket.onclose = function (event) {
         console.log("WebSocket cerrado:", event);
         reconnectAttempts++;
         console.log(`Intento de reconexión: ${reconnectAttempts}`);
