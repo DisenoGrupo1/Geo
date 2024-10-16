@@ -71,9 +71,6 @@ function initializeWebSocket() {
                     marker = new google.maps.Marker({
                         position: lastLatLng,
                         map: map,
-                        icon: {
-                            url: "http://geotaxi.ddns.net/icon/taxi.png", // URL del icono
-                        }
                     });
                     map.setCenter(lastLatLng);
                 }
