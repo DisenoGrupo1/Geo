@@ -71,12 +71,6 @@ function initializeWebSocket() {
                     marker = new google.maps.Marker({
                         position: lastLatLng,
                         map: map,
-                        icon: {
-                            url: "/var/www/html/icon/taxi.png", // Ruta a tu imagen de taxi
-                            scaledSize: new google.maps.Size(50, 50), // Tamaño del icono
-                            origin: new google.maps.Point(0, 0), // Origen de la imagen
-                            anchor: new google.maps.Point(25, 25) // Punto de anclaje del icono
-                        }
                     });
                     map.setCenter(lastLatLng);
                 }
