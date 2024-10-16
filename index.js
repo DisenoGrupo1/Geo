@@ -17,8 +17,6 @@ function loadConfig() {
         .then(response => response.json())
         .then(config => {
             configData = config;
-            //console.log("Configuración cargada:", configData);
-
             // Establece el título de la página
             document.title = configData.TITLE;
 
@@ -73,13 +71,18 @@ function initializeWebSocket() {
                     marker = new google.maps.Marker({
                         position: lastLatLng,
                         map: map,
+                        icon: {
+                            url: "/var/www/html/icon/taxi.png", // Ruta a tu imagen de taxi
+                            scaledSize: new google.maps.Size(50, 50), // Tamaño del icono
+                            origin: new google.maps.Point(0, 0), // Origen de la imagen
+                            anchor: new google.maps.Point(25, 25) // Punto de anclaje del icono
+                        }
                     });
                     map.setCenter(lastLatLng);
                 }
             })
             .catch(error => console.error("Error al obtener la última ubicación:", error));
     };
-
     socket.onmessage = function (event) {
         console.log("Mensaje recibido del WebSocket:", event.data);
         let data = JSON.parse(event.data);
@@ -102,7 +105,6 @@ function initializeWebSocket() {
             map.panTo(latLng);
         }
     };
-
     socket.onerror = function (event) {
         console.error("Error de WebSocket:", event);
         alert("Error de conexión. Intentando reconectar...");
