@@ -2,7 +2,6 @@ let configData;
 let map;
 let marker;
 let circle; // Variable global para el círculo
-let autocompleteService; // Variable global para el servicio de autocompletado
 
 // Cargar config.json y obtener la clave API
 function loadConfig() {
@@ -19,44 +18,41 @@ function loadConfig() {
         .catch(error => console.error("Error al cargar config.json:", error));
 }
 
-// Inicializa el mapa
+// Inicializa el mapa y la funcionalidad de Autocomplete
 function initMap() {
     const barranquilla = { lat: 10.9878, lng: -74.7889 };
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 12,
         center: barranquilla
     });
-    initAutocomplete(); // Inicializa el servicio de autocompletado
-}
 
-// Inicializa el servicio de autocompletado
-function initAutocomplete() {
+    // Agregar Autocomplete al campo de dirección
     const input = document.getElementById('address');
+    const autocomplete = new google.maps.places.Autocomplete(input);
+    
+    // Evitar que se sesgue a un lugar específico, permitiendo cualquier predicción
+    autocomplete.setFields(['geometry', 'formatted_address']);
 
-    // Crea el objeto de autocompletar con restricciones de país
-    autocompleteService = new google.maps.places.AutocompleteService();
-    const autocomplete = new google.maps.places.Autocomplete(input, {
-        componentRestrictions: { country: 'CO' }, // Restringe solo a Colombia
-        fields: ['place_id', 'geometry', 'name'] // Campos que deseas recuperar
-    });
-
-    // Muestra sugerencias de autocompletar
-    autocomplete.addListener('place_changed', () => {
+    // Evento para cuando el usuario selecciona una sugerencia de la lista
+    autocomplete.addListener('place_changed', function () {
         const place = autocomplete.getPlace();
+
         if (place.geometry) {
-            console.log(`Seleccionaste: ${place.name}`);
-            // Aquí puedes agregar la lógica para manejar la selección
-            centerMapOnLocation(place.geometry.location); // Centrar el mapa en la ubicación seleccionada
+            const location = place.geometry.location;
+            searchByCoordinates(location.lat(), location.lng(), document.getElementById('radius').value);
+            centerMapOnLocation(location);
+        } else {
+            alert('Por favor, seleccione una dirección válida de la lista desplegable.');
         }
     });
 }
 
-// Función para convertir dirección en coordenadas
+// Función para convertir dirección en coordenadas (solo si se pulsa el botón buscar)
 function geocodeAddress() {
     const address = document.getElementById('address').value;
     const button = document.querySelector('button');
     const loadingText = document.querySelector('.loading');
-    const radius = document.getElementById('radius').value; // Obtener el valor del radio
+    const radius = document.getElementById('radius').value;  // Obtener el valor del radio
 
     if (address) {
         button.disabled = true;
@@ -69,7 +65,7 @@ function geocodeAddress() {
 
             if (status === 'OK') {
                 const location = results[0].geometry.location;
-                searchByCoordinates(location.lat(), location.lng(), radius); // Pasar el valor del radio
+                searchByCoordinates(location.lat(), location.lng(), radius);  // Pasar el valor del radio
                 centerMapOnLocation(location);
             } else {
                 alert('La dirección ingresada no es válida');
@@ -80,50 +76,11 @@ function geocodeAddress() {
     }
 }
 
-// Función para autocompletar dirección
-function autocompleteAddress() {
-    const input = document.getElementById('address');
-    const query = input.value;
-
-    if (query.length > 2) { // Solo buscar si el input tiene más de 2 caracteres
-        autocompleteService.getPlacePredictions({ input: query, componentRestrictions: { country: 'CO' } }, displaySuggestions);
-        console.log("Función de autocompletar llamada");
-    } else {
-        document.getElementById('suggestions').style.display = 'none'; // Ocultar sugerencias si la longitud es menor
-    }
-}
-
-// Muestra las sugerencias en el contenedor
-function displaySuggestions(predictions, status) {
-    const suggestionsContainer = document.getElementById('suggestions');
-    suggestionsContainer.innerHTML = ''; // Limpiar sugerencias anteriores
-
-    if (status === google.maps.places.PlacesServiceStatus.OK) {
-        predictions.forEach(prediction => {
-            const suggestionItem = document.createElement('div');
-            suggestionItem.textContent = prediction.description;
-            suggestionItem.className = 'suggestion-item';
-            suggestionItem.onclick = () => selectSuggestion(prediction); // Al hacer clic en una sugerencia
-            suggestionsContainer.appendChild(suggestionItem);
-        });
-        suggestionsContainer.style.display = 'block'; // Mostrar sugerencias
-    } else {
-        suggestionsContainer.style.display = 'none'; // Ocultar si no hay sugerencias
-    }
-}
-
-// Función para seleccionar una sugerencia
-function selectSuggestion(prediction) {
-    document.getElementById('address').value = prediction.description; // Completar el campo de dirección
-    document.getElementById('suggestions').style.display = 'none'; // Ocultar sugerencias
-}
-
-// Función para buscar por coordenadas
 function searchByCoordinates(lat, lng, radius) {
     const requestBody = {
         latitud: lat,
         longitud: lng,
-        radio: radius // Incluir el radio en el cuerpo de la solicitud
+        radio: radius  // Incluir el radio en el cuerpo de la solicitud
     };
     console.log("Latitud:", lat, "Longitud:", lng, "Radio:", radius);
 
@@ -190,18 +147,23 @@ function displayResults(data) {
     if (data.length > 0) {
         data.forEach(item => {
             const row = document.createElement('tr');
-            row.innerHTML = `<td>${item.fecha}</td><td>${item.hora}</td>`;
+            const dateCell = document.createElement('td');
+            const timeCell = document.createElement('td');
+            dateCell.textContent = item.fecha;
+            timeCell.textContent = item.hora;
+            row.appendChild(dateCell);
+            row.appendChild(timeCell);
             resultsBody.appendChild(row);
         });
-        document.getElementById('no-results').style.display = 'none';
+        document.getElementById('no-results').style.display = 'none'; // Ocultar mensaje de no resultados
     } else {
-        document.getElementById('no-results').style.display = 'block'; // Mostrar mensaje si no hay resultados
+        document.getElementById('no-results').style.display = 'block'; // Mostrar mensaje de no resultados
     }
 }
 
-// Actualiza el valor mostrado del radio
+// Actualizar el valor del radio en el HTML
 function updateRadiusValue(value) {
-    document.getElementById('radius-value').innerText = `${value} m`;
+    document.getElementById('radius-value').textContent = value + ' m';
 }
 
 // Cargar la configuración al cargar la página
