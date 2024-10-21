@@ -14,9 +14,10 @@
     <!-- Sección para ingresar la dirección -->
     <div id="address-selection">
         <label for="address">Dirección:</label>
-        <input type="text" id="address" placeholder="Ingrese una dirección">
+        <input type="text" id="address" placeholder="Ingrese una dirección" oninput="autocompleteAddress()">
         <button onclick="geocodeAddress()">Buscar</button>
         <div class="loading">Cargando...</div>
+        <div id="suggestions" class="suggestions" style="display:none;"></div> <!-- Contenedor para las sugerencias -->
     </div>
 
     <div id="back-container">
