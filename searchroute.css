@@ -141,26 +141,6 @@ button:hover {
     font-weight: bold;
 }
 
-/* Estilos para las sugerencias de autocompletar */
-.autocomplete-suggestions {
-    border: 1px solid #ccc;
-    background: white;
-    position: absolute;
-    z-index: 1000;
-    max-height: 200px;
-    overflow-y: auto;
-    width: calc(100% - 2px);
-}
-
-.autocomplete-suggestion {
-    padding: 10px;
-    cursor: pointer;
-}
-
-.autocomplete-suggestion:hover {
-    background-color: #f0f0f0;
-}
-
 /* Estilos para pantallas pequeñas */
 @media (max-width: 768px) {
     #map-and-results {
@@ -170,8 +150,9 @@ button:hover {
 
     #map,
     #results-container {
+         /* Cada uno ocupa el 100% del ancho */
         height: 300px; /* Altura fija en dispositivos pequeños */
-        width: auto; /* Cada uno ocupa el 100% del ancho */
+        width: auto;
     }
 
     input {
