@@ -31,7 +31,24 @@ function initMap() {
 
 // Inicializa el servicio de autocompletado
 function initAutocomplete() {
+    const input = document.getElementById('address');
+
+    // Crea el objeto de autocompletar con restricciones de país
     autocompleteService = new google.maps.places.AutocompleteService();
+    const autocomplete = new google.maps.places.Autocomplete(input, {
+        componentRestrictions: { country: 'CO' }, // Restringe solo a Colombia
+        fields: ['place_id', 'geometry', 'name'] // Campos que deseas recuperar
+    });
+
+    // Muestra sugerencias de autocompletar
+    autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (place.geometry) {
+            console.log(`Seleccionaste: ${place.name}`);
+            // Aquí puedes agregar la lógica para manejar la selección
+            centerMapOnLocation(place.geometry.location); // Centrar el mapa en la ubicación seleccionada
+        }
+    });
 }
 
 // Función para convertir dirección en coordenadas
@@ -39,7 +56,7 @@ function geocodeAddress() {
     const address = document.getElementById('address').value;
     const button = document.querySelector('button');
     const loadingText = document.querySelector('.loading');
-    const radius = document.getElementById('radius').value;  // Obtener el valor del radio
+    const radius = document.getElementById('radius').value; // Obtener el valor del radio
 
     if (address) {
         button.disabled = true;
@@ -52,7 +69,7 @@ function geocodeAddress() {
 
             if (status === 'OK') {
                 const location = results[0].geometry.location;
-                searchByCoordinates(location.lat(), location.lng(), radius);  // Pasar el valor del radio
+                searchByCoordinates(location.lat(), location.lng(), radius); // Pasar el valor del radio
                 centerMapOnLocation(location);
             } else {
                 alert('La dirección ingresada no es válida');
@@ -69,7 +86,7 @@ function autocompleteAddress() {
     const query = input.value;
 
     if (query.length > 2) { // Solo buscar si el input tiene más de 2 caracteres
-        autocompleteService.getPlacePredictions({ input: query }, displaySuggestions);
+        autocompleteService.getPlacePredictions({ input: query, componentRestrictions: { country: 'CO' } }, displaySuggestions);
         console.log("Función de autocompletar llamada");
     } else {
         document.getElementById('suggestions').style.display = 'none'; // Ocultar sugerencias si la longitud es menor
@@ -106,7 +123,7 @@ function searchByCoordinates(lat, lng, radius) {
     const requestBody = {
         latitud: lat,
         longitud: lng,
-        radio: radius  // Incluir el radio en el cuerpo de la solicitud
+        radio: radius // Incluir el radio en el cuerpo de la solicitud
     };
     console.log("Latitud:", lat, "Longitud:", lng, "Radio:", radius);
 
