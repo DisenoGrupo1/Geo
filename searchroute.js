@@ -11,7 +11,7 @@ function loadConfig() {
             configData = config;
             document.getElementById('page-title').innerText = configData.TITLE;
             const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&libraries=places&callback=initMap`;
             script.defer = true;
             document.head.appendChild(script);
         })
@@ -24,6 +24,26 @@ function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 12,
         center: barranquilla
+    });
+
+    // Agregar Autocomplete al campo de dirección
+    const input = document.getElementById('address');
+    const autocomplete = new google.maps.places.Autocomplete(input);
+
+    // Evitar que se sesgue a un lugar específico, permitiendo cualquier predicción
+    autocomplete.setFields(['geometry', 'formatted_address']);
+
+    // Evento para cuando el usuario selecciona una sugerencia de la lista
+    autocomplete.addListener('place_changed', function () {
+        const place = autocomplete.getPlace();
+
+        if (place.geometry) {
+            const location = place.geometry.location;
+            searchByCoordinates(location.lat(), location.lng(), document.getElementById('radius').value);
+            centerMapOnLocation(location);
+        } else {
+            alert('Por favor, seleccione una dirección válida de la lista desplegable.');
+        }
     });
 }
 
