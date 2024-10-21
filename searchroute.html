@@ -30,25 +30,21 @@
         <span id="radius-value">150 m</span>
     </div>
 
-    <div id="map-and-results">
-        <div id="map" style="height: 500px; width: 100%;"></div>
-        <!-- Asegúrate de establecer un tamaño adecuado para el mapa -->
-        <div id="results-container">
-            <h3>Resultados de fechas y horas para la consulta por dirección</h3>
-            <table id="results">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Hora</th>
-                    </tr>
-                </thead>
-                <tbody id="results-body"></tbody>
-            </table>
-            <div class="no-results" id="no-results" style="display: none;">No se encontraron resultados.</div>
-        </div>
+    <div id="map"></div>
+    <div id="results">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                </tr>
+            </thead>
+            <tbody id="results-body"></tbody>
+        </table>
+        <div id="no-results" style="display:none;">No se encontraron resultados.</div>
     </div>
-    <script src="searchroute.js" defer></script> <!-- Vincula el archivo JS -->
 
+    <script src="searchroute.js"></script>
 </body>
 
 </html>
