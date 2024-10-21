@@ -7,7 +7,7 @@
     <title id="page-title">Inserte su titulo</title>
     <link rel="icon" href="http://geotaxi.ddns.net/icon/titleicon3.png" type="image/png">
     <link rel="stylesheet" href="searchroute.css"> <!-- Vincula el archivo CSS -->
-    <script src="searchroute.js"></script> <!-- Vincula el archivo JS -->
+    <script src="searchroute.js" defer></script> <!-- Vincula el archivo JS -->
 </head>
 
 <body>
@@ -16,7 +16,7 @@
         <label for="address">Dirección:</label>
         <input type="text" id="address" placeholder="Ingrese una dirección" oninput="autocompleteAddress()">
         <button onclick="geocodeAddress()">Buscar</button>
-        <div class="loading">Cargando...</div>
+        <div class="loading" style="display:none;">Cargando...</div>
         <div id="suggestions" class="suggestions" style="display:none;"></div> <!-- Contenedor para las sugerencias -->
     </div>
 
@@ -31,7 +31,7 @@
     </div>
 
     <div id="map-and-results">
-        <div id="map"></div>
+        <div id="map" style="height: 500px; width: 100%;"></div> <!-- Asegúrate de establecer un tamaño adecuado para el mapa -->
         <div id="results-container">
             <h3>Resultados de fechas y horas para la consulta por dirección</h3>
             <table id="results">
