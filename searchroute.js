@@ -70,6 +70,7 @@ function autocompleteAddress() {
 
     if (query.length > 2) { // Solo buscar si el input tiene más de 2 caracteres
         autocompleteService.getPlacePredictions({ input: query }, displaySuggestions);
+        console.log("Función de autocompletar llamada");
     } else {
         document.getElementById('suggestions').style.display = 'none'; // Ocultar sugerencias si la longitud es menor
     }
