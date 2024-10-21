@@ -2,7 +2,6 @@ let configData;
 let map;
 let marker;
 let circle; // Variable global para el círculo
-let autocomplete; // Variable para el autocompletado
 
 // Cargar config.json y obtener la clave API
 function loadConfig() {
@@ -12,43 +11,28 @@ function loadConfig() {
             configData = config;
             document.getElementById('page-title').innerText = configData.TITLE;
             const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&libraries=places&callback=initMap`;
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
             script.defer = true;
             document.head.appendChild(script);
         })
         .catch(error => console.error("Error al cargar config.json:", error));
 }
 
-// Inicializa el mapa y el autocompletado
+// Inicializa el mapa
 function initMap() {
     const barranquilla = { lat: 10.9878, lng: -74.7889 };
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 12,
         center: barranquilla
     });
-
-    // Inicializar el autocompletado
-    const input = document.getElementById('address');
-    autocomplete = new google.maps.places.Autocomplete(input);
-    autocomplete.setFields(['address_components', 'geometry']);
-
-    // Escuchar el evento de selección de la dirección
-    autocomplete.addListener('place_changed', function () {
-        const place = autocomplete.getPlace();
-        if (place.geometry) {
-            searchByCoordinates(place.geometry.location.lat(), place.geometry.location.lng(), document.getElementById('radius').value);
-            centerMapOnLocation(place.geometry.location);
-        } else {
-            alert('La dirección seleccionada no es válida');
-        }
-    });
 }
 
-// Función para convertir dirección en coordenadas (ya no es necesario, ya que el autocompletado se encarga)
+// Función para convertir dirección en coordenadas
 function geocodeAddress() {
     const address = document.getElementById('address').value;
     const button = document.querySelector('button');
     const loadingText = document.querySelector('.loading');
+    const radius = document.getElementById('radius').value;  // Obtener el valor del radio
 
     if (address) {
         button.disabled = true;
@@ -61,7 +45,7 @@ function geocodeAddress() {
 
             if (status === 'OK') {
                 const location = results[0].geometry.location;
-                searchByCoordinates(location.lat(), location.lng(), document.getElementById('radius').value);
+                searchByCoordinates(location.lat(), location.lng(), radius);  // Pasar el valor del radio
                 centerMapOnLocation(location);
             } else {
                 alert('La dirección ingresada no es válida');
