@@ -2,6 +2,7 @@ let configData;
 let map;
 let marker;
 let circle; // Variable global para el círculo
+let autocomplete; // Variable para el autocompletado
 
 // Cargar config.json y obtener la clave API
 function loadConfig() {
@@ -11,7 +12,7 @@ function loadConfig() {
             configData = config;
             document.getElementById('page-title').innerText = configData.TITLE;
             const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&libraries=places&callback=initMap`;
             script.defer = true;
             document.head.appendChild(script);
         })
@@ -24,6 +25,35 @@ function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 12,
         center: barranquilla
+    });
+
+    // Inicializa el autocompletado cuando el mapa está cargado
+    initAutocomplete();
+}
+
+// Función para inicializar el autocompletado de Google Places
+function initAutocomplete() {
+    // Vincula el campo de dirección al Autocomplete de Google Places
+    const input = document.getElementById('address');
+    autocomplete = new google.maps.places.Autocomplete(input);
+    
+    // Limitar los resultados a direcciones (opcional)
+    autocomplete.setFields(['address_components', 'geometry']);
+    
+    // Escucha cuando el usuario selecciona una opción
+    autocomplete.addListener('place_changed', function () {
+        const place = autocomplete.getPlace();
+        if (!place.geometry) {
+            // Si no se selecciona una ubicación válida
+            alert("No se ha seleccionado una ubicación válida.");
+            return;
+        }
+        
+        // Centra el mapa en la ubicación seleccionada
+        const location = place.geometry.location;
+        const radius = document.getElementById('radius').value;
+        searchByCoordinates(location.lat(), location.lng(), radius);
+        centerMapOnLocation(location);
     });
 }
 
@@ -56,6 +86,7 @@ function geocodeAddress() {
     }
 }
 
+// Función para buscar resultados por coordenadas y radio
 function searchByCoordinates(lat, lng, radius) {
     const requestBody = {
         latitud: lat,
