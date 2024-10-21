@@ -7,6 +7,7 @@
     <title id="page-title">Inserte su titulo</title>
     <link rel="icon" href="http://geotaxi.ddns.net/icon/titleicon3.png" type="image/png">
     <link rel="stylesheet" href="searchroute.css"> <!-- Vincula el archivo CSS -->
+    <script src="searchroute.js" defer></script> <!-- Vincula el archivo JS -->
 </head>
 
 <body>
@@ -15,7 +16,7 @@
         <label for="address">Dirección:</label>
         <input type="text" id="address" placeholder="Ingrese una dirección" oninput="autocompleteAddress()">
         <button onclick="geocodeAddress()">Buscar</button>
-        <div class="loading" style="display:none;">Cargando...</div>
+        <div class="loading">Cargando...</div>
         <div id="suggestions" class="suggestions" style="display:none;"></div> <!-- Contenedor para las sugerencias -->
     </div>
 
@@ -25,26 +26,26 @@
 
     <div id="radius-selection">
         <label for="radius">Radio de búsqueda:</label>
-        <input type="range" id="radius" min="100" max="2000" value="150" step="50"
-            onchange="updateRadiusValue(this.value)">
+        <input type="range" id="radius" min="100" max="2000" value="150" step="50" onchange="updateRadiusValue(this.value)">
         <span id="radius-value">150 m</span>
     </div>
 
-    <div id="map"></div>
-    <div id="results">
-        <table>
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                </tr>
-            </thead>
-            <tbody id="results-body"></tbody>
-        </table>
-        <div id="no-results" style="display:none;">No se encontraron resultados.</div>
+    <div id="map-and-results">
+        <div id="map"></div>
+        <div id="results-container">
+            <h3>Resultados de fechas y horas para la consulta por dirección</h3>
+            <table id="results">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                    </tr>
+                </thead>
+                <tbody id="results-body"></tbody>
+            </table>
+            <div class="no-results" id="no-results" style="display: none;">No se encontraron resultados.</div>
+        </div>
     </div>
-
-    <script src="searchroute.js"></script>
 </body>
 
 </html>
