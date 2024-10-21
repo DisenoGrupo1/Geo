@@ -33,7 +33,19 @@ function initMap() {
 function initAutocomplete() {
     autocompleteService = new google.maps.places.AutocompleteService();
 }
+console.log("autocompleteAddress:", autocompleteAddress);
 
+// Función para autocompletar dirección
+function autocompleteAddress() {
+    const input = document.getElementById('address');
+    const query = input.value;
+
+    if (query.length > 2) { // Solo buscar si el input tiene más de 2 caracteres
+        autocompleteService.getPlacePredictions({ input: query }, displaySuggestions);
+    } else {
+        document.getElementById('suggestions').style.display = 'none'; // Ocultar sugerencias si la longitud es menor
+    }
+}
 // Función para convertir dirección en coordenadas
 function geocodeAddress() {
     const address = document.getElementById('address').value;
@@ -63,17 +75,7 @@ function geocodeAddress() {
     }
 }
 
-// Función para autocompletar dirección
-function autocompleteAddress() {
-    const input = document.getElementById('address');
-    const query = input.value;
 
-    if (query.length > 2) { // Solo buscar si el input tiene más de 2 caracteres
-        autocompleteService.getPlacePredictions({ input: query }, displaySuggestions);
-    } else {
-        document.getElementById('suggestions').style.display = 'none'; // Ocultar sugerencias si la longitud es menor
-    }
-}
 
 // Muestra las sugerencias en el contenedor
 function displaySuggestions(predictions, status) {
