@@ -172,7 +172,6 @@ function displayResults(data) {
     }
 }
 
-// Actualizar el valor del radio en el HTML
 function updateRadiusValue(value) {
     document.getElementById('radius-value').textContent = value + ' m';
 }
