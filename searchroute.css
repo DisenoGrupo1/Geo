@@ -142,23 +142,7 @@ button:hover {
     margin-left: 10px;
     font-weight: bold;
 }
-.suggestions {
-    border: 1px solid #ccc;
-    background-color: white;
-    z-index: 1000;
-    position: absolute; /* Para que aparezca sobre otros elementos */
-    max-height: 200px;
-    overflow-y: auto;
-}
 
-.suggestion-item {
-    padding: 8px;
-    cursor: pointer;
-}
-
-.suggestion-item:hover {
-    background-color: #f0f0f0;
-}
 /* Estilos para pantallas pequeñas */
 @media (max-width: 768px) {
     #map-and-results {
