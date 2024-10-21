@@ -6,7 +6,7 @@ import os
 from dotenv import load_dotenv
 
 app = Flask(__name__)
-CORS(app, resources={r"/location-history": {"origins": "*"}})
+CORS(app)
 load_dotenv()
 
 # Configuración de la base de datos usando variables de entorno
