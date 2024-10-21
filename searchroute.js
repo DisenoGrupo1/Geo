@@ -2,7 +2,7 @@ let configData;
 let map;
 let marker;
 let circle; // Variable global para el círculo
-let autocomplete; // Variable para el autocompletado
+let autocomplete; // Variable para el servicio de autocompletar
 
 // Cargar config.json y obtener la clave API
 function loadConfig() {
@@ -19,7 +19,7 @@ function loadConfig() {
         .catch(error => console.error("Error al cargar config.json:", error));
 }
 
-// Inicializa el mapa
+// Inicializa el mapa y el servicio de Autocompletar
 function initMap() {
     const barranquilla = { lat: 10.9878, lng: -74.7889 };
     map = new google.maps.Map(document.getElementById('map'), {
@@ -27,33 +27,31 @@ function initMap() {
         center: barranquilla
     });
 
-    // Inicializa el autocompletado cuando el mapa está cargado
-    initAutocomplete();
-}
-
-// Función para inicializar el autocompletado de Google Places
-function initAutocomplete() {
-    // Vincula el campo de dirección al Autocomplete de Google Places
+    // Inicializa el servicio de Autocompletar
     const input = document.getElementById('address');
     autocomplete = new google.maps.places.Autocomplete(input);
     
-    // Limitar los resultados a direcciones (opcional)
-    autocomplete.setFields(['address_components', 'geometry']);
-    
-    // Escucha cuando el usuario selecciona una opción
-    autocomplete.addListener('place_changed', function () {
+    // Limitar las sugerencias a Barranquilla
+    autocomplete.setBounds(new google.maps.LatLngBounds(
+        new google.maps.LatLng(10.9278, -74.8289),
+        new google.maps.LatLng(11.0478, -74.7489)
+    ));
+
+    autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
-        if (!place.geometry) {
-            // Si no se selecciona una ubicación válida
-            alert("No se ha seleccionado una ubicación válida.");
-            return;
+        if (place.geometry) {
+            centerMapOnLocation(place.geometry.location);
         }
-        
-        // Centra el mapa en la ubicación seleccionada
-        const location = place.geometry.location;
-        const radius = document.getElementById('radius').value;
-        searchByCoordinates(location.lat(), location.lng(), radius);
-        centerMapOnLocation(location);
+    });
+
+    // Agregar listener al input para mostrar sugerencias
+    input.addEventListener('input', () => {
+        const value = input.value;
+        if (value.length > 2) {
+            autocomplete.getPlacePredictions({ input: value }, displaySuggestions);
+        } else {
+            document.getElementById('autocomplete-suggestions').style.display = 'none';
+        }
     });
 }
 
@@ -86,7 +84,6 @@ function geocodeAddress() {
     }
 }
 
-// Función para buscar resultados por coordenadas y radio
 function searchByCoordinates(lat, lng, radius) {
     const requestBody = {
         latitud: lat,
@@ -172,8 +169,32 @@ function displayResults(data) {
     }
 }
 
+// Actualizar el valor del radio en el HTML
 function updateRadiusValue(value) {
     document.getElementById('radius-value').textContent = value + ' m';
+}
+
+// Mostrar sugerencias de autocompletado
+function displaySuggestions(predictions, status) {
+    const suggestionsContainer = document.getElementById('autocomplete-suggestions');
+    suggestionsContainer.innerHTML = '';
+
+    if (status === google.maps.places.PlacesServiceStatus.OK) {
+        predictions.forEach(prediction => {
+            const div = document.createElement('div');
+            div.classList.add('autocomplete-suggestion');
+            div.textContent = prediction.description;
+            div.onclick = () => {
+                document.getElementById('address').value = prediction.description;
+                suggestionsContainer.style.display = 'none';
+                geocodeAddress(); // Llama a tu función de geocodificación
+            };
+            suggestionsContainer.appendChild(div);
+        });
+        suggestionsContainer.style.display = 'block';
+    } else {
+        suggestionsContainer.style.display = 'none';
+    }
 }
 
 // Cargar la configuración al cargar la página
