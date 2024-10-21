@@ -2,7 +2,6 @@ let configData;
 let map;
 let marker;
 let circle; // Variable global para el círculo
-let autocompleteService; // Variable global para el servicio de autocompletado
 
 // Cargar config.json y obtener la clave API
 function loadConfig() {
@@ -12,7 +11,7 @@ function loadConfig() {
             configData = config;
             document.getElementById('page-title').innerText = configData.TITLE;
             const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&libraries=places&callback=initMap`;
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
             script.defer = true;
             document.head.appendChild(script);
         })
@@ -26,26 +25,8 @@ function initMap() {
         zoom: 12,
         center: barranquilla
     });
-    initAutocomplete(); // Inicializa el servicio de autocompletado
 }
 
-// Inicializa el servicio de autocompletado
-function initAutocomplete() {
-    autocompleteService = new google.maps.places.AutocompleteService();
-}
-console.log("autocompleteAddress:", autocompleteAddress);
-
-// Función para autocompletar dirección
-function autocompleteAddress() {
-    const input = document.getElementById('address');
-    const query = input.value;
-
-    if (query.length > 2) { // Solo buscar si el input tiene más de 2 caracteres
-        autocompleteService.getPlacePredictions({ input: query }, displaySuggestions);
-    } else {
-        document.getElementById('suggestions').style.display = 'none'; // Ocultar sugerencias si la longitud es menor
-    }
-}
 // Función para convertir dirección en coordenadas
 function geocodeAddress() {
     const address = document.getElementById('address').value;
@@ -75,34 +56,6 @@ function geocodeAddress() {
     }
 }
 
-
-
-// Muestra las sugerencias en el contenedor
-function displaySuggestions(predictions, status) {
-    const suggestionsContainer = document.getElementById('suggestions');
-    suggestionsContainer.innerHTML = ''; // Limpiar sugerencias anteriores
-
-    if (status === google.maps.places.PlacesServiceStatus.OK) {
-        predictions.forEach(prediction => {
-            const suggestionItem = document.createElement('div');
-            suggestionItem.textContent = prediction.description;
-            suggestionItem.className = 'suggestion-item';
-            suggestionItem.onclick = () => selectSuggestion(prediction); // Al hacer clic en una sugerencia
-            suggestionsContainer.appendChild(suggestionItem);
-        });
-        suggestionsContainer.style.display = 'block'; // Mostrar sugerencias
-    } else {
-        suggestionsContainer.style.display = 'none'; // Ocultar si no hay sugerencias
-    }
-}
-
-// Función para seleccionar una sugerencia
-function selectSuggestion(prediction) {
-    document.getElementById('address').value = prediction.description; // Completar el campo de dirección
-    document.getElementById('suggestions').style.display = 'none'; // Ocultar sugerencias
-}
-
-// Función para buscar por coordenadas
 function searchByCoordinates(lat, lng, radius) {
     const requestBody = {
         latitud: lat,
@@ -174,18 +127,23 @@ function displayResults(data) {
     if (data.length > 0) {
         data.forEach(item => {
             const row = document.createElement('tr');
-            row.innerHTML = `<td>${item.fecha}</td><td>${item.hora}</td>`;
+            const dateCell = document.createElement('td');
+            const timeCell = document.createElement('td');
+            dateCell.textContent = item.fecha;
+            timeCell.textContent = item.hora;
+            row.appendChild(dateCell);
+            row.appendChild(timeCell);
             resultsBody.appendChild(row);
         });
-        document.getElementById('no-results').style.display = 'none';
+        document.getElementById('no-results').style.display = 'none'; // Ocultar mensaje de no resultados
     } else {
-        document.getElementById('no-results').style.display = 'block'; // Mostrar mensaje si no hay resultados
+        document.getElementById('no-results').style.display = 'block'; // Mostrar mensaje de no resultados
     }
 }
 
-// Actualiza el valor mostrado del radio
+// Actualizar el valor del radio en el HTML
 function updateRadiusValue(value) {
-    document.getElementById('radius-value').innerText = `${value} m`;
+    document.getElementById('radius-value').textContent = value + ' m';
 }
 
 // Cargar la configuración al cargar la página
