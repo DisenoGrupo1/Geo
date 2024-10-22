@@ -287,7 +287,6 @@ function setMaxDate() {
     document.getElementById('end-datetime').setAttribute('max', `${localDate}T23:59`);
 }
 
-// Cargar la configuración al cargar la página
 window.onload = function () {
     loadConfig();
     setMaxDate();
