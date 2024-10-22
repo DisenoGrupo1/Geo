@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Inserte su título</title>
+    <link rel="icon" href="http://geotaxi.ddns.net/icon/titleicon3.png" type="image/png">
+    <link rel="stylesheet" href="addandhist.css"> <!-- Estilo unificado -->
+    <script src="addandhist.js" defer></script> <!-- Script unificado -->
+</head>
+
+<body>
+    <div class="container">
+        <h1>Consulta por ventana de tiempo</h1>
+        <div id="link-container">
+            <button class="btn-link" onclick="window.location.href='index.html'">Volver a Inicio</button>
+        </div>
+
+        <div class="flex-row">
+            <div>
+                <label for="start-datetime">Fecha y hora inicial:</label>
+                <input type="datetime-local" id="start-datetime" required>
+            </div>
+            <div>
+                <label for="end-datetime">Fecha y hora final:</label>
+                <input type="datetime-local" id="end-datetime" required>
+            </div>
+            <button onclick="loadHistory()">Cargar Histórico</button>
+        </div>
+
+        <!-- Sección para ingresar la dirección -->
+        <div id="address-selection">
+            <label for="address">Dirección:</label>
+            <input type="text" id="address" placeholder="Ingrese una dirección">
+            <button onclick="geocodeAddress()">Buscar</button>
+            <div class="loading">Cargando...</div>
+        </div>
+
+        <div id="radius-selection">
+            <label for="radius">Radio de búsqueda:</label>
+            <input type="range" id="radius" min="100" max="2000" value="150" step="50"
+                onchange="updateRadiusValue(this.value)">
+            <span id="radius-value">150 m</span>
+        </div>
+
+        <div id="map-and-results">
+            <div id="map"></div>
+            <div id="results-container">
+                <h3>Resultados de fechas y horas para la consulta por dirección</h3>
+                <table id="results">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body"></tbody>
+                </table>
+                <div class="no-results" id="no-results" style="display: none;">No se encontraron resultados.</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
