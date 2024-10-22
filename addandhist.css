@@ -24,7 +24,7 @@ label {
 }
 
 .flex-row {
- display: flex;
+    display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
@@ -48,7 +48,7 @@ input[type="range"] {
 button {
     padding: 10px;
     background-color: #007BFF;
- color: white;
+    color: white;
     border: none;
     border-radius: 4px;
     font-size: 16px;
@@ -74,13 +74,13 @@ button:hover {
 }
 
 .btn-link {
-  padding: 10px 20px;
+    padding: 10px 20px;
     background-color: #28a745;
     color: white;
     border: none;
     border-radius: 4px;
     font-size: 16px;
-	    cursor: pointer;
+    cursor: pointer;
     transition: background-color 0.3s;
     margin: 40px;
     right: 40px;
@@ -95,12 +95,14 @@ button:hover {
 }
 
 .loading {
-    display: none; /* Esconder por defecto */
+    display: none;
+    /* Esconder por defecto */
 }
 
 .no-results {
     color: red;
 }
+
 /* Tabla de resultados */
 #results {
     width: 100%;
@@ -108,18 +110,21 @@ button:hover {
     margin-top: 20px;
     text-align: center;
 }
-h3{ 
+
+h3 {
     text-align: center;
 }
-#results th, #results td {
+
+#results th,
+#results td {
     border: 1px solid #ccc;
     padding: 8px;
     text-align: center;
 }
 
 #results th {
-    	text-align: center;
-	background-color: #f2f2f2;
+    text-align: center;
+    background-color: #f2f2f2;
 }
 
 .no-results {
@@ -128,9 +133,10 @@ h3{
     margin-top: 20px;
     color: #999;
 }
+
 /* Media queries para dispositivos pequeños */
 @media (max-width: 600px) {
- .flex-row {
+    .flex-row {
         flex-direction: column;
         align-items: flex-start;
     }
