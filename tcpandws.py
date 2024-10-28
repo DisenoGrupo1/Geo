@@ -78,8 +78,10 @@ async def handle_client(conn):
                     processed_messages.add(hashed_message)
                     buffer.append(message)
                     print(f"Datos recibidos: '{message}'")
-                    
-                    match = re.match(r'Latitude:\s*(-?\d+\.\d+)\s+Longitude:\s*(-?\d+\.\d+)\s+Timestamp:\s*(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+Speed:\s*(\d+\.\d+)\s+RPM:\s*(\d+\.\d+)', message)
+                    match = re.match(
+                        r'Latitude:\s*(-?\d+\.\d+)\s+Longitude:\s*(-?\d+\.\d+)\s+Timestamp:\s*(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+Speed:\s*(\d+(?:\.\d+)?)\s+RPM:\s*(\d+(?:\.\d+)?)', 
+                        message
+                    )
                     if match:
                         latitud, longitud, fecha, hora, velocidad, rpm = match.groups()
                         location_cache.append((latitud, longitud, fecha, hora, velocidad, rpm))
