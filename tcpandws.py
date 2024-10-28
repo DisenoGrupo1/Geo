@@ -102,7 +102,7 @@ async def save_locations_in_batch():
     
     current_timestamp = time.time()
     
-    # Verificar si han pasado 10 segundos desde el último guardado
+    # Ver si han pasado 10 segundos desde el último guardado
     if last_saved_timestamp is None or (current_timestamp - last_saved_timestamp) >= 10:
         async with save_lock:
             try:
