@@ -79,12 +79,12 @@ async def handle_client(conn):
                     buffer.append(message)
                     print(f"Datos recibidos: '{message}'")
                     
-                    match = re.match(r'Latitude:\s*(-?\d+\.\d+)\s+Longitude:\s*(-?\d+\.\d+)\s+Timestamp:\s*(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+Speed:\s*(\d+\.\d+)\s+RPM:\s*(\d+\.\d+)', message)
+                    match = re.match(r'Latitude:\s*(-?\d+\.\d+)\s+Longitude:\s*(-?\d+\.\d+)\s+Timestamp:\s*(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})', message)
                     if match:
-                        latitud, longitud, fecha, hora, velocidad, rpm = match.groups()
-                        location_cache.append((latitud, longitud, fecha, hora, velocidad, rpm))
+                        latitud, longitud, fecha, hora = match.groups()
+                        location_cache.append((latitud, longitud, fecha, hora))
                         await save_locations_in_batch()
-                        await notify_clients(latitud, longitud, fecha, hora, velocidad, rpm)
+                        await notify_clients(latitud, longitud, fecha, hora)
                         await asyncio.to_thread(conn.sendall, b"Datos recibidos y guardados.")
                     else:
                         print("Datos recibidos en formato incorrecto.")
@@ -102,14 +102,14 @@ async def save_locations_in_batch():
     
     current_timestamp = time.time()
     
-    # Ver si han pasado 10 segundos desde el último guardado
+    # Verificar si han pasado 10 segundos desde el último guardado
     if last_saved_timestamp is None or (current_timestamp - last_saved_timestamp) >= 10:
         async with save_lock:
             try:
                 connection = connection_pool.get_connection()
                 cursor = connection.cursor()
-                cursor.executemany('''INSERT IGNORE INTO ubicaciones (latitud, longitud, fecha, hora, velocidad, rpm) 
-                                      VALUES (%s, %s, %s, %s, %s, %s)''', location_cache)
+                cursor.executemany('''INSERT IGNORE INTO ubicaciones (latitud, longitud, fecha, hora) 
+                                      VALUES (%s, %s, %s, %s)''', location_cache)
                 connection.commit()
                 last_saved_timestamp = current_timestamp
                 location_cache.clear()
@@ -120,20 +120,13 @@ async def save_locations_in_batch():
                 cursor.close()
                 connection.close()
 
-async def notify_clients(latitud, longitud, fecha, hora, velocidad, rpm):
+async def notify_clients(latitud, longitud, fecha, hora):
     """Notifica a los clientes conectados via WebSocket de manera throttled."""
     global last_notification_time
     current_time = time.time()
     
     if current_time - last_notification_time >= NOTIFICATION_THRESHOLD:
-        message = json.dumps({
-            'latitud': latitud, 
-            'longitud': longitud, 
-            'fecha': fecha, 
-            'hora': hora,
-            'velocidad': velocidad,
-            'rpm': rpm
-        })
+        message = json.dumps({'latitud': latitud, 'longitud': longitud, 'fecha': fecha, 'hora': hora})
         for client in clients:
             await asyncio.to_thread(server.send_message, client, message)
         last_notification_time = current_time
