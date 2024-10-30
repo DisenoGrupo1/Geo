@@ -1,38 +1,72 @@
 /* Tamaño del mapa */
 #map {
-    height: 90%; /* Ajustado para dejar espacio para el hipervínculo */
+    height: 80%;
 }
 
-/* Asegurarse de que el cuerpo y el HTML ocupen el 100% del tamaño */
+/* Asegura que cuerpo y HTML ocupen el 100% del tamaño */
 html, body {
     height: 100%;
     margin: 0;
     padding: 0;
 }
 
-/* Contenedor del hipervínculo */
-#link-container {
-    height: 10%;
+/* Contenedor para el enlace y los tacómetros */
+#controls-container {
+    height: 20%;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    padding: 10px;
     background-color: #f8f9fa;
     flex-direction: row;
 }
 
-/* Estilo del enlace como botón */
-#link-container a {
-    display: inline-block; /* Permite aplicar padding y margen */
-    background-color: #000dff; /* Color de fondo */
-    color: white; /* Color del texto */
-    padding: 10px 20px; /* Espaciado interno */
-    text-decoration: none; /* Sin subrayado */
-    margin: 0 10px;
-    border-radius: 5px; /* Bordes redondeados */
-    transition: background-color 0.3s, transform 0.2s; /* Transiciones suaves */
+/* Contenedor de tacómetros */
+.gauge-container {
+    display: flex;
+    gap: 20px;
 }
 
-/* Cambio de color al pasar el mouse */
+/* Estilo del enlace como botón */
+#link-container a {
+    display: inline-block;
+    background-color: #000dff;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    margin: 0 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
 #link-container a:hover {
-    background-color: #0000cc; /* Color azul más oscuro al pasar el mouse */
+    background-color: #0000cc;
+}
+
+/* Estilos del tacómetro */
+.speedometer {
+    width: 100px;
+    height: 100px;
+    background-color: #333;
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    border: 8px solid #333;
+}
+
+.speed {
+    font-size: 24px;
+    font-weight: bold;
+    position: relative;
+    z-index: 2;
+}
+
+.unit {
+    font-size: 14px;
+    position: absolute;
+    bottom: 10px;
+    z-index: 2;
 }
