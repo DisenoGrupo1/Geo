@@ -21,7 +21,7 @@ function loadConfig() {
             configData = config;
             document.title = configData.TITLE;
             const script = document.createElement('script');
-            script.src = https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap;
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${configData.apiKey}&callback=initMap`;
             script.async = true;
             script.defer = true;
             document.head.appendChild(script);
@@ -52,28 +52,32 @@ function initializeWebSocket() {
         return;
     }
 
-    socket = new WebSocket(ws://${configData.AWS_IP}:20000);
+    socket = new WebSocket(`ws://${configData.AWS_IP}:20000`);
 
     socket.onopen = function () {
         console.log("Conectado al WebSocket");
         reconnectInterval = 1000;
         reconnectAttempts = 0;
 
-        fetch(http://${configData.AWS_IP}:50000/last_location)
+        fetch(`http://${configData.AWS_IP}:50000/last_location`)
             .then(response => response.json())
             .then(data => {
                 if (data.latitud && data.longitud) {
                     lastLatLng = new google.maps.LatLng(parseFloat(data.latitud), parseFloat(data.longitud));
-                    marker = new google.maps.Marker({
-                        position: lastLatLng,
-                        map: map,
-                        icon: {
-                            url: "http://geotaxi.ddns.net/icon/taxi.png",
-                            scaledSize: new google.maps.Size(25, 25),
-                            origin: new google.maps.Point(0, 0),
-                            anchor: new google.maps.Point(15, 15)
-                        }
-                    });
+                    if (!marker) {
+                        marker = new google.maps.Marker({
+                            position: lastLatLng,
+                            map: map,
+                            icon: {
+                                url: "http://geotaxi.ddns.net/icon/taxi.png",
+                                scaledSize: new google.maps.Size(25, 25),
+                                origin: new google.maps.Point(0, 0),
+                                anchor: new google.maps.Point(15, 15)
+                            }
+                        });
+                    } else {
+                        marker.setPosition(lastLatLng);
+                    }
                     map.setCenter(lastLatLng);
                 }
             })
@@ -85,7 +89,7 @@ function initializeWebSocket() {
         let data = JSON.parse(event.data);
         let latLng = new google.maps.LatLng(parseFloat(data.latitud), parseFloat(data.longitud));
         
-        let currentTime = new Date(${data.fecha}T${data.hora});
+        let currentTime = new Date(`${data.fecha}T${data.hora}`);
         if (!lastUpdateTime || (currentTime - lastUpdateTime) >= 1000) {
             lastUpdateTime = currentTime;
 
@@ -104,15 +108,18 @@ function initializeWebSocket() {
 
     socket.onerror = function () {
         console.error("Error de WebSocket");
-        alert("Error de conexión. Intentando reconectar...");
     };
 
     socket.onclose = function () {
         console.log("WebSocket cerrado");
         reconnectAttempts++;
-        console.log(Intento de reconexión: ${reconnectAttempts});
-        setTimeout(initializeWebSocket, reconnectInterval);
-        reconnectInterval = Math.min(reconnectInterval * 2, 60000);
+        console.log(`Intento de reconexión: ${reconnectAttempts}`);
+        if (reconnectAttempts < MAX_ATTEMPTS) {
+            setTimeout(initializeWebSocket, reconnectInterval);
+            reconnectInterval = Math.min(reconnectInterval * 2, 60000);
+        } else {
+            console.log("No se pudo reconectar después de varios intentos.");
+        }
     };
 }
 
