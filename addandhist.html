@@ -12,7 +12,7 @@
 
 <body>
     <div class="container">
-        <h1>Rastreo por dirección y por ventana de tiempo</h1>
+        <h1>Rastreo por ventana de tiempo</h1>
         <div id="link-container">
             <button class="btn-link" onclick="window.location.href='index.html'">Volver a Inicio</button>
         </div>
@@ -29,36 +29,20 @@
             <button onclick="loadHistory()">Cargar Histórico</button>
         </div>
 
-        <!-- Sección para ingresar la dirección -->
-        <div id="address-selection">
-            <label for="address">Dirección:</label>
-            <input type="text" id="address" placeholder="Ingrese una dirección">
-            <button onclick="geocodeAddress()">Buscar</button>
-            <div class="loading">Cargando...</div>
+        <div id="slider-container">
+            <input type="range" id="slider" min="0" max="100" value="0" step="1" oninput="updateMarkerPosition(this.value)">
+            <span id="slider-value">0</span>%
         </div>
 
-        <div id="radius-selection">
-            <label for="radius">Radio de búsqueda:</label>
-            <input type="range" id="radius" min="100" max="2000" value="150" step="50"
-                onchange="updateRadiusValue(this.value)">
-            <span id="radius-value">150 m</span>
+        <div id="popup" class="popup" style="display: none;">
+            <div id="popup-content">
+                <span id="popup-close" onclick="closePopup()">✖</span>
+                <p id="popup-date-time"></p>
+            </div>
         </div>
 
         <div id="map-and-results">
             <div id="map"></div>
-            <div id="results-container">
-                <h3>Resultados de fechas y horas para la consulta por dirección</h3>
-                <table id="results">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Hora</th>
-                        </tr>
-                    </thead>
-                    <tbody id="results-body"></tbody>
-                </table>
-                <div class="no-results" id="no-results" style="display: none;">No se encontraron resultados.</div>
-            </div>
         </div>
     </div>
 </body>
