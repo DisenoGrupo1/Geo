@@ -90,67 +90,37 @@ button:hover {
     background-color: #218838;
 }
 
-#radius-selection {
+.popup {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    z-index: 1000;
+}
+
+.popup #popup-content {
+    position: relative;
+}
+
+.popup #popup-close {
+    cursor: pointer;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 16px;
+}
+
+#slider-container {
     margin: 20px 0;
 }
 
-.loading {
-    display: none;
-    /* Esconder por defecto */
-}
-
-.no-results {
-    color: red;
-}
-
-/* Tabla de resultados */
-#results {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    text-align: center;
-}
-
-h3 {
-    text-align: center;
-}
-
-#results th,
-#results td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: center;
-}
-
-#results th {
-    text-align: center;
-    background-color: #f2f2f2;
-}
-
-.no-results {
-    text-align: center;
-    font-size: 1.2em;
-    margin-top: 20px;
-    color: #999;
-}
-
-/* Media queries para dispositivos pequeños */
-@media (max-width: 600px) {
-    .flex-row {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    input[type="datetime-local"],
-    input[type="text"] {
-        max-width: 100%;
-        margin-bottom: 10px;
-    }
-
-    #link-container {
-        position: relative;
-        top: 0;
-        right: 0;
-        margin-top: 20px;
-    }
+/* Estilo para el marcador en el mapa */
+.marker-icon {
+    width: 30px; /* Cambia el tamaño del icono aquí */
+    height: 30px; /* Cambia el tamaño del icono aquí */
+    background: url('http://geotaxi.ddns.net/icon/titleicon3.png') no-repeat center center;
+    background-size: contain;
 }
