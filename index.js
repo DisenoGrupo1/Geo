@@ -10,9 +10,7 @@ const MAX_ATTEMPTS = 5;
 let lastUpdateTime = null;
 let lastLatLng;
 let mapInitialized = false;
-
-const speedValueElement = document.getElementById("speedValue");
-const rpmValueElement = document.getElementById("rpmValue");
+let infoWindow;
 
 function loadConfig() {
     return fetch('config.json')
@@ -34,6 +32,7 @@ function initMap() {
         zoom: 15,
         center: { lat: 0, lng: 0 }
     });
+
     pathPolyline = new google.maps.Polyline({
         path: pathCoordinates,
         geodesic: true,
@@ -43,6 +42,7 @@ function initMap() {
         map: map
     });
 
+    infoWindow = new google.maps.InfoWindow(); // Popup para mostrar velocidad y rpm
     initializeWebSocket();
 }
 
@@ -75,6 +75,10 @@ function initializeWebSocket() {
                                 anchor: new google.maps.Point(15, 15)
                             }
                         });
+
+                        marker.addListener('click', () => {
+                            infoWindow.open(map, marker);
+                        });
                     } else {
                         marker.setPosition(lastLatLng);
                     }
@@ -101,8 +105,9 @@ function initializeWebSocket() {
             }
 
             map.panTo(latLng);
-            speedValueElement.textContent = data.velocidad;
-            rpmValueElement.textContent = data.rpm;
+
+            // Actualizar el contenido del popup con velocidad y rpm
+            infoWindow.setContent(`<div><strong>Velocidad:</strong> ${data.velocidad} km/h<br><strong>RPM:</strong> ${data.rpm}</div>`);
         }
     };
 
