@@ -79,14 +79,14 @@ async def handle_client(conn):
                     buffer.append(message)
                     print(f"Datos recibidos: '{message}'")
                     match = re.match(
-                        r'Latitude:\s*(-?\d+\.\d+)\s+Longitude:\s*(-?\d+\.\d+)\s+Timestamp:\s*(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+Speed:\s*(\d+(?:\.\d+)?)\s+RPM:\s*(\d+(?:\.\d+)?)', 
+                        r'Latitude:\s*(-?\d+\.\d+)\s+Longitude:\s*(-?\d+\.\d+)\s+Timestamp:\s*(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+Speed:\s*(\d+(?:\.\d+)?)\s+RPM:\s*(\d+(?:\.\d+)?)\s+Fuel:\s*(\d+(?:\.\d+)?)', 
                         message
                     )
                     if match:
-                        latitud, longitud, fecha, hora, velocidad, rpm = match.groups()
-                        location_cache.append((latitud, longitud, fecha, hora, velocidad, rpm))
+                        latitud, longitud, fecha, hora, velocidad, rpm, fuel = match.groups()
+                        location_cache.append((latitud, longitud, fecha, hora, velocidad, rpm, fuel))
                         await save_locations_in_batch()
-                        await notify_clients(latitud, longitud, fecha, hora, velocidad, rpm)
+                        await notify_clients(latitud, longitud, fecha, hora, velocidad, rpm, fuel)
                         await asyncio.to_thread(conn.sendall, b"Datos recibidos y guardados.")
                     else:
                         print("Datos recibidos en formato incorrecto.")
@@ -110,8 +110,8 @@ async def save_locations_in_batch():
             try:
                 connection = connection_pool.get_connection()
                 cursor = connection.cursor()
-                cursor.executemany('''INSERT IGNORE INTO ubicaciones (latitud, longitud, fecha, hora, velocidad, rpm) 
-                                      VALUES (%s, %s, %s, %s, %s, %s)''', location_cache)
+                cursor.executemany('''INSERT IGNORE INTO ubicaciones (latitud, longitud, fecha, hora, velocidad, rpm, combustible) 
+                      VALUES (%s, %s, %s, %s, %s, %s, %s)''', location_cache)
                 connection.commit()
                 last_saved_timestamp = current_timestamp
                 location_cache.clear()
@@ -122,7 +122,7 @@ async def save_locations_in_batch():
                 cursor.close()
                 connection.close()
 
-async def notify_clients(latitud, longitud, fecha, hora, velocidad, rpm):
+async def notify_clients(latitud, longitud, fecha, hora, velocidad, rpm, fuel):
     """Notifica a los clientes conectados via WebSocket de manera throttled."""
     global last_notification_time
     current_time = time.time()
@@ -134,7 +134,8 @@ async def notify_clients(latitud, longitud, fecha, hora, velocidad, rpm):
             'fecha': fecha, 
             'hora': hora,
             'velocidad': velocidad,
-            'rpm': rpm
+            'rpm': rpm,
+            'combustible': fuel
         })
         for client in clients:
             await asyncio.to_thread(server.send_message, client, message)
