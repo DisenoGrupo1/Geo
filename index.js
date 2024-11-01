@@ -107,7 +107,7 @@ function initializeWebSocket() {
             map.panTo(latLng);
 
             // Actualizar el contenido del popup con velocidad y rpm
-            infoWindow.setContent(`<div><strong>Velocidad:</strong> ${data.velocidad} km/h<br><strong>RPM:</strong> ${data.rpm}</div>`);
+            infoWindow.setContent(`<div><strong>Velocidad:</strong> ${data.velocidad} km/h<br><strong>RPM:</strong> ${data.rpm}<br><strong>Combustible:</strong> ${data.fuel}%</div>`);
         }
     };
 
