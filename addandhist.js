@@ -162,7 +162,7 @@ function addEndMarker() {
 
 // Actualiza la posición del marcador basado en el slider
 function updateMarkerPosition(value) {
-    if (totalSteps === 0) return; // No hay pasos disponibles
+    if (totalSteps === 0) return; 
 
     // Convertimos el valor del slider en un índice que no supere el total de ubicaciones
     currentStep = Math.floor((value / 100) * (totalSteps - 1));
