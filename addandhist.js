@@ -75,7 +75,6 @@ function loadHistory() {
             },
             body: JSON.stringify(requestBody)
         })
-            console.log(data)
             .then(response => {
                 if (!response.ok) {
                     throw new Error("No existen ubicaciones para la ventana de tiempo especificada");
@@ -83,10 +82,11 @@ function loadHistory() {
                 return response.json();
             })
             .then(data => {
+                console.log(data);
                 if (Array.isArray(data)) {
                     pathCoordinates = data.map(loc => ({
-                        latitud: parseFloat(loc.latitud),
-                        longitud: parseFloat(loc.longitud),
+                        latitud: loc.latitud,
+                        longitud: loc.longitud,
                         fecha: loc.fecha, // Asumiendo que tienes fecha en la respuesta
                         hora: loc.hora // Asumiendo que tienes hora en la respuesta
                     }));
