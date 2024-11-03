@@ -143,23 +143,29 @@ function updatePolyline() {
 }
 
 // Agregar marcadores de inicio y fin
+// Agrega un marcador de inicio
 function addStartMarker() {
-    if (startMarker) startMarker.setMap(null);
+    if (startMarker) {
+        startMarker.setMap(null);
+    }
+    const startLocation = pathCoordinates[0];
     startMarker = new google.maps.Marker({
-        position: pathCoordinates[0],
+        position: new google.maps.LatLng(startLocation.latitud, startLocation.longitud),
         map: map,
-        title: 'Inicio',
-        label: 'A'
+        title: 'Inicio'
     });
 }
 
+// Agrega un marcador de fin
 function addEndMarker() {
-    if (endMarker) endMarker.setMap(null);
+    if (endMarker) {
+        endMarker.setMap(null);
+    }
+    const endLocation = pathCoordinates[pathCoordinates.length - 1];
     endMarker = new google.maps.Marker({
-        position: pathCoordinates[pathCoordinates.length - 1],
+        position: new google.maps.LatLng(endLocation.latitud, endLocation.longitud),
         map: map,
-        title: 'Fin',
-        label: 'B'
+        title: 'Fin'
     });
 }
 
