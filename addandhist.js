@@ -36,7 +36,7 @@ function initMap() {
         strokeColor: '#FF0000',
         strokeOpacity: 0.8,
         strokeWeight: 2,
-        map: map 
+        map: map
     });
 
     // Inicializa el marcador que se moverá
@@ -95,11 +95,11 @@ function loadHistory() {
                     // Inicializamos los marcadores de inicio y fin
                     addStartMarker();
                     addEndMarker();
-                    
+
                     // Colocamos el marcador en la primera ubicación
                     movingMarker.setPosition(new google.maps.LatLng(pathCoordinates[0].latitud, pathCoordinates[0].longitud));
                     map.setCenter(movingMarker.getPosition());
-                    
+
                     // Añadimos el listener al marcador para mostrar el popup al hacer clic
                     addMarkerClickListener();
 
@@ -121,7 +121,7 @@ function loadHistory() {
 
 // Agregar el listener de clic en el marcador
 function addMarkerClickListener() {
-    google.maps.event.addListener(movingMarker, 'click', function() {
+    google.maps.event.addListener(movingMarker, 'click', function () {
         const position = pathCoordinates[currentStep];
         showPopup(position.fecha, position.hora);
     });
@@ -171,20 +171,26 @@ function addEndMarker() {
 
 // Actualiza la posición del marcador basado en el slider
 function updateMarkerPosition(value) {
-    if (totalSteps === 0) return; 
+    if (totalSteps === 0) return;
 
     // Convertimos el valor del slider en un índice que no supere el total de ubicaciones
     currentStep = Math.floor((value / 100) * (totalSteps - 1));
-    
+
     const position = pathCoordinates[currentStep];
     movingMarker.setPosition(new google.maps.LatLng(position.latitud, position.longitud));
-        map.setZoom(20); // Establecer el nivel de zoom en 15
+    map.setZoom(20); // Establecer el nivel de zoom en 15
 
     // Centrar el mapa en la nueva posición del marcador
     map.setCenter(movingMarker.getPosition());
     map.setZoom(20); // Establecer el nivel de zoom en 15
 
     showPopup(position.fecha, position.hora);
+}
+function setMaxDate() {
+    const today = new Date();
+    const localDate = today.toLocaleDateString('en-CA');
+    document.getElementById('start-datetime').setAttribute('max', `${localDate}T23:59`);
+    document.getElementById('end-datetime').setAttribute('max', `${localDate}T23:59`);
 }
 
 // Actualiza el slider basado en la cantidad de ubicaciones
