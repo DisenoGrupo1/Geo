@@ -135,6 +135,8 @@ function updatePolyline() {
             const bounds = new google.maps.LatLngBounds();
             pathCoordinates.forEach(coord => bounds.extend(new google.maps.LatLng(coord.latitud, coord.longitud)));
             map.fitBounds(bounds);
+            addStartMarker();
+            addEndMarker();
         }
     }
 }
