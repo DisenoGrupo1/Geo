@@ -90,22 +90,22 @@ button:hover {
     background-color: #218838;
 }
 
-.popup {
-    position: fixed;
-    top: 20px;
-    right: 20px;
+#popup {
+    position: absolute; /* Cambia a absolute para que funcione dentro del contenedor del mapa */
+    top: 20px; /* Ajusta la distancia desde la parte superior */
+    right: 20px; /* Ajusta la distancia desde el borde derecho */
     background: white;
     border: 1px solid #ccc;
     border-radius: 4px;
     padding: 10px;
-    z-index: 1000;
+    z-index: 10; /* Asegúrate de que esté encima del mapa */
 }
 
-.popup #popup-content {
+#popup #popup-content {
     position: relative;
 }
 
-.popup #popup-close {
+#popup #popup-close {
     cursor: pointer;
     position: absolute;
     top: 5px;
