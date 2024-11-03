@@ -75,6 +75,7 @@ function loadHistory() {
             },
             body: JSON.stringify(requestBody)
         })
+            console.log(data)
             .then(response => {
                 if (!response.ok) {
                     throw new Error("No existen ubicaciones para la ventana de tiempo especificada");
