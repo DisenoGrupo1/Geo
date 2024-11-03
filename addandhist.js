@@ -82,7 +82,7 @@ function loadHistory() {
                 return response.json();
             })
             .then(data => {
-                console.log(data);
+                //console.log(data);
                 if (Array.isArray(data)) {
                     pathCoordinates = data.map(loc => ({
                         latitud: loc.latitud,
@@ -178,11 +178,11 @@ function updateMarkerPosition(value) {
     
     const position = pathCoordinates[currentStep];
     movingMarker.setPosition(new google.maps.LatLng(position.latitud, position.longitud));
-        map.setZoom(25); // Establecer el nivel de zoom en 15
+        map.setZoom(20); // Establecer el nivel de zoom en 15
 
     // Centrar el mapa en la nueva posición del marcador
     map.setCenter(movingMarker.getPosition());
-    map.setZoom(25); // Establecer el nivel de zoom en 15
+    map.setZoom(20); // Establecer el nivel de zoom en 15
 
     showPopup(position.fecha, position.hora);
 }
