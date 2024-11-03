@@ -84,8 +84,8 @@ function loadHistory() {
             .then(data => {
                 if (Array.isArray(data)) {
                     pathCoordinates = data.map(loc => ({
-                        latitud: loc.latitud,
-                        longitud: loc.longitud,
+                        latitud: parseFloat(loc.latitud),
+                        longitud: parseFloat(loc.longitud),
                         fecha: loc.fecha, // Asumiendo que tienes fecha en la respuesta
                         hora: loc.hora // Asumiendo que tienes hora en la respuesta
                     }));
