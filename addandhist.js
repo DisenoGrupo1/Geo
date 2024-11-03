@@ -214,3 +214,8 @@ function closePopup() {
 }
 
 document.addEventListener('DOMContentLoaded', loadConfig);
+
+window.onload = function () {
+    loadConfig();
+    setMaxDate();
+};
