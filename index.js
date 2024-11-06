@@ -158,7 +158,7 @@ function initializeWebSocket() {
             </div>
         `);
 
-        map.panTo(latLng);  // Opcional: centra el mapa en la última posición recibida
+        map.panTo(latLng); 
     };
 
     socket.onerror = function () {
