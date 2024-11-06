@@ -14,7 +14,6 @@ from dotenv import load_dotenv
 # Cargar variables de entorno
 load_dotenv()
 
-# Variables globales
 last_saved_timestamp = None
 clients = []
 location_cache = []
@@ -78,16 +77,31 @@ async def handle_client(conn):
                     processed_messages.add(hashed_message)
                     buffer.append(message)
                     print(f"Datos recibidos: '{message}'")
-                    match = re.match(
+                    
+                    # Verificar el primer formato de mensaje
+                    match_1 = re.match(
                         r'Latitude:\s*(-?\d+\.\d+)\s+Longitude:\s*(-?\d+\.\d+)\s+Timestamp:\s*(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+Speed:\s*(\d+(?:\.\d+)?)\s+RPM:\s*(\d+(?:\.\d+)?)\s+Fuel:\s*(\d+(?:\.\d+)?)', 
                         message
                     )
-                    if match:
-                        latitud, longitud, fecha, hora, velocidad, rpm, fuel = match.groups()
+                    if match_1:
+                        latitud, longitud, fecha, hora, velocidad, rpm, fuel = match_1.groups()
                         location_cache.append((latitud, longitud, fecha, hora, velocidad, rpm, fuel))
                         await save_locations_in_batch()
                         await notify_clients(latitud, longitud, fecha, hora, velocidad, rpm, fuel)
                         await asyncio.to_thread(conn.sendall, b"Datos recibidos y guardados.")
+                    
+                    # Verificar el nuevo formato de mensaje
+                    match_2 = re.match(
+                        r'Latitude:\s*(-?\d+\.\d+)\s+Longitude:\s*(-?\d+\.\d+)\s+Timestamp:\s*(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})', 
+                        message
+                    )
+                    if match_2:
+                        latitud, longitud, timestamp = match_2.groups()
+                        print(f"Nuevo mensaje recibido: Latitud: {latitud}, Longitud: {longitud}, Timestamp: {timestamp}")
+                        # Agregar el nuevo mensaje al caché o realizar alguna acción
+                        location_cache.append((latitud, longitud, timestamp))
+                        await save_locations_in_batch()
+                        await asyncio.to_thread(conn.sendall, b"Nuevo mensaje recibido y procesado.")
                     else:
                         print("Datos recibidos en formato incorrecto.")
                         await asyncio.to_thread(conn.sendall, b"Formato de datos incorrecto.")
@@ -95,6 +109,7 @@ async def handle_client(conn):
             print("Conexión TCP cerrada por timeout.")
         except Exception as e:
             print(f"Error en la conexión TCP: {e}")
+    
 
 async def save_locations_in_batch():
     """Guarda las ubicaciones en la base de datos en lotes."""
