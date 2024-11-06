@@ -25,7 +25,6 @@ NOTIFICATION_THRESHOLD = 5  # Enviar notificaciones cada 5 segundos como máximo
 last_notification_time = time.time()
 global server  # Definimos server globalmente para que sea accesible
 
-# Crear un pool de conexiones a la base de datos
 connection_pool = pooling.MySQLConnectionPool(
     pool_name="mypool",
     pool_size=10,
