@@ -14,7 +14,6 @@ from dotenv import load_dotenv
 # Cargar variables de entorno
 load_dotenv()
 
-# Variables globales
 last_saved_timestamp = None
 clients = []
 location_cache = []
