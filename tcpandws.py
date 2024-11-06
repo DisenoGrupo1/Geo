@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 # Cargar variables de entorno
 load_dotenv()
 
+# Variables globales
 last_saved_timestamp = None
 clients = []
 location_cache = []
@@ -78,30 +79,19 @@ async def handle_client(conn):
                     buffer.append(message)
                     print(f"Datos recibidos: '{message}'")
                     
-                    # Verificar el primer formato de mensaje
-                    match_1 = re.match(
+                    # Actualizamos la expresión regular para incluir el nuevo campo Fuel
+                    match = re.match(
                         r'Latitude:\s*(-?\d+\.\d+)\s+Longitude:\s*(-?\d+\.\d+)\s+Timestamp:\s*(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+Speed:\s*(\d+(?:\.\d+)?)\s+RPM:\s*(\d+(?:\.\d+)?)\s+Fuel:\s*(\d+(?:\.\d+)?)', 
                         message
                     )
-                    if match_1:
-                        latitud, longitud, fecha, hora, velocidad, rpm, fuel = match_1.groups()
+                    
+                    if match:
+                        # Incluimos el nuevo campo `fuel` en la captura de datos
+                        latitud, longitud, fecha, hora, velocidad, rpm, fuel = match.groups()
                         location_cache.append((latitud, longitud, fecha, hora, velocidad, rpm, fuel))
                         await save_locations_in_batch()
                         await notify_clients(latitud, longitud, fecha, hora, velocidad, rpm, fuel)
                         await asyncio.to_thread(conn.sendall, b"Datos recibidos y guardados.")
-                    
-                    # Verificar el nuevo formato de mensaje
-                    match_2 = re.match(
-                        r'Latitude:\s*(-?\d+\.\d+)\s+Longitude:\s*(-?\d+\.\d+)\s+Timestamp:\s*(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})', 
-                        message
-                    )
-                    if match_2:
-                        latitud, longitud, timestamp = match_2.groups()
-                        print(f"Nuevo mensaje recibido: Latitud: {latitud}, Longitud: {longitud}, Timestamp: {timestamp}")
-                        # Agregar el nuevo mensaje al caché o realizar alguna acción
-                        location_cache.append((latitud, longitud, timestamp))
-                        await save_locations_in_batch()
-                        await asyncio.to_thread(conn.sendall, b"Nuevo mensaje recibido y procesado.")
                     else:
                         print("Datos recibidos en formato incorrecto.")
                         await asyncio.to_thread(conn.sendall, b"Formato de datos incorrecto.")
@@ -109,7 +99,6 @@ async def handle_client(conn):
             print("Conexión TCP cerrada por timeout.")
         except Exception as e:
             print(f"Error en la conexión TCP: {e}")
-    
 
 async def save_locations_in_batch():
     """Guarda las ubicaciones en la base de datos en lotes."""
@@ -120,13 +109,15 @@ async def save_locations_in_batch():
     current_timestamp = time.time()
     
     # Verificar si han pasado 10 segundos desde el último guardado
-    if last_saved_timestamp is None or (current_timestamp - last_saved_timestamp) >= 1000:
+    if last_saved_timestamp is None or (current_timestamp - last_saved_timestamp) >= 10:
         async with save_lock:
             try:
                 connection = connection_pool.get_connection()
                 cursor = connection.cursor()
+                
+                # Usamos la columna `combustible` en el INSERT
                 cursor.executemany('''INSERT IGNORE INTO ubicaciones (latitud, longitud, fecha, hora, velocidad, rpm, combustible) 
-                      VALUES (%s, %s, %s, %s, %s, %s, %s)''', location_cache)
+                                      VALUES (%s, %s, %s, %s, %s, %s, %s)''', location_cache)
                 connection.commit()
                 last_saved_timestamp = current_timestamp
                 location_cache.clear()
@@ -143,6 +134,7 @@ async def notify_clients(latitud, longitud, fecha, hora, velocidad, rpm, fuel):
     current_time = time.time()
     
     if current_time - last_notification_time >= NOTIFICATION_THRESHOLD:
+        # Incluir `combustible` en el mensaje de notificación
         message = json.dumps({
             'latitud': latitud, 
             'longitud': longitud, 
@@ -173,7 +165,7 @@ def new_client(client, server):
     print("Nuevo cliente conectado y agregado a la lista.")
 
 def client_left(client, server):
-    """Elimina un cliente de la lista."""	
+    """Elimina un cliente de la lista."""    
     clients.remove(client)
     print("Cliente desconectado y eliminado de la lista.")
 

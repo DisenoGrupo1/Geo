@@ -91,7 +91,7 @@ function initializeWebSocket() {
     socket.onmessage = function (event) {
         console.log("Mensaje recibido del WebSocket:", event.data);
         let data = JSON.parse(event.data);
-        console.log(data);
+        //console.log(data);
         let latLng = new google.maps.LatLng(parseFloat(data.latitud), parseFloat(data.longitud));
         
         let currentTime = new Date(`${data.fecha}T${data.hora}`);
@@ -108,7 +108,7 @@ function initializeWebSocket() {
             map.panTo(latLng);
 
             // Actualizar el contenido del popup con velocidad y rpm
-            infoWindow.setContent(`<div><strong>Velocidad:</strong> ${data.velocidad} km/h<br><strong>RPM:</strong> ${data.rpm}<br><strong>Combustible:</strong> ${data.fuel}%</div>`);
+            infoWindow.setContent(`<div><strong>Velocidad:</strong> ${data.velocidad} km/h<br><strong>RPM:</strong> ${data.rpm}<br><strong>Combustible:</strong> ${data.combustible}%</div>`);
         }
     };
 
