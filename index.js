@@ -99,6 +99,7 @@ function initializeWebSocket() {
     socket.onmessage = function (event) {
         console.log("Mensaje recibido del WebSocket:", event.data);
         let data = JSON.parse(event.data);
+        let alias = data.alias;  // Obtén el alias del cliente
 
         // Verifica si el mensaje tiene el client_id
         if (!data.client_id) {
@@ -151,10 +152,10 @@ function initializeWebSocket() {
         // Actualiza el contenido del InfoWindow con velocidad, rpm, y combustible
         markers[clientId].infoWindow.setContent(`
             <div>
-                <strong>Cliente ID:</strong> ${clientId}<br>
+                <strong>ID:</strong> ${alias}<br>
                 <strong>Velocidad:</strong> ${data.velocidad} km/h<br>
                 <strong>RPM:</strong> ${data.rpm}<br>
-                <strong>Combustible:</strong> ${data.combustible}%
+                <strong>Combustible:</strong> ${data.fuel}%
             </div>
         `);
 
