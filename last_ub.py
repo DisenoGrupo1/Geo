@@ -28,7 +28,7 @@ def get_last_location():
 
         # Selecciona la última ubicación de cada carro identificada por `client_id`
         cursor.execute('''
-            SELECT client_id, latitud, longitud, fecha, hora
+            SELECT client_id, latitud, longitud, fecha, hora, alias
             FROM ubicaciones
             WHERE (client_id, fecha, hora) IN (
                 SELECT client_id, MAX(fecha), MAX(hora)

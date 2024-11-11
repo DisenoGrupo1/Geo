@@ -54,6 +54,7 @@ function initializeWebSocket() {
 
                 cars.forEach(car => {
                     let clientId = car.client_id;
+                    let alias=car.alias;
                     let lastLatLng = new google.maps.LatLng(parseFloat(car.latitud), parseFloat(car.longitud));
 
                     // Crea un marcador y línea de trayectoria para cada cliente
@@ -81,6 +82,11 @@ function initializeWebSocket() {
 
                         // Crear InfoWindow y añadir listener para mostrarlo al hacer clic
                         markers[clientId].infoWindow = new google.maps.InfoWindow();
+                        markers[clientId].infoWindow.setContent(`
+                            <div>
+                                <strong>ID:</strong> ${alias}<br>
+                            </div>
+                        `);
                         markers[clientId].addListener('click', () => {
                             markers[clientId].infoWindow.open(map, markers[clientId]);
                         });
