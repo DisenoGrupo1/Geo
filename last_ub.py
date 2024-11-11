@@ -20,36 +20,32 @@ db_config = {
     'database': os.getenv('DB_NAME')
 }
 
-# Ruta para obtener la última ubicación
 @app.route('/last_location', methods=['GET'])
 def get_last_location():
     try:
-        # Crear una nueva conexión para esta solicitud
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
 
-        # Ejecutar la consulta para obtener la última ubicación
-        cursor.execute('''SELECT latitud, longitud, fecha, hora
-                          FROM ubicaciones
-                          ORDER BY fecha DESC, hora DESC
-                          LIMIT 1''')
+        # Selecciona la última ubicación de cada carro identificada por `client_id`
+        cursor.execute('''
+            SELECT client_id, latitud, longitud, fecha, hora
+            FROM ubicaciones
+            WHERE (client_id, fecha, hora) IN (
+                SELECT client_id, MAX(fecha), MAX(hora)
+                FROM ubicaciones
+                GROUP BY client_id
+            )
+        ''')
 
-        last_location = cursor.fetchone()
-
-        if last_location:
-            last_location['fecha'] = last_location['fecha'].strftime('%Y-%m-%d')  # Formato de fecha
-            # Asegurarse de que 'hora' sea un objeto datetime
-            if isinstance(last_location['hora'], datetime):
-                last_location['hora'] = last_location['hora'].strftime('%H:%M:%S')  # Formato de hora
-            else:
-                last_location['hora'] = str(last_location['hora'])  # Convertir a cadena si es timedelta
-            return jsonify(last_location), 200
-        else:
-            return jsonify({"message": "No location found"}), 404
+        last_locations = cursor.fetchall()
+        for location in last_locations:
+            location['fecha'] = location['fecha'].strftime('%Y-%m-%d')
+            location['hora'] = location['hora'].strftime('%H:%M:%S') if isinstance(location['hora'], datetime) else str(location['hora'])
+        
+        return jsonify(last_locations), 200
     except mysql.connector.Error as e:
         return jsonify({"error": str(e)}), 500
     finally:
-        # Cerrar la conexión
         cursor.close()
         connection.close()
 
