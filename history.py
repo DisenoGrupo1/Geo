@@ -9,7 +9,6 @@ app = Flask(__name__)
 CORS(app, resources={r"/location-history": {"origins": "*"}})
 load_dotenv()
 
-# Configuración de la base de datos usando variables de entorno
 db_config = {
     'host': os.getenv('DB_HOST'),
     'user': os.getenv('DB_USER'),
