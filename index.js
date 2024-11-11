@@ -26,7 +26,7 @@ function loadConfig() {
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 15,
-        center: { lat: 0, lng: 0 }
+        center: { lat: 10.9878, lng: -74.7889 }
     });
 
     initializeWebSocket();
@@ -158,7 +158,7 @@ function initializeWebSocket() {
             </div>
         `);
 
-        map.panTo(latLng); 
+       //map.panTo(latLng); 
     };
 
     socket.onerror = function () {
