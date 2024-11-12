@@ -157,12 +157,12 @@ function loadAliases() {
                 });
             } else {
                 console.error("Los alias no son un arreglo válido.");
-                alert("Error al cargar los alias.");
+                //alert("Error al cargar los ID.");
             }
         })
         .catch(error => {
             console.error("Error cargando los alias:", error);
-            alert("Error al cargar los alias.");
+            //alert("Error al cargar los alias.");
         });
 }
 
