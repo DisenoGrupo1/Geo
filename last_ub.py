@@ -25,7 +25,6 @@ def get_last_location():
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
 
-        # Selecciona la última ubicación de cada carro identificada por `client_id`
         cursor.execute('''
             SELECT client_id, latitud, longitud, fecha, hora, alias
             FROM ubicaciones

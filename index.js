@@ -45,7 +45,6 @@ function initializeWebSocket() {
         reconnectInterval = 1000;
         reconnectAttempts = 0;
 
-        // Obtener la última ubicación de cada cliente al iniciar conexión
         fetch(`http://${configData.AWS_IP}:50000/last_location`)
             .then(response => response.json())
             .then(data => {
