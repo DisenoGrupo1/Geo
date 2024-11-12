@@ -350,6 +350,6 @@ document.addEventListener('DOMContentLoaded', function () {
         loadAliases(); // Solo se llama después de que loadConfig termine
     });
 });
-//document.getElementById('alias-selector').addEventListener('change', function () {
+document.getElementById('alias-selector').addEventListener('change', function () {
     //loadHistory();  // Llamamos a loadHistory cada vez que cambia el alias
-//});
+});
