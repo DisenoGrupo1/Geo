@@ -57,7 +57,6 @@ function initializeWebSocket() {
                     let alias=car.alias;
                     let lastLatLng = new google.maps.LatLng(parseFloat(car.latitud), parseFloat(car.longitud));
 
-                    // Crea un marcador y línea de trayectoria para cada cliente
                     if (!markers[clientId]) {
                         markers[clientId] = new google.maps.Marker({
                             position: lastLatLng,
