@@ -351,5 +351,5 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 document.getElementById('alias-selector').addEventListener('change', function () {
-    //loadHistory();  // Llamamos a loadHistory cada vez que cambia el alias
+    loadHistory();  // Llamamos a loadHistory cada vez que cambia el alias
 });
