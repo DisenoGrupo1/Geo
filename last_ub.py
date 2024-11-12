@@ -12,7 +12,6 @@ app = Flask(__name__)
 CORS(app, resources={r"/last_location": {"origins": "*"}})
 
 
-# Configuración de la base de datos
 db_config = {
     'host': os.getenv('DB_HOST'),
     'user': os.getenv('DB_USER'),
