@@ -316,7 +316,7 @@ function showPopup(fecha, hora, velocidad, rpm, combustible, alias) {
     popupSpeed.innerText = `Velocidad: ${velocidad} km/h`; // Añadir velocidad
     popupRPM.innerText = `RPM: ${rpm}`; // Añadir RPM
     popupFuel.innerText = `Combustible: ${combustible} %`; // Añadir combustible
-    popupAlias.innerText = `Alias: ${alias}`; // Mostrar el alias
+    popupAlias.innerText = `ID: ${alias}`; // Mostrar el alias
 
     // Muestra el popup
     popup.style.display = 'block';
