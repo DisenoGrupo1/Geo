@@ -28,7 +28,8 @@ function initMap() {
     const barranquilla = { lat: 10.9878, lng: -74.7889 };
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 15, // Aumentamos el nivel de zoom
-        center: barranquilla
+        center: barranquilla,
+        scrollwheel: true
     });
 
     // Inicializa la polilínea
@@ -53,6 +54,12 @@ function initMap() {
 function loadHistory() {
     const startDate = document.getElementById('start-datetime').value;
     const endDate = document.getElementById('end-datetime').value;
+    const alias = document.getElementById('alias-selector').value; // Capturar el alias seleccionado
+
+    if (!alias) {
+        alert("Por favor, seleccione un ID.");
+        return;
+    }
 
     if (startDate && endDate) {
         const startDateTime = new Date(startDate);
@@ -65,7 +72,8 @@ function loadHistory() {
 
         const requestBody = {
             start: startDate,
-            end: endDate
+            end: endDate,
+            alias: alias  // Agregar alias a la solicitud
         };
 
         fetch(`http://${configData.AWS_IP}:60000/location-history`, {
@@ -82,30 +90,33 @@ function loadHistory() {
                 return response.json();
             })
             .then(data => {
-                //console.log(data);
                 if (Array.isArray(data)) {
                     pathCoordinates = data.map(loc => ({
                         latitud: loc.latitud,
                         longitud: loc.longitud,
-                        fecha: loc.fecha, // Asumiendo que tienes fecha en la respuesta
-                        hora: loc.hora // Asumiendo que tienes hora en la respuesta
+                        fecha: loc.fecha,
+                        hora: loc.hora,
+                        velocidad: loc.velocidad,  // Añadir velocidad
+                        rpm: loc.rpm,              // Añadir rpm
+                        combustible: loc.combustible // Añadir combustible
                     }));
-                    totalSteps = pathCoordinates.length; // Total de puntos en el recorrido
-
-                    // Inicializamos los marcadores de inicio y fin
+                    totalSteps = pathCoordinates.length;
+            
                     addStartMarker();
                     addEndMarker();
-
-                    // Colocamos el marcador en la primera ubicación
+            
                     movingMarker.setPosition(new google.maps.LatLng(pathCoordinates[0].latitud, pathCoordinates[0].longitud));
                     map.setCenter(movingMarker.getPosition());
-
-                    // Añadimos el listener al marcador para mostrar el popup al hacer clic
+            
                     addMarkerClickListener();
-
+            
                     updatePolyline();
                     updateSlider();
-                    showPopup(pathCoordinates[0].fecha, pathCoordinates[0].hora); // Mostrar popup inicialmente
+            
+                    // Mostrar los valores en el popup con los nuevos datos
+                    showPopup(pathCoordinates[0].fecha, pathCoordinates[0].hora, 
+                              pathCoordinates[0].velocidad, pathCoordinates[0].rpm, 
+                              pathCoordinates[0].combustible);
                 } else {
                     alert(data.message || "No se encontraron ubicaciones para el rango de fechas especificado.");
                 }
@@ -119,11 +130,47 @@ function loadHistory() {
     }
 }
 
+function loadAliases() {
+    fetch(`http://${configData.AWS_IP}:60000/get-aliases`, {
+        method: 'GET'  // Definir el método como GET
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            return response.json();
+        })
+        .then(aliases => {
+            // Verificar el contenido de la respuesta
+            console.log(aliases);  // Aquí estamos viendo la respuesta que llega del servidor
+
+            const aliasSelector = document.getElementById('alias-selector');
+
+            if (Array.isArray(aliases)) {
+                aliasSelector.innerHTML = '<option value="">Seleccionar ID</option>'; // Limpiar el selector
+
+                aliases.forEach(alias => {
+                    const option = document.createElement('option');
+                    option.value = alias;
+                    option.textContent = alias;
+                    aliasSelector.appendChild(option);
+                });
+            } else {
+                console.error("Los alias no son un arreglo válido.");
+                alert("Error al cargar los alias.");
+            }
+        })
+        .catch(error => {
+            console.error("Error cargando los alias:", error);
+            alert("Error al cargar los alias.");
+        });
+}
+
 // Agregar el listener de clic en el marcador
 function addMarkerClickListener() {
     google.maps.event.addListener(movingMarker, 'click', function () {
         const position = pathCoordinates[currentStep];
-        showPopup(position.fecha, position.hora);
+        showPopup(position.fecha, position.hora, position.velocidad, position.rpm, position.combustible);
     });
 }
 
@@ -184,7 +231,7 @@ function updateMarkerPosition(value) {
     map.setCenter(movingMarker.getPosition());
     map.setZoom(20); // Establecer el nivel de zoom en 15
 
-    showPopup(position.fecha, position.hora);
+    showPopup(position.fecha, position.hora, position.velocidad, position.rpm, position.combustible);
 }
 function setMaxDate() {
     const today = new Date();
@@ -201,21 +248,32 @@ function updateSlider() {
 }
 
 // Muestra el popup con la fecha y hora
-function showPopup(fecha, hora) {
+function showPopup(fecha, hora, velocidad, rpm, combustible) {
     const popup = document.getElementById('popup');
     const popupDateTime = document.getElementById('popup-date-time');
+    const popupSpeed = document.getElementById('popup-speed');
+    const popupRPM = document.getElementById('popup-rpm');
+    const popupFuel = document.getElementById('popup-fuel');
+
+    // Actualiza los contenidos del popup
     popupDateTime.innerText = `Fecha: ${fecha} \nHora: ${hora}`;
+    popupSpeed.innerText = `Velocidad: ${velocidad} km/h`; // Añadir velocidad
+    popupRPM.innerText = `RPM: ${rpm}`; // Añadir RPM
+    popupFuel.innerText = `Combustible: ${combustible} %`; // Añadir combustible
+
+    // Muestra el popup
     popup.style.display = 'block';
 }
+
 
 // Cierra el popup
 function closePopup() {
     document.getElementById('popup').style.display = 'none';
 }
 
-document.addEventListener('DOMContentLoaded', loadConfig);
-
-window.onload = function () {
-    loadConfig();
-    setMaxDate();
-};
+document.addEventListener('DOMContentLoaded', function () {
+    loadConfig().then(() => {
+        setMaxDate();
+        loadAliases(); // Solo se llama después de que loadConfig termine
+    });
+});

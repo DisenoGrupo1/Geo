@@ -7,7 +7,7 @@
     <title id="page-title">Inserte su título</title>
     <link rel="icon" href="http://geotaxi.ddns.net/icon/titleicon3.png" type="image/png">
     <link rel="stylesheet" href="addandhist.css"> <!-- Estilo unificado -->
-    <script src="addandhist.js" defer></script> 
+    <script src="addandhist.js" defer></script>
 </head>
 
 <body>
@@ -28,9 +28,17 @@
             </div>
             <button onclick="loadHistory()">Cargar Histórico</button>
         </div>
+        <div>
+            <label for="alias-selector">Selecciona un ID:</label>
+            <select id="alias-selector">
+                <!-- Los alias serán insertados aquí por JavaScript -->
+            </select>
+        </div>
+
 
         <div id="slider-container">
-            <input type="range" id="slider" min="0" max="100" value="0" step="1" oninput="updateMarkerPosition(this.value)">
+            <input type="range" id="slider" min="0" max="100" value="0" step="1"
+                oninput="updateMarkerPosition(this.value)">
             <span id="slider-value"></span>
         </div>
 
@@ -38,24 +46,12 @@
             <div id="popup-content">
                 <span id="popup-close" onclick="closePopup()">✖</span>
                 <p id="popup-date-time"></p>
+                <p id="popup-speed"></p> 
+                <p id="popup-rpm"></p>
+                <p id="popup-fuel"></p> 
             </div>
         </div>
-        <!-- Comentado la sección de búsqueda por dirección -->
-        <!-- 
-        <div id="address-selection">
-            <label for="address">Dirección:</label>
-            <input type="text" id="address" placeholder="Ingrese una dirección">
-            <button onclick="geocodeAddress()">Buscar</button>
-            <div class="loading">Cargando...</div>
-        </div>
 
-        <div id="radius-selection">
-            <label for="radius">Radio de búsqueda:</label>
-            <input type="range" id="radius" min="100" max="2000" value="150" step="50"
-                onchange="updateRadiusValue(this.value)">
-            <span id="radius-value">150 m</span>
-        </div>
-        -->
         <div id="map-and-results">
             <div id="map"></div>
         </div>
