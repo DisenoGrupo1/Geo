@@ -1,12 +1,32 @@
 let configData;
 let map, pathPolyline;
 let pathCoordinates = [];
-let startMarker;
-let endMarker;
 let movingMarker; // Marcador que se moverá a lo largo de la polilínea
 let currentStep = 0; // Paso actual en el recorrido
 let totalSteps = 0; // Total de pasos
 const iconUrl = 'http://geotaxi.ddns.net/icon/titleicon3.png'; // URL del icono
+let aliasPolylines = {}; // Objeto para almacenar las polilíneas de cada alias
+let aliasMarkers = {};
+// Generar un color único para cada alias
+function getColorForAlias(alias) {
+    // Usamos un hash para obtener un valor numérico único basado en el alias
+    let hash = 0;
+    for (let i = 0; i < alias.length; i++) {
+        hash = (hash << 5) - hash + alias.charCodeAt(i);
+        hash = hash & hash; // Asegura que el valor se mantenga en 32 bits
+    }
+
+    // Usamos el valor del hash para obtener un índice único dentro del rango de colores disponibles
+    const colors = [
+        '#FF0000',  // Rojo
+        '#0000FF',  // Azul
+        '#00FF00',  // Verde
+        '#00FFFF'   // Cian
+    ];
+    
+    const index = Math.abs(hash) % colors.length; // Asegura un valor positivo y dentro de los límites del array
+    return colors[index];
+}
 
 // Cargar config.json y obtener la clave API
 function loadConfig() {
@@ -32,29 +52,74 @@ function initMap() {
         scrollwheel: true
     });
 
-    // Inicializa la polilínea
-    pathPolyline = new google.maps.Polyline({
-        strokeColor: '#FF0000',
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-        map: map
-    });
-
     // Inicializa el marcador que se moverá
     movingMarker = new google.maps.Marker({
         map: map,
         icon: {
-            url: iconUrl,
-            scaledSize: new google.maps.Size(30, 30) // Tamaño del icono (30x30)
+            url: 'http://geotaxi.ddns.net/icon/taxi.png', // Cambiar a este icono
+            scaledSize: new google.maps.Size(20, 20) // Tamaño del icono (20x20)
         }
     });
+}
+
+// Función para cargar los alias
+function loadAliases() {
+    fetch(`http://${configData.AWS_IP}:60000/get-aliases`, {
+        method: 'GET'
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            return response.json();
+        })
+        .then(aliases => {
+            const aliasSelector = document.getElementById('alias-selector');
+
+            if (Array.isArray(aliases)) {
+                aliasSelector.innerHTML = `
+                    <option value="">Seleccionar ID</option>
+                    <option value="todos">Todos</option>`; // Añadir opción "todos"
+
+                aliases.forEach(alias => {
+                    const option = document.createElement('option');
+                    option.value = alias;
+                    option.textContent = alias;
+                    aliasSelector.appendChild(option);
+                });
+            } else {
+                console.error("Los alias no son un arreglo válido.");
+            }
+        })
+        .catch(error => {
+            console.error("Error cargando los alias:", error);
+        });
+}
+
+// Agrupa los datos por alias
+function groupByAlias(data) {
+    return data.reduce((acc, loc) => {
+        if (!acc[loc.alias]) {
+            acc[loc.alias] = [];
+        }
+        acc[loc.alias].push({
+            latitud: loc.latitud,
+            longitud: loc.longitud,
+            fecha: loc.fecha,
+            hora: loc.hora,
+            velocidad: loc.velocidad,
+            rpm: loc.rpm,
+            combustible: loc.combustible
+        });
+        return acc;
+    }, {});
 }
 
 // Función para cargar el historial
 function loadHistory() {
     const startDate = document.getElementById('start-datetime').value;
     const endDate = document.getElementById('end-datetime').value;
-    const alias = document.getElementById('alias-selector').value; // Capturar el alias seleccionado
+    const alias = document.getElementById('alias-selector').value;
 
     if (!alias) {
         alert("Por favor, seleccione un ID.");
@@ -73,7 +138,7 @@ function loadHistory() {
         const requestBody = {
             start: startDate,
             end: endDate,
-            alias: alias  // Agregar alias a la solicitud
+            alias: alias === "todos" ? null : alias  // Si es "todos", envía alias como null
         };
 
         fetch(`http://${configData.AWS_IP}:60000/location-history`, {
@@ -91,32 +156,45 @@ function loadHistory() {
             })
             .then(data => {
                 if (Array.isArray(data)) {
+                    clearPolylines(); // Limpiar polilíneas anteriores
+                    clearMarkers(); // Limpiar marcadores anteriores
+
+                    const aliasGroups = groupByAlias(data);
+                    let globalBounds = new google.maps.LatLngBounds(); // Crear un objeto LatLngBounds para todo el historial
+                    for (const alias in aliasGroups) {
+                        const aliasData = aliasGroups[alias];
+                        drawPolylineForAlias(alias, aliasData);
+
+                        // Actualizar los límites globales con las ubicaciones de este alias
+                        aliasData.forEach(loc => {
+                            globalBounds.extend(new google.maps.LatLng(loc.latitud, loc.longitud));
+                        });
+                    }
+
                     pathCoordinates = data.map(loc => ({
                         latitud: loc.latitud,
                         longitud: loc.longitud,
                         fecha: loc.fecha,
                         hora: loc.hora,
-                        velocidad: loc.velocidad,  // Añadir velocidad
-                        rpm: loc.rpm,              // Añadir rpm
-                        combustible: loc.combustible // Añadir combustible
+                        velocidad: loc.velocidad,
+                        rpm: loc.rpm,
+                        combustible: loc.combustible,
+                        alias: loc.alias
                     }));
                     totalSteps = pathCoordinates.length;
-            
-                    addStartMarker();
-                    addEndMarker();
-            
+
                     movingMarker.setPosition(new google.maps.LatLng(pathCoordinates[0].latitud, pathCoordinates[0].longitud));
                     map.setCenter(movingMarker.getPosition());
-            
+
                     addMarkerClickListener();
-            
-                    updatePolyline();
                     updateSlider();
-            
-                    // Mostrar los valores en el popup con los nuevos datos
-                    showPopup(pathCoordinates[0].fecha, pathCoordinates[0].hora, 
-                              pathCoordinates[0].velocidad, pathCoordinates[0].rpm, 
-                              pathCoordinates[0].combustible);
+                    const alias = pathCoordinates[0].alias || "Desconocido"; // Si no hay alias, muestra 'Desconocido'
+                    showPopup(pathCoordinates[0].fecha, pathCoordinates[0].hora,
+                        pathCoordinates[0].velocidad, pathCoordinates[0].rpm,
+                        pathCoordinates[0].combustible, alias);
+
+                    // Ajustar el mapa para mostrar todas las ubicaciones
+                    map.fitBounds(globalBounds); // Ajustar la vista para todo el trazado
                 } else {
                     alert(data.message || "No se encontraron ubicaciones para el rango de fechas especificado.");
                 }
@@ -129,94 +207,120 @@ function loadHistory() {
         alert("Por favor, seleccione fechas y horas válidas.");
     }
 }
+// Función para dibujar una polilínea para un alias
+function drawPolylineForAlias(alias, aliasData) {
+    const color = getColorForAlias(alias);
 
-function loadAliases() {
-    fetch(`http://${configData.AWS_IP}:60000/get-aliases`, {
-        method: 'GET'  // Definir el método como GET
-    })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error en la respuesta del servidor');
-            }
-            return response.json();
-        })
-        .then(aliases => {
-            // Verificar el contenido de la respuesta
-            console.log(aliases);  // Aquí estamos viendo la respuesta que llega del servidor
+    const polyline = new google.maps.Polyline({
+        path: aliasData.map(loc => new google.maps.LatLng(loc.latitud, loc.longitud)),
+        strokeColor: color,
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        map: map
+    });
 
-            const aliasSelector = document.getElementById('alias-selector');
+    aliasPolylines[alias] = polyline; // Guardar la polilínea para cada alias
 
-            if (Array.isArray(aliases)) {
-                aliasSelector.innerHTML = '<option value="">Seleccionar ID</option>'; // Limpiar el selector
-
-                aliases.forEach(alias => {
-                    const option = document.createElement('option');
-                    option.value = alias;
-                    option.textContent = alias;
-                    aliasSelector.appendChild(option);
-                });
-            } else {
-                console.error("Los alias no son un arreglo válido.");
-                //alert("Error al cargar los ID.");
-            }
-        })
-        .catch(error => {
-            console.error("Error cargando los alias:", error);
-            //alert("Error al cargar los alias.");
-        });
+    if (aliasData.length > 0) {
+        addAliasMarkers(alias, aliasData);
+    }
 }
+function updateSlider() {
+    const slider = document.getElementById('slider');
+    slider.max = 100; // Mantenemos el máximo en 100
+    slider.value = 0; // Reiniciamos el valor del slider
+}
+
+function setMaxDate() {
+    const today = new Date();
+    const localDate = today.toLocaleDateString('en-CA');
+    document.getElementById('start-datetime').setAttribute('max', `${localDate}T23:59`);
+    document.getElementById('end-datetime').setAttribute('max', `${localDate}T23:59`);
+}
+// Añadir los marcadores de inicio y fin para cada alias
+function addAliasMarkers(alias, aliasData) {
+    // Verificar si ya existen los marcadores para este alias, si es así, eliminarlos
+    if (aliasMarkers[alias]) {
+        const { startMarker, endMarker } = aliasMarkers[alias];
+        if (startMarker) startMarker.setMap(null);
+        if (endMarker) endMarker.setMap(null);
+    }
+
+    const startLocation = aliasData[0];
+    const endLocation = aliasData[aliasData.length - 1];
+
+    // Crear marcador de inicio
+    const startMarker = new google.maps.Marker({
+        position: new google.maps.LatLng(startLocation.latitud, startLocation.longitud),
+        map: map,
+        title: `Inicio - ${alias}`,
+        icon: {
+            url: iconUrl,
+            scaledSize: new google.maps.Size(30, 30)
+        }
+    });
+
+    // Crear marcador de fin
+    const endMarker = new google.maps.Marker({
+        position: new google.maps.LatLng(endLocation.latitud, endLocation.longitud),
+        map: map,
+        title: `Fin - ${alias}`,
+        icon: {
+            url: iconUrl,
+            scaledSize: new google.maps.Size(30, 30)
+        }
+    });
+
+    // Guardar los marcadores en aliasMarkers
+    aliasMarkers[alias] = { startMarker, endMarker };
+}
+// Función para limpiar las polilíneas
+function clearPolylines() {
+    for (const alias in aliasPolylines) {
+        aliasPolylines[alias].setMap(null); // Elimina la polilínea del mapa
+    }
+    aliasPolylines = {};  // Resetea el objeto que contiene las polilíneas
+}
+
+// Función para limpiar los marcadores
+function clearMarkers() {
+    // Eliminar marcadores existentes
+    for (const alias in aliasMarkers) {
+        const { startMarker, endMarker } = aliasMarkers[alias];
+        if (startMarker) startMarker.setMap(null); // Elimina el marcador de inicio
+        if (endMarker) endMarker.setMap(null); // Elimina el marcador de fin
+    }
+    aliasMarkers = {};  // Resetea el objeto que contiene los marcadores
+}
+
 
 // Agregar el listener de clic en el marcador
 function addMarkerClickListener() {
     google.maps.event.addListener(movingMarker, 'click', function () {
         const position = pathCoordinates[currentStep];
-        showPopup(position.fecha, position.hora, position.velocidad, position.rpm, position.combustible);
+        const alias = position.alias || "Desconocido"; // Obtener el alias actual
+        showPopup(position.fecha, position.hora, position.velocidad, position.rpm, position.combustible, alias);
     });
 }
+// Muestra el popup con la fecha y hora
+function showPopup(fecha, hora, velocidad, rpm, combustible, alias) {
+    const popup = document.getElementById('popup');
+    const popupDateTime = document.getElementById('popup-date-time');
+    const popupSpeed = document.getElementById('popup-speed');
+    const popupRPM = document.getElementById('popup-rpm');
+    const popupFuel = document.getElementById('popup-fuel');
+    const popupAlias = document.getElementById('popup-alias'); // Nuevo elemento para el alias
 
-// Actualiza la polilínea y los marcadores
-function updatePolyline() {
-    if (pathPolyline) {
-        pathPolyline.setPath(pathCoordinates.map(coord => new google.maps.LatLng(coord.latitud, coord.longitud)));
+    // Actualiza los contenidos del popup
+    popupDateTime.innerText = `Fecha: ${fecha} \nHora: ${hora}`;
+    popupSpeed.innerText = `Velocidad: ${velocidad} km/h`; // Añadir velocidad
+    popupRPM.innerText = `RPM: ${rpm}`; // Añadir RPM
+    popupFuel.innerText = `Combustible: ${combustible} %`; // Añadir combustible
+    popupAlias.innerText = `Alias: ${alias}`; // Mostrar el alias
 
-        if (pathCoordinates.length > 0) {
-            const bounds = new google.maps.LatLngBounds();
-            pathCoordinates.forEach(coord => bounds.extend(new google.maps.LatLng(coord.latitud, coord.longitud)));
-            map.fitBounds(bounds);
-            addStartMarker();
-            addEndMarker();
-        }
-    }
+    // Muestra el popup
+    popup.style.display = 'block';
 }
-
-// Agregar marcadores de inicio y fin
-// Agrega un marcador de inicio
-function addStartMarker() {
-    if (startMarker) {
-        startMarker.setMap(null);
-    }
-    const startLocation = pathCoordinates[0];
-    startMarker = new google.maps.Marker({
-        position: new google.maps.LatLng(startLocation.latitud, startLocation.longitud),
-        map: map,
-        title: 'Inicio'
-    });
-}
-
-// Agrega un marcador de fin
-function addEndMarker() {
-    if (endMarker) {
-        endMarker.setMap(null);
-    }
-    const endLocation = pathCoordinates[pathCoordinates.length - 1];
-    endMarker = new google.maps.Marker({
-        position: new google.maps.LatLng(endLocation.latitud, endLocation.longitud),
-        map: map,
-        title: 'Fin'
-    });
-}
-
-// Actualiza la posición del marcador basado en el slider
 function updateMarkerPosition(value) {
     if (totalSteps === 0) return;
 
@@ -225,48 +329,17 @@ function updateMarkerPosition(value) {
 
     const position = pathCoordinates[currentStep];
     movingMarker.setPosition(new google.maps.LatLng(position.latitud, position.longitud));
-    map.setZoom(20); // Establecer el nivel de zoom en 15
+    map.setZoom(15); // Establecer el nivel de zoom en 20
 
     // Centrar el mapa en la nueva posición del marcador
-    map.setCenter(movingMarker.getPosition());
-    map.setZoom(20); // Establecer el nivel de zoom en 15
+    map.setCenter(movingMarker.getPosition()); 
+    map.setZoom(15);
+    // Suponiendo que el alias está disponible en los datos de la ubicación, 
+    // puedes pasar el alias en el siguiente parámetro
+    const alias = position.alias || "Desconocido"; // Usar el alias de la posición, si existe
 
-    showPopup(position.fecha, position.hora, position.velocidad, position.rpm, position.combustible);
+    showPopup(position.fecha, position.hora, position.velocidad, position.rpm, position.combustible, alias);
 }
-function setMaxDate() {
-    const today = new Date();
-    const localDate = today.toLocaleDateString('en-CA');
-    document.getElementById('start-datetime').setAttribute('max', `${localDate}T23:59`);
-    document.getElementById('end-datetime').setAttribute('max', `${localDate}T23:59`);
-}
-
-// Actualiza el slider basado en la cantidad de ubicaciones
-function updateSlider() {
-    const slider = document.getElementById('slider');
-    slider.max = 100; // Mantenemos el máximo en 100
-    slider.value = 0; // Reiniciamos el valor del slider
-}
-
-// Muestra el popup con la fecha y hora
-function showPopup(fecha, hora, velocidad, rpm, combustible) {
-    const popup = document.getElementById('popup');
-    const popupDateTime = document.getElementById('popup-date-time');
-    const popupSpeed = document.getElementById('popup-speed');
-    const popupRPM = document.getElementById('popup-rpm');
-    const popupFuel = document.getElementById('popup-fuel');
-
-    // Actualiza los contenidos del popup
-    popupDateTime.innerText = `Fecha: ${fecha} \nHora: ${hora}`;
-    popupSpeed.innerText = `Velocidad: ${velocidad} km/h`; // Añadir velocidad
-    popupRPM.innerText = `RPM: ${rpm}`; // Añadir RPM
-    popupFuel.innerText = `Combustible: ${combustible} %`; // Añadir combustible
-
-    // Muestra el popup
-    popup.style.display = 'block';
-}
-
-
-// Cierra el popup
 function closePopup() {
     document.getElementById('popup').style.display = 'none';
 }
@@ -277,3 +350,6 @@ document.addEventListener('DOMContentLoaded', function () {
         loadAliases(); // Solo se llama después de que loadConfig termine
     });
 });
+//document.getElementById('alias-selector').addEventListener('change', function () {
+    //loadHistory();  // Llamamos a loadHistory cada vez que cambia el alias
+//});

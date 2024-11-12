@@ -21,10 +21,7 @@ def get_location_history():
     request_data = request.get_json()
     start_datetime_str = request_data['start']
     end_datetime_str = request_data['end']
-    alias = request_data.get('alias', None)  # Obtener el alias, si se proporciona
-
-    if not alias:
-        return jsonify({"error": "El alias es obligatorio."}), 400  # Si no se proporciona alias, error 400
+    alias = request_data.get('alias', None)  # Alias puede ser None si es "todos"
 
     connection = None
     cursor = None
@@ -39,19 +36,28 @@ def get_location_history():
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
 
-        # Consulta SQL con filtro por alias
-        query = '''SELECT latitud, longitud, fecha, hora, velocidad, rpm, combustible
-                   FROM ubicaciones
-                   WHERE (fecha > %s OR (fecha = %s AND hora >= %s)) AND
-                         (fecha < %s OR (fecha = %s AND hora <= %s)) AND
-                         alias = %s'''
-
-        # Ejecutar la consulta con el alias
-        cursor.execute(query, (
-            start_datetime.date(), start_datetime.date(), start_datetime.time(),
-            end_datetime.date(), end_datetime.date(), end_datetime.time(),
-            alias
-        ))
+        # Construir la consulta SQL
+        if alias:
+            query = '''SELECT latitud, longitud, fecha, hora, velocidad, rpm, combustible, alias
+                       FROM ubicaciones
+                       WHERE (fecha > %s OR (fecha = %s AND hora >= %s)) AND
+                             (fecha < %s OR (fecha = %s AND hora <= %s)) AND
+                             alias = %s'''
+            cursor.execute(query, (
+                start_datetime.date(), start_datetime.date(), start_datetime.time(),
+                end_datetime.date(), end_datetime.date(), end_datetime.time(),
+                alias
+            ))
+        else:
+            # Si alias es None, no filtramos por alias
+            query = '''SELECT latitud, longitud, fecha, hora, velocidad, rpm, combustible, alias
+                       FROM ubicaciones
+                       WHERE (fecha > %s OR (fecha = %s AND hora >= %s)) AND
+                             (fecha < %s OR (fecha = %s AND hora <= %s))'''
+            cursor.execute(query, (
+                start_datetime.date(), start_datetime.date(), start_datetime.time(),
+                end_datetime.date(), end_datetime.date(), end_datetime.time()
+            ))
 
         locations = cursor.fetchall()
 
