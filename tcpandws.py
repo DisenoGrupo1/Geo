@@ -123,7 +123,6 @@ async def handle_client(conn):
                         location_cache.append((client_id, alias, latitud, longitud, fecha, hora, velocidad, rpm, fuel))
                         await save_locations_in_batch()
                         
-                        # Aquí se pasa el client_id al llamar a notify_clients
                         await notify_clients(client_id, alias, latitud, longitud, fecha, hora, velocidad, rpm, fuel)
                         
                         await asyncio.to_thread(conn.sendall, b"Datos recibidos y guardados.")
