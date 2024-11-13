@@ -1,7 +1,7 @@
 let configData;
 let map, pathPolyline;
 let pathCoordinates = [];
-let movingMarker; // Marcador que se moverá a lo largo de la polilínea
+let movingMarker; // Marcador que se movera a lo largo de la polilínea
 let currentStep = 0; // Paso actual en el recorrido
 let totalSteps = 0; // Total de pasos
 const iconUrl = 'http://geotaxi.ddns.net/icon/titleicon3.png'; // URL del icono
