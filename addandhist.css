@@ -1,13 +1,16 @@
+/* Estilos generales */
 body {
     margin: 0;
     padding: 20px;
     background-color: #f4f4f4;
     color: #333;
+    position: relative;
 }
 
 h1 {
     text-align: center;
     color: #000;
+    margin-top: 20px;
 }
 
 .container {
@@ -17,6 +20,7 @@ h1 {
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
 }
 
 label {
@@ -65,16 +69,17 @@ button:hover {
     width: 100%;
     border-radius: 4px;
     margin-top: 20px;
+    position: relative;
 }
 
 #link-container {
     position: absolute;
     top: 20px;
-    right: 220px;
+    right: 20px;
 }
 
 .btn-link {
-    padding: 10px 20px;
+    padding: 10px;
     background-color: #28a745;
     color: white;
     border: none;
@@ -82,75 +87,105 @@ button:hover {
     font-size: 16px;
     cursor: pointer;
     transition: background-color 0.3s;
-    margin: 40px;
-    right: 40px;
+    white-space: nowrap; /* Evita el salto de línea en el texto del botón */
+    width: auto; /* Ajusta el tamaño del botón según el contenido */
 }
 
 .btn-link:hover {
     background-color: #218838;
 }
 
-#radius-selection {
+#popup {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    max-width: 300px;
+    z-index: 10;
+    overflow: auto;
+}
+
+#popup #popup-content {
+    position: relative;
+}
+
+#popup #popup-close {
+    cursor: pointer;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 16px;
+}
+
+#slider-container {
     margin: 20px 0;
 }
 
-.loading {
-    display: none;
-    /* Esconder por defecto */
+/* Estilo para el marcador en el mapa */
+.marker-icon {
+    width: 30px;
+    height: 30px;
+    background: url('http://geotaxi.ddns.net/icon/titleicon3.png') no-repeat center center;
+    background-size: contain;
 }
 
-.no-results {
-    color: red;
-}
+/* Media query para dispositivos pequeños (móviles) */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
 
-/* Tabla de resultados */
-#results {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    text-align: center;
-}
+    /* Coloca el botón "Volver a Inicio" en la esquina superior derecha */
+    #link-container {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
 
-h3 {
-    text-align: center;
-}
+    h1 {
+        margin-top: 60px; /* Espacio para el botón de "Volver a Inicio" */
+    }
 
-#results th,
-#results td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: center;
-}
-
-#results th {
-    text-align: center;
-    background-color: #f2f2f2;
-}
-
-.no-results {
-    text-align: center;
-    font-size: 1.2em;
-    margin-top: 20px;
-    color: #999;
-}
-
-/* Media queries para dispositivos pequeños */
-@media (max-width: 600px) {
     .flex-row {
         flex-direction: column;
-        align-items: flex-start;
+        gap: 5px;
     }
 
     input[type="datetime-local"],
-    input[type="text"] {
-        max-width: 100%;
-        margin-bottom: 10px;
+    input[type="text"],
+    button {
+        width: 100%;
+        font-size: 14px;
     }
 
-    #link-container {
+    #map {
+        height: 300px;
+    }
+
+    /* Ajuste del botón "Cargar Histórico" al texto */
+    .btn-link {
+        width: auto;
+        padding: 10px;
+        margin: 10px auto;
+        display: inline-block; /* Alinea el botón al centro en dispositivos pequeños */
+    }
+
+    /* Coloca el popup debajo del mapa y ajusta el tamaño al contenido */
+    #popup {
         position: relative;
-        top: 0;
-        right: 0;
+        max-width: 90%; /* Ocupa el 90% del ancho en pantallas pequeñas */
+        width: auto; /* Se adapta al contenido */
         margin-top: 20px;
+        padding: 10px;
+        left: 0;
+        right: 0;
+        display: inline-block; /* Ajusta el ancho al contenido */
+    }
+
+    #popup #popup-close {
+        font-size: 14px;
     }
 }

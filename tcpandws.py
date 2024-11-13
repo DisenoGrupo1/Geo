@@ -23,6 +23,7 @@ backlog_size = 50  # Tamaño del backlog para conexiones pendientes
 tcp_socket_timeout = 20  # Timeout para aceptar conexiones en el socket principal
 client_socket_timeout = 15  # Timeout para operaciones de lectura/escritura
 save_lock = asyncio.Lock()
+alias_cache = {}  # Cache para almacenar los alias generados para los client_id
 
 # Crear un pool de conexiones a la base de datos
 connection_pool = pooling.MySQLConnectionPool(
@@ -41,6 +42,38 @@ last_notification_time = time.time()
 def hash_message(message):
     """Crea un hash a partir del mensaje para evitar duplicados."""
     return hashlib.sha256(message.encode()).hexdigest()
+
+def generate_alias(client_id):
+    """Genera un alias secuencial único como 'taxi X'."""
+    if client_id in alias_cache:
+        return alias_cache[client_id]
+    
+    try:
+        connection = connection_pool.get_connection()
+        cursor = connection.cursor()
+
+        # Buscar si el client_id ya tiene un alias registrado en la base de datos
+        cursor.execute("SELECT alias FROM aliases WHERE client_id = %s", (client_id,))
+        result = cursor.fetchone()
+
+        if result:
+            alias = result[0]  # Recuperar el alias si ya existe
+        else:
+            # Contar el número de filas para obtener el próximo número disponible
+            cursor.execute("SELECT COUNT(*) FROM aliases")
+            next_number = cursor.fetchone()[0] + 1
+            alias = f"taxi {next_number}"
+            
+            # Insertar el nuevo alias para el client_id en la tabla de aliases
+            cursor.execute("INSERT INTO aliases (client_id, alias) VALUES (%s, %s)", (client_id, alias))
+            connection.commit()
+
+        alias_cache[client_id] = alias  # Guardar en caché para futuros usos
+    finally:
+        cursor.close()
+        connection.close()
+
+    return alias
 
 async def handle_tcp_connection():
     """Maneja conexiones TCP y guarda ubicaciones en la base de datos."""
@@ -78,13 +111,20 @@ async def handle_client(conn):
                     processed_messages.add(hashed_message)
                     buffer.append(message)
                     print(f"Datos recibidos: '{message}'")
-                    
-                    match = re.match(r'Latitude:\s*(-?\d+\.\d+)\s+Longitude:\s*(-?\d+\.\d+)\s+Timestamp:\s*(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})', message)
+                    # Actualizar la expresión regular para coincidir con el formato
+                    match = re.match(
+                        r'ID:\s*(\w+)\s+Latitude:\s*(-?\d+\.\d+)\s+Longitude:\s*(-?\d+\.\d+)\s+Timestamp:\s*(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\s+Speed:\s*(\d+(?:\.\d+)?)\s+RPM:\s*(\d+(?:\.\d+)?)\s+Fuel:\s*(\d+(?:\.\d+)?)',
+                        message
+                    )
                     if match:
-                        latitud, longitud, fecha, hora = match.groups()
-                        location_cache.append((latitud, longitud, fecha, hora))
+                        client_id, latitud, longitud, timestamp, velocidad, rpm, fuel = match.groups()
+                        alias = generate_alias(client_id)
+                        fecha, hora = timestamp.split()
+                        location_cache.append((client_id, alias, latitud, longitud, fecha, hora, velocidad, rpm, fuel))
                         await save_locations_in_batch()
-                        await notify_clients(latitud, longitud, fecha, hora)
+                        
+                        await notify_clients(client_id, alias, latitud, longitud, fecha, hora, velocidad, rpm, fuel)
+                        
                         await asyncio.to_thread(conn.sendall, b"Datos recibidos y guardados.")
                     else:
                         print("Datos recibidos en formato incorrecto.")
@@ -94,6 +134,7 @@ async def handle_client(conn):
         except Exception as e:
             print(f"Error en la conexión TCP: {e}")
 
+
 async def save_locations_in_batch():
     """Guarda las ubicaciones en la base de datos en lotes."""
     global last_saved_timestamp
@@ -102,14 +143,13 @@ async def save_locations_in_batch():
     
     current_timestamp = time.time()
     
-    # Verificar si han pasado 10 segundos desde el último guardado
-    if last_saved_timestamp is None or (current_timestamp - last_saved_timestamp) >= 10:
+    if last_saved_timestamp is None or (current_timestamp - last_saved_timestamp) >= 1:
         async with save_lock:
             try:
                 connection = connection_pool.get_connection()
                 cursor = connection.cursor()
-                cursor.executemany('''INSERT IGNORE INTO ubicaciones (latitud, longitud, fecha, hora) 
-                                      VALUES (%s, %s, %s, %s)''', location_cache)
+                cursor.executemany('''INSERT IGNORE INTO ubicaciones (client_id, alias, latitud, longitud, fecha, hora, velocidad, rpm, combustible) 
+                                      VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)''', location_cache)
                 connection.commit()
                 last_saved_timestamp = current_timestamp
                 location_cache.clear()
@@ -120,13 +160,23 @@ async def save_locations_in_batch():
                 cursor.close()
                 connection.close()
 
-async def notify_clients(latitud, longitud, fecha, hora):
+async def notify_clients(client_id,alias, latitud, longitud, fecha, hora, velocidad, rpm, fuel):
     """Notifica a los clientes conectados via WebSocket de manera throttled."""
     global last_notification_time
     current_time = time.time()
     
     if current_time - last_notification_time >= NOTIFICATION_THRESHOLD:
-        message = json.dumps({'latitud': latitud, 'longitud': longitud, 'fecha': fecha, 'hora': hora})
+        message = json.dumps({
+            'client_id': client_id,
+            'alias': alias,
+            'latitud': latitud, 
+            'longitud': longitud, 
+            'fecha': fecha, 
+            'hora': hora,
+            'velocidad': velocidad,
+            'rpm': rpm,
+            'fuel': fuel
+        })
         for client in clients:
             await asyncio.to_thread(server.send_message, client, message)
         last_notification_time = current_time
@@ -170,7 +220,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
-
-
