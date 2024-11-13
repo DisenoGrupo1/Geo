@@ -313,3 +313,6 @@ loadConfig().then(() => {
     setMaxDate();
     loadAliases();
 });
+document.getElementById('alias-selector').addEventListener('change', function () {
+    loadHistory();  // Llamamos a loadHistory cada vez que cambia el alias
+});
