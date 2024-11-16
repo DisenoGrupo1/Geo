@@ -123,6 +123,7 @@ async def handle_client(conn):
                         location_cache.append((client_id, alias, latitud, longitud, fecha, hora, velocidad, rpm, fuel))
                         await save_locations_in_batch()
                         
+                        # Aquí se pasa el client_id al llamar a notify_clients
                         await notify_clients(client_id, alias, latitud, longitud, fecha, hora, velocidad, rpm, fuel)
                         
                         await asyncio.to_thread(conn.sendall, b"Datos recibidos y guardados.")
@@ -143,9 +144,11 @@ async def save_locations_in_batch():
     
     current_timestamp = time.time()
     
+    # Verificar si han pasado 10 segundos desde el último guardado
     if last_saved_timestamp is None or (current_timestamp - last_saved_timestamp) >= 1:
         async with save_lock:
             try:
+                location_cache.sort(key=lambda x: f"{x[4]} {x[5]}")  # Asumiendo que el formato es fecha y hora (yyyy-mm-dd hh:mm:ss)
                 connection = connection_pool.get_connection()
                 cursor = connection.cursor()
                 cursor.executemany('''INSERT IGNORE INTO ubicaciones (client_id, alias, latitud, longitud, fecha, hora, velocidad, rpm, combustible) 
