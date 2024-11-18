@@ -16,7 +16,7 @@ function getColorForAlias(alias) {
         hash = hash & hash; // Asegura que el valor se mantenga en 32 bits
     }
 
-    const colors = ['#FF0000', '#0000FF', '#00FF00', '#00FFFF'];
+    const colors = ['#FF0000', '#0000FF', '#00FF00', '#00FFFF', '#FF00FF', '#FFFF00', '#FFA500', '#800080', '#008000', '#000080', '#FFC0CB', '#808080', '#FFD700', '#8A2BE2', '#00CED1', '#FF6347', '#4682B4', '#DC143C', '#7FFF00', '#40E0D0'];
     const index = Math.abs(hash) % colors.length;
     return colors[index];
 }
