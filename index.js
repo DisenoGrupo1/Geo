@@ -8,9 +8,6 @@ let socket;
 let reconnectAttempts = 0;
 const MAX_ATTEMPTS = 5;
 
-// Array de colores para las polilíneas, puedes agregar más si es necesario
-const polylineColors = ['#FF0000', '#0000FF', '#00FF00', '#00FFFF'];
-
 function loadConfig() {
     return fetch('config.json')
         .then(response => response.json())
@@ -51,11 +48,12 @@ function initializeWebSocket() {
         fetch(`http://${configData.AWS_IP}:50000/last_location`)
             .then(response => response.json())
             .then(data => {
+                // Asegurar que `data` sea un arreglo
                 let cars = Array.isArray(data) ? data : [data];
 
                 cars.forEach(car => {
                     let clientId = car.client_id;
-                    let alias = car.alias;
+                    let alias=car.alias;
                     let lastLatLng = new google.maps.LatLng(parseFloat(car.latitud), parseFloat(car.longitud));
 
                     if (!markers[clientId]) {
@@ -70,14 +68,11 @@ function initializeWebSocket() {
                             }
                         });
 
-                        // Asignar un color único para cada cliente
-                        let polylineColor = polylineColors[clientId % polylineColors.length];
-
                         pathCoordinates[clientId] = [lastLatLng];
                         pathPolylines[clientId] = new google.maps.Polyline({
                             path: pathCoordinates[clientId],
                             geodesic: true,
-                            strokeColor: polylineColor,
+                            strokeColor: '#FF0000',
                             strokeOpacity: 1.0,
                             strokeWeight: 2,
                             map: map
@@ -97,7 +92,7 @@ function initializeWebSocket() {
                         // Actualiza posición si el marcador ya existe
                         markers[clientId].setPosition(lastLatLng);
                     }
-
+                    
                     // Centra el mapa en la última ubicación del cliente
                     map.setCenter(lastLatLng);
                 });
@@ -107,9 +102,8 @@ function initializeWebSocket() {
 
     socket.onmessage = function (event) {
         console.log("Mensaje recibido del WebSocket:", event.data);
-
         let data = JSON.parse(event.data);
-        let alias = data.alias;
+        let alias = data.alias;  // Obtén el alias del cliente
 
         // Verifica si el mensaje tiene el client_id
         if (!data.client_id) {
@@ -139,13 +133,10 @@ function initializeWebSocket() {
                 }
             });
 
-            // Asignar un color único para cada cliente
-            let polylineColor = polylineColors[clientId % polylineColors.length];
-
             pathPolylines[clientId] = new google.maps.Polyline({
                 path: pathCoordinates[clientId],
                 geodesic: true,
-                strokeColor: polylineColor,
+                strokeColor: '#FF0000',
                 strokeOpacity: 1.0,
                 strokeWeight: 2,
                 map: map
@@ -168,9 +159,11 @@ function initializeWebSocket() {
                 <strong>ID:</strong> ${alias}<br>
                 <strong>Velocidad:</strong> ${data.velocidad} km/h<br>
                 <strong>RPM:</strong> ${data.rpm}<br>
-                <strong>Combustible:</strong> ${data.fuel}%<br>
+                <strong>Combustible:</strong> ${data.fuel}%
             </div>
         `);
+
+       //map.panTo(latLng); 
     };
 
     socket.onerror = function () {
