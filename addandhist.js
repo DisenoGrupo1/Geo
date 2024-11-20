@@ -144,9 +144,11 @@ function loadHistory() {
 
                 const aliasGroups = groupByAlias(data);
                 let globalBounds = new google.maps.LatLngBounds();
+
                 for (const alias in aliasGroups) {
                     const aliasData = aliasGroups[alias];
                     drawPolylineForAlias(alias, aliasData);
+
                     aliasData.forEach(loc => {
                         globalBounds.extend(new google.maps.LatLng(loc.latitud, loc.longitud));
                     });
@@ -168,6 +170,9 @@ function loadHistory() {
                 addMarkerClickListener();
                 updateSlider();
 
+                // Ajustar los límites del mapa para que se ajusten a las ubicaciones cargadas
+                map.fitBounds(globalBounds);
+
                 if (alias === "todos") {
                     map.fitBounds(globalBounds);
                 }
@@ -183,6 +188,7 @@ function loadHistory() {
         alert("Por favor, seleccione fechas y horas válidas.");
     }
 }
+
 
 // Función para dibujar una polilínea para un alias
 function drawPolylineForAlias(alias, aliasData) {
