@@ -190,7 +190,6 @@ function loadHistory() {
 }
 
 
-// Función para dibujar una polilínea para un alias
 function drawPolylineForAlias(alias, aliasData) {
     const color = getColorForAlias(alias);
     const polyline = new google.maps.Polyline({
