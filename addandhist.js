@@ -54,7 +54,6 @@ function initMap() {
     });
 }
 
-// Función para cargar los alias
 function loadAliases() {
     fetch(`http://${configData.AWS_IP}:60000/get-aliases`, {
         method: 'GET'
