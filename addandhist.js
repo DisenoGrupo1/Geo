@@ -170,7 +170,6 @@ function loadHistory() {
                 addMarkerClickListener();
                 updateSlider();
 
-                // Ajustar los límites del mapa para que se ajusten a las ubicaciones cargadas
                 map.fitBounds(globalBounds);
 
                 if (alias === "todos") {
