@@ -48,7 +48,6 @@ function initializeWebSocket() {
         fetch(`http://${configData.AWS_IP}:50000/last_location`)
             .then(response => response.json())
             .then(data => {
-                // Asegurar que `data` sea un arreglo
                 let cars = Array.isArray(data) ? data : [data];
 
                 cars.forEach(car => {
